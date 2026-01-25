@@ -154,7 +154,11 @@
     </table>
 </div>
 
-<div class="btn-container"><button onclick="gerarPDF()">📄 GERAR PDF </button></div>
+<div class="btn-panel">
+    <button class="btn-print" onclick="window.print()">GERAR PDF</button>
+    <button class="btn-clear" onclick="limparTudo()" style="display: block; width: 100%; margin-top: 5px; padding: 10px; background: #d9534f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px;">ZERAR FORMULÁRIO</button>
+    <button onclick="window.location.href='index.html'" style="display: block; width: 100%; margin-top: 5px; padding: 10px; background: #5bc0de; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px;">VOLTAR AO MENU</button>
+</div>
 
 <div id="modalAssinatura" class="modal">
     <div class="modal-content">
@@ -293,6 +297,40 @@
         pdf.save("RAT- ORDEM DE SERVIÇO GLOBAL HITSS.pdf");
         btn.innerText = "📄 GERAR PDF "; btn.disabled = false;
     }
+<script>
+    // Carrega os dados e ativa o salvamento automático
+    window.addEventListener('load', () => {
+        const campos = document.querySelectorAll('input, textarea, select');
+        const prefixo = window.location.pathname; // Garante que cada arquivo salve seus próprios dados
+
+        campos.forEach((campo, index) => {
+            // Se o campo não tiver ID, criamos um automático baseado na posição dele
+            if (!campo.id) campo.id = 'campo-' + index;
+
+            // Carrega o que estava salvo
+            const valorSalvo = localStorage.getItem(prefixo + campo.id);
+            if (valorSalvo) campo.value = valorSalvo;
+
+            // Salva sempre que o usuário digitar algo
+            campo.addEventListener('input', () => {
+                localStorage.setItem(prefixo + campo.id, campo.value);
+            });
+        });
+    });
+
+    // Função para o botão ZERAR
+    function limparTudo() {
+        if (confirm("Isso apagará todos os dados digitados neste relatório. Confirmar?")) {
+            const campos = document.querySelectorAll('input, textarea, select');
+            const prefixo = window.location.pathname;
+            
+            campos.forEach(campo => {
+                localStorage.removeItem(prefixo + campo.id);
+            });
+            location.reload(); // Recarrega a página limpa
+        }
+    }
 </script>
 </body>
+
 </html>
