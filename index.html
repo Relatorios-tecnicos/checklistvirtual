@@ -6,18 +6,33 @@
     <title>Menu de Relatórios</title>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background-color: #f4f4f4; }
-        .btn { width: 300px; padding: 20px; margin: 10px; text-align: center; background: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; border: none; cursor: pointer; }
+        .btn { width: 300px; padding: 20px; margin: 10px; text-align: center; background: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; border: none; cursor: pointer; display: block; }
         .btn:hover { background: #0056b3; }
+        h1 { color: #333; }
     </style>
     <script>
-        // ALTERE A SENHA ABAIXO
-        const SENHA_CORRETA = "Hitss123"; 
+        // Função de verificação de senha
+        function verificarAcesso() {
+            const SENHA_CORRETA = "Hitss123"; 
+            
+            // Verifica se já foi feito o login nesta sessão
+            if (sessionStorage.getItem("logado") === "true") {
+                return; // Já está logado, não faz nada e mostra a página
+            }
 
-        let tentativa = prompt("Digite a senha de acesso:");
-        if (tentativa !== SENHA_CORRETA) {
-            alert("Senha incorreta! Acesso negado.");
-            window.location.href = "https://www.google.com";
+            // Se não estiver logado, pede a senha
+            let tentativa = prompt("Digite a senha de acesso:");
+            
+            if (tentativa === SENHA_CORRETA) {
+                sessionStorage.setItem("logado", "true"); // Salva que logou com sucesso
+            } else {
+                alert("Senha incorreta! Acesso negado.");
+                window.location.href = "https://www.google.com";
+            }
         }
+
+        // Executa a verificação assim que abre a página
+        verificarAcesso();
     </script>
 </head>
 <body>
