@@ -204,45 +204,41 @@
         mCanvas.addEventListener('mousemove', (e) => { if(!drawing) return; const p = getPos(e); mCtx.lineTo(p.x, p.y); mCtx.stroke(); });
         window.addEventListener('mouseup', () => drawing = false);
     <script>
-    // Função para salvar automaticamente no Navegador (LocalStorage)
-    function salvarDados() {
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            if (input.id) { // Só salva se o input tiver um ID
-                localStorage.setItem(input.id, input.value);
-            }
-        });
-    }
+    // Carrega os dados e ativa o salvamento automático
+    window.addEventListener('load', () => {
+        // Seleciona apenas inputs e textareas, ignorando o campo da assinatura
+        const campos = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
+        const prefixo = window.location.pathname;
 
-    // Função para carregar os dados ao abrir a página
-    function carregarDados() {
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            if (input.id && localStorage.getItem(input.id)) {
-                input.value = localStorage.getItem(input.id);
-            }
-        });
-    }
+        campos.forEach((campo, index) => {
+            // Se o campo for o canvas da assinatura, o script pula ele
+            if (campo.id === 'modal-canvas' || campo.classList.contains('signature-pad')) return;
 
-    // Função para o botão "ZERAR FORMULÁRIO"
+            if (!campo.id) campo.id = 'campo-' + index;
+
+            const valorSalvo = localStorage.getItem(prefixo + campo.id);
+            if (valorSalvo) campo.value = valorSalvo;
+
+            campo.addEventListener('input', () => {
+                localStorage.setItem(prefixo + campo.id, campo.value);
+            });
+        });
+    });
+
+    // Função para o botão ZERAR
     function limparTudo() {
-        if (confirm("Tem certeza que deseja apagar todos os dados do formulário?")) {
-            localStorage.clear();
+        if (confirm("Isso apagará todos os dados digitados (exceto assinaturas). Confirmar?")) {
+            const campos = document.querySelectorAll('input, textarea, select');
+            const prefixo = window.location.pathname;
+            
+            campos.forEach(campo => {
+                localStorage.removeItem(prefixo + campo.id);
+            });
             location.reload();
         }
     }
-
-    // Executa ao carregar a página
-    window.onload = function() {
-        carregarDados();
-
-        // Adiciona o evento de salvar em cada input automaticamente
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('input', salvarDados);
-        });
-    };
 </script>
 </body>
 
 </html>
+
