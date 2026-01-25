@@ -2,24 +2,30 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu de Relatórios</title>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background-color: #f4f4f4; }
-        .btn { width: 300px; padding: 20px; margin: 10px; text-align: center; background: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        .btn { width: 300px; padding: 20px; margin: 10px; text-align: center; background: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; border: none; cursor: pointer; }
         .btn:hover { background: #0056b3; }
     </style>
+    <script>
+        // ALTERE A SENHA ABAIXO
+        const SENHA_CORRETA = "Hitss123"; 
+
+        let tentativa = prompt("Digite a senha de acesso:");
+        if (tentativa !== SENHA_CORRETA) {
+            alert("Senha incorreta! Acesso negado.");
+            window.location.href = "https://www.google.com";
+        }
+    </script>
 </head>
 <body>
-    <script>
-  var senha = prompt("Digite a senha para acessar os relatórios:");
-  if (senha !== Hitss123) {
-    alert("Senha incorreta!");
-    window.location.href = "https://google.com"; // Manda o usuário para outro lugar
-  }
-</script>
     <h1>Selecione o Relatório</h1>
-    <a class="btn" href="RAT-%20ORDEM%20DE%20SERVI%C3%87O%20GLOBAL%20HITSS.html">RAT - Ordem de Serviço</a>
+    
+    <a class="btn" href="RAT-%20ORDEM%20DE%20SERVI%C3%87O%20GLOBAL%20HITSS.html.html">RAT - Ordem de Serviço</a>
     <a class="btn" href="CADERNO%20DE%20TESTES.html">Caderno de Testes</a>
     <a class="btn" href="TERMO%20DE%20ENTREGA.html">Termo de Entrega</a>
+
 </body>
 </html>
