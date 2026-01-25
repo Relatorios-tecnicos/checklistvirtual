@@ -254,18 +254,19 @@
     <script>
     // Carrega os dados e ativa o salvamento automático
     window.addEventListener('load', () => {
-        const campos = document.querySelectorAll('input, textarea, select');
-        const prefixo = window.location.pathname; // Garante que cada arquivo salve seus próprios dados
+        // Seleciona apenas inputs e textareas, ignorando o campo da assinatura
+        const campos = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
+        const prefixo = window.location.pathname;
 
         campos.forEach((campo, index) => {
-            // Se o campo não tiver ID, criamos um automático baseado na posição dele
+            // Se o campo for o canvas da assinatura, o script pula ele
+            if (campo.id === 'modal-canvas' || campo.classList.contains('signature-pad')) return;
+
             if (!campo.id) campo.id = 'campo-' + index;
 
-            // Carrega o que estava salvo
             const valorSalvo = localStorage.getItem(prefixo + campo.id);
             if (valorSalvo) campo.value = valorSalvo;
 
-            // Salva sempre que o usuário digitar algo
             campo.addEventListener('input', () => {
                 localStorage.setItem(prefixo + campo.id, campo.value);
             });
@@ -274,18 +275,19 @@
 
     // Função para o botão ZERAR
     function limparTudo() {
-        if (confirm("Isso apagará todos os dados digitados neste relatório. Confirmar?")) {
+        if (confirm("Isso apagará todos os dados digitados (exceto assinaturas). Confirmar?")) {
             const campos = document.querySelectorAll('input, textarea, select');
             const prefixo = window.location.pathname;
             
             campos.forEach(campo => {
                 localStorage.removeItem(prefixo + campo.id);
             });
-            location.reload(); // Recarrega a página limpa
+            location.reload();
         }
     }
 </script>
 </body>
 
 </html>
+
 
