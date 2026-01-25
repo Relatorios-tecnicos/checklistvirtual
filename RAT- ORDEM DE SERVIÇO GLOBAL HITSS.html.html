@@ -298,35 +298,87 @@
         btn.innerText = "📄 GERAR PDF "; btn.disabled = false;
     }
 <script>
-    // Carrega os dados e ativa o salvamento automático
+    // --- LÓGICA DA ASSINATURA ---
+    const canvas = document.getElementById('modal-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let currentTargetImg = null;
+
+    // Ajusta o tamanho do canvas para o desenho ficar nítido
+    canvas.width = 400;
+    canvas.height = 200;
+
+    function openModal(imgId) {
+        currentTargetImg = document.getElementById(imgId);
+        document.getElementById('sig-modal').style.display = 'flex';
+        clearModal();
+    }
+
+    function closeModal() {
+        document.getElementById('sig-modal').style.display = 'none';
+    }
+
+    function clearModal() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+    }
+
+    function saveSignature() {
+        if (currentTargetImg) {
+            currentTargetImg.src = canvas.toDataURL();
+            currentTargetImg.style.display = 'block';
+        }
+        closeModal();
+    }
+
+    // Eventos de desenho (Mouse e Touch)
+    canvas.addEventListener('mousedown', () => drawing = true);
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('touchstart', (e) => { drawing = true; e.preventDefault(); });
+    canvas.addEventListener('touchend', (e) => { drawing = false; e.preventDefault(); });
+    canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); });
+
+    function draw(e) {
+        if (!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.pageX) - rect.left;
+        const y = (e.clientY || e.pageY) - rect.top;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    // --- LÓGICA DE SALVAMENTO AUTOMÁTICO ---
     window.addEventListener('load', () => {
-        // Seleciona apenas inputs e textareas, ignorando o campo da assinatura
-        const campos = document.querySelectorAll('input:not([type="hidden"]), textarea, select');
         const prefixo = window.location.pathname;
+        // Seleciona apenas os campos de texto/data
+        const campos = document.querySelectorAll('input[type="text"], input[type="date"], textarea');
 
         campos.forEach((campo, index) => {
-            // Se o campo for o canvas da assinatura, o script pula ele
-            if (campo.id === 'modal-canvas' || campo.classList.contains('signature-pad')) return;
+            // Se o campo não tiver ID, gera um automático
+            if (!campo.id) campo.id = 'f-' + index;
 
-            if (!campo.id) campo.id = 'campo-' + index;
+            // Carrega o que estava salvo
+            const salvo = localStorage.getItem(prefixo + campo.id);
+            if (salvo) campo.value = salvo;
 
-            const valorSalvo = localStorage.getItem(prefixo + campo.id);
-            if (valorSalvo) campo.value = valorSalvo;
-
+            // Salva ao digitar
             campo.addEventListener('input', () => {
                 localStorage.setItem(prefixo + campo.id, campo.value);
             });
         });
     });
 
-    // Função para o botão ZERAR
+    // Função do botão ZERAR
     function limparTudo() {
-        if (confirm("Isso apagará todos os dados digitados (exceto assinaturas). Confirmar?")) {
-            const campos = document.querySelectorAll('input, textarea, select');
+        if (confirm("Deseja apagar todos os dados digitados?")) {
             const prefixo = window.location.pathname;
-            
+            const campos = document.querySelectorAll('input, textarea');
             campos.forEach(campo => {
-                localStorage.removeItem(prefixo + campo.id);
+                if (campo.id) localStorage.removeItem(prefixo + campo.id);
             });
             location.reload();
         }
@@ -335,4 +387,5 @@
 </body>
 
 </html>
+
 
