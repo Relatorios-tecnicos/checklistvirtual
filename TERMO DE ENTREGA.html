@@ -94,7 +94,11 @@
     </style>
 </head>
 <body>
-    <div class="btn-panel"><button class="btn-print" onclick="window.print()">GERAR PDF</button></div>
+    <div class="btn-panel">
+        <button class="btn-print" onclick="window.print()">GERAR PDF</button>
+        <button class="btn-clear" onclick="limparTudo()" style="display: block; width: 100%; margin-top: 5px; padding: 10px; background: #d9534f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px;">ZERAR FORMULÁRIO</button>
+        <button onclick="window.location.href='index.html'" style="display: block; width: 100%; margin-top: 5px; padding: 10px; background: #5bc0de; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px;">VOLTAR AO MENU</button>
+    </div>
     
     <div id="sig-modal">
         <div class="modal-content">
@@ -199,6 +203,46 @@
         mCanvas.addEventListener('mousedown', (e) => { drawing = true; mCtx.beginPath(); const p = getPos(e); mCtx.moveTo(p.x, p.y); });
         mCanvas.addEventListener('mousemove', (e) => { if(!drawing) return; const p = getPos(e); mCtx.lineTo(p.x, p.y); mCtx.stroke(); });
         window.addEventListener('mouseup', () => drawing = false);
-    </script>
+    <script>
+    // Função para salvar automaticamente no Navegador (LocalStorage)
+    function salvarDados() {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            if (input.id) { // Só salva se o input tiver um ID
+                localStorage.setItem(input.id, input.value);
+            }
+        });
+    }
+
+    // Função para carregar os dados ao abrir a página
+    function carregarDados() {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            if (input.id && localStorage.getItem(input.id)) {
+                input.value = localStorage.getItem(input.id);
+            }
+        });
+    }
+
+    // Função para o botão "ZERAR FORMULÁRIO"
+    function limparTudo() {
+        if (confirm("Tem certeza que deseja apagar todos os dados do formulário?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    // Executa ao carregar a página
+    window.onload = function() {
+        carregarDados();
+
+        // Adiciona o evento de salvar em cada input automaticamente
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('input', salvarDados);
+        });
+    };
+</script>
 </body>
+
 </html>
