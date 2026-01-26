@@ -180,78 +180,89 @@
         <button class="btn-back" onclick="window.location.href='index.html'">VOLTAR AO MENU</button>
     </div>
 
-    <div id="sig-modal">
-        <div class="modal-content">
-            <div style="padding:10px; text-align:center; font-weight:bold;">ASSINE ABAIXO</div>
-            <canvas id="modal-canvas"></canvas>
-            <div class="modal-footer">
-                <button style="background:#666; color:white; flex:1; padding:10px; border:none; border-radius:5px;" onclick="clearModal()">Limpar</button>
-                <button style="background:#dc3545; color:white; flex:1; padding:10px; border:none; border-radius:5px;" onclick="closeModal()">Sair</button>
-                <button style="background:#28a745; color:white; flex:1; padding:10px; border:none; border-radius:5px;" onclick="saveSignature()">Confirmar</button>
-            </div>
+    <div id="modalAssinatura" class="modal">
+    <div class="modal-content">
+        <canvas id="canvasModal"></canvas>
+        <div style="display:flex; justify-content: space-between; margin-top:15px; gap: 10px;">
+            <button onclick="fecharModal()" style="flex:1; background:#666; color:white; border:none; padding:10px; border-radius:5px;">Sair</button>
+            <button onclick="limparModal()" style="flex:1; background:#d9534f; color:white; border:none; padding:10px; border-radius:5px;">Limpar</button>
+            <button onclick="salvarAssinatura()" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:5px;">Salvar</button>
         </div>
     </div>
+</div>
 
-    <script>
-        let currentTarget = '';
-        const modal = document.getElementById("sig-modal");
-        const canvasM = document.getElementById("modal-canvas");
-        const ctxM = canvasM.getContext("2d");
-        let desenhando = false;
+<script>
+    let currentTarget = '';
+    const modal = document.getElementById("modalAssinatura");
+    const canvasM = document.getElementById("canvasModal");
+    const ctxM = canvasM.getContext("2d");
+    let desenhando = false;
 
-        function openModal(id) {
-            currentTarget = id;
-            modal.style.display = "flex";
-            const ratio = 2;
-            const rect = canvasM.getBoundingClientRect();
-            canvasM.width = rect.width * ratio;
-            canvasM.height = rect.height * ratio;
-            ctxM.scale(ratio, ratio);
-            ctxM.lineWidth = 2.5;
-            ctxM.strokeStyle = "#003399";
-            clearModal();
-        }
+    function openModal(id) {
+        currentTarget = id;
+        modal.style.display = "flex";
+        const ratio = window.devicePixelRatio || 2;
+        const rect = canvasM.getBoundingClientRect();
+        canvasM.width = rect.width * ratio;
+        canvasM.height = rect.height * ratio;
+        ctxM.scale(ratio, ratio);
+        ctxM.lineWidth = 2.5;
+        ctxM.strokeStyle = "#003399";
+        limparModal();
+    }
 
-        function closeModal() { modal.style.display = "none"; }
-        function clearModal() { ctxM.clearRect(0, 0, canvasM.width, canvasM.height); }
+    function fecharModal() { modal.style.display = "none"; }
+    function limparModal() { ctxM.clearRect(0, 0, canvasM.width, canvasM.height); }
 
-        function saveSignature() {
-            const box = document.getElementById('box-' + currentTarget);
-            const dataUrl = canvasM.toDataURL();
-            box.innerHTML = `<img src="${dataUrl}" style="max-height:100%; width:auto; mix-blend-mode: multiply;">`;
-            closeModal();
-        }
+    function salvarAssinatura() {
+        const box = document.getElementById('box-' + currentTarget);
+        const dataUrl = canvasM.toDataURL();
+        box.innerHTML = `<img src="${dataUrl}" style="max-height:100%; width:auto; mix-blend-mode: multiply;">`;
+        fecharModal();
+    }
 
-        const getPos = (e) => {
-            const r = canvasM.getBoundingClientRect();
-            const p = e.touches ? e.touches[0] : e;
-            return { x: p.clientX - r.left, y: p.clientY - r.top };
-        };
+    const getPos = (e) => {
+        const r = canvasM.getBoundingClientRect();
+        const p = e.touches ? e.touches[0] : e;
+        return { x: p.clientX - r.left, y: p.clientY - r.top };
+    };
 
-        canvasM.onmousedown = (e) => { desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
-        canvasM.onmousemove = (e) => { if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
-        window.onmouseup = () => desenhando = false;
-        canvasM.ontouchstart = (e) => { e.preventDefault(); desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
-        canvasM.ontouchmove = (e) => { e.preventDefault(); if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
+    canvasM.onmousedown = (e) => { desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
+    canvasM.onmousemove = (e) => { if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
+    window.onmouseup = () => desenhando = false;
+    canvasM.ontouchstart = (e) => { e.preventDefault(); desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
+    canvasM.ontouchmove = (e) => { e.preventDefault(); if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
 
-        window.addEventListener('load', () => {
-            const prefixo = window.location.pathname;
-            document.querySelectorAll('input').forEach(campo => {
-                if (!campo.id) return;
-                const salvo = localStorage.getItem(prefixo + campo.id);
-                if (salvo) campo.value = salvo;
-                campo.addEventListener('input', () => localStorage.setItem(prefixo + campo.id, campo.value));
+    // SALVAMENTO AUTOMÁTICO
+    window.addEventListener('load', () => {
+        const prefixo = window.location.pathname;
+        const campos = document.querySelectorAll('input, textarea');
+        campos.forEach(campo => {
+            if (!campo.id) return;
+            const salvo = localStorage.getItem(prefixo + campo.id);
+            if (salvo) {
+                if (campo.type === 'checkbox') campo.checked = (salvo === 'true');
+                else campo.value = salvo;
+            }
+            campo.addEventListener('change', () => {
+                const val = campo.type === 'checkbox' ? campo.checked : campo.value;
+                localStorage.setItem(prefixo + campo.id, val);
             });
         });
+    });
 
-        function limparTudo() {
-            if (confirm("Deseja apagar todos os dados digitados?")) {
-                localStorage.clear();
-                location.reload();
-            }
+    function limparTudo() {
+        if (confirm("Deseja apagar todos os dados digitados?")) {
+            const prefixo = window.location.pathname;
+            document.querySelectorAll('input, textarea').forEach(c => {
+                if (c.id) localStorage.removeItem(prefixo + c.id);
+            });
+            location.reload();
         }
-    </script>
+    }
+</script>
 </body>
 </html>
+
 
 
