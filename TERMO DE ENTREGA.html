@@ -22,7 +22,7 @@
                 box-shadow: 0 0 10px rgba(0,0,0,0.5); 
                 padding: 40px 50px !important;
                 margin-bottom: 20px;
-                min-height: 1120px !important;
+                min-height: 1120px;
             }
         }
 
@@ -32,53 +32,22 @@
             max-width: 794px; 
             min-height: 100vh; 
             padding: 20px; 
-            position: relative; /* Mantém elementos absolutos presos aqui */
+            position: relative; 
             display: flex; 
             flex-direction: column;
-            overflow: hidden;
         }
 
-        //* MARCA D'ÁGUA - Ajustada para fundo transparente */
-.embratel-bg { 
-    position: absolute; 
-    top: 45%; 
-    left: 50%; 
-    transform: translate(-50%, -50%); 
-    width: 85%; 
-    max-width: 450px; 
-    opacity: 0.4; 
-    filter: saturate(1.8) brightness(1.1); /* Brilho levemente aumentado para eliminar cinza */
-    z-index: 0; 
-    pointer-events: none;
-    background: transparent !important; /* Garante que a imagem não tenha fundo próprio */
-}
-
-/* CAIXAS DE ASSINATURA - Removendo o fundo cinza */
-.sig-box { 
-    width: 100%; 
-    height: 90px; 
-    border-bottom: 2px solid black; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    cursor: pointer; 
-    background: transparent !important; /* Mudado de #fdfdfd para transparente */
-    margin-bottom: 8px;
-}
-
-/* Garante que a imagem da assinatura também não traga fundo */
-.sig-box img { 
-    max-height: 100%; 
-    mix-blend-mode: multiply; 
-    background: transparent !important;
-}
-
-/* AJUSTE FINAL PARA O PDF */
-@media print { 
-    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    body, .page { background: white !important; }
-    .sig-box { background: transparent !important; border-bottom: 2px solid black !important; }
-} 
+        /* MARCA D'ÁGUA - AGORA ROLA COM A PÁGINA */
+        .embratel-bg { 
+            position: absolute; 
+            top: 45%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 80%; 
+            max-width: 400px; 
+            opacity: 0.35; /* Visibilidade reforçada como pedido */
+            z-index: 0; 
+            pointer-events: none; 
         }
 
         .content { position: relative; z-index: 2; width: 100%; }
@@ -132,7 +101,7 @@
             body { background: white; padding: 0; }
             .page { width: 100%; max-width: 100%; padding: 40px 50px; min-height: 100vh; box-shadow: none; overflow: visible; } 
             .btn-panel, #sig-modal { display: none !important; } 
-            .embratel-bg { opacity: 0.15; position: absolute; }
+            .embratel-bg { position: absolute; opacity: 0.15; }
         }
     </style>
 </head>
@@ -256,19 +225,16 @@
                     i.value = localStorage.getItem(window.location.pathname + i.id) || i.value;
                     i.oninput = () => {
                         localStorage.setItem(window.location.pathname + i.id, i.value);
-                        // Se for o ID do projeto, atualiza o título da página dinamicamente
-                        if(i.id === 'id-p') {
-                            document.title = "TERMO DE ENTREGA - " + i.value;
-                        }
+                        if(i.id === 'id-p') document.title = "TERMO DE ENTREGA - " + i.value;
                     };
                 }
             });
-            // Inicializa o título com o valor atual
             document.title = "TERMO DE ENTREGA - " + document.getElementById('id-p').value;
         }
     </script>
 </body>
 </html>
+
 
 
 
