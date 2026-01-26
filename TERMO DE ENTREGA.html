@@ -12,25 +12,24 @@
             width: 794px; 
             height: 1120px; 
             padding: 40px 60px; 
-            position: relative; /* Base para o posicionamento da marca d'água */
-            display: block; 
+            position: relative; /* Essencial para o posicionamento absoluto */
         }
 
-        /* MARCA D'ÁGUA: Posicionada especificamente na área das assinaturas */
+        /* POSICIONAMENTO FIXO DA MARCA D'ÁGUA NO FUNDO */
         .marca-dagua { 
             position: absolute; 
-            top: 75%; /* Ajustado para ficar embaixo, perto das assinaturas */
+            bottom: 150px; /* Distância fixa do final da folha para ficar nas assinaturas */
             left: 50%; 
-            transform: translate(-50%, -50%); 
-            width: 480px; 
-            opacity: 0.3; 
-            z-index: 0; /* Fica atrás de tudo */
+            transform: translateX(-50%); 
+            width: 520px; 
+            opacity: 0.25; 
+            z-index: 0; 
             pointer-events: none; 
         }
 
         .conteudo { 
             position: relative; 
-            z-index: 1; /* Fica à frente da marca d'água */
+            z-index: 1; 
             width: 100%;
         }
 
@@ -43,7 +42,6 @@
             font-weight: bold; 
             margin-top: 10px;
             margin-bottom: 30px; 
-            text-decoration: underline;
         }
         .titulo input { font-size: 16px; font-weight: bold; border: none; width: 120px; text-align: center; background: transparent; text-decoration: underline; }
 
@@ -57,7 +55,7 @@
 
         .observacao { font-size: 11px; font-style: italic; margin-bottom: 60px; }
 
-        /* Assinaturas */
+        /* Estrutura das Assinaturas */
         .assinatura-bloco { margin-bottom: 45px; }
         .assinatura-linha { display: flex; align-items: flex-end; margin-bottom: 5px; }
         .label { font-size: 14px; font-weight: bold; width: 110px; }
@@ -69,6 +67,7 @@
             display: flex; 
             justify-content: center; 
             align-items: center;
+            background: transparent;
         }
         .campo-assinatura img { max-height: 100%; mix-blend-mode: multiply; }
         .sub-label { font-size: 10px; margin-left: 110px; font-weight: bold; display: block; }
@@ -76,7 +75,6 @@
         .data-footer { text-align: right; margin-top: 20px; font-size: 14px; }
         .data-footer input { border: none; border-bottom: 1px solid #000; text-align: center; background: transparent; }
 
-        /* Painel de Botões */
         .botoes { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 1000; }
         .btn { padding: 12px 25px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; }
         .btn-pdf { background: #e1251b; }
@@ -85,10 +83,9 @@
         @media print { 
             .botoes, #modal-sig { display: none; } 
             body { background: white; }
-            .page { padding: 40px 60px; }
+            .page { padding: 40px 60px; height: 100vh; }
         }
 
-        /* Modal */
         #modal-sig { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 15px; border-radius: 8px; width: 600px; }
         canvas { border: 1px solid #ccc; background: #fff; width: 100%; height: 300px; touch-action: none; }
@@ -169,6 +166,7 @@
     </div>
 
     <script>
+        // ... (Script de assinatura igual ao anterior)
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext('2d');
         let desenhando = false;
