@@ -19,13 +19,13 @@
             overflow: hidden;
         }
 
-        /* MARCA D'ÁGUA REPOSICIONADA MAIS PERTO DA ASSINATURA */
+        /* ÚNICA ALTERAÇÃO: POSIÇÃO DA MARCA D'ÁGUA */
         .embratel-bg { 
             position: absolute; 
-            bottom: 240px; /* Ajustado para ficar em cima da área de recebimento */
+            bottom: 200px; /* Movida para cima da assinatura de recebimento */
             left: 50%; 
             transform: translateX(-50%); 
-            width: 380px; 
+            width: 350px; 
             opacity: 0.4; 
             z-index: 1; 
             pointer-events: none; 
@@ -63,7 +63,6 @@
             align-items: center; 
             justify-content: center; 
             cursor: pointer;
-            background: transparent;
         }
         .sig-box img { max-height: 100%; mix-blend-mode: multiply; }
         .label-sub { font-size: 9px; margin-left: 95px; font-weight: bold; margin-bottom: 15px; display: block; }
