@@ -6,25 +6,39 @@
     <title>RAT - Global Hitss Ultra HD</title>
 
     <style>
-        /* TRAVA DE ROLAGEM LATERAL E PREPARAÇÃO DO CORPO */
+        /* TRAVA DE ROLAGEM E AJUSTE DE ENQUADRAMENTO */
         html, body { 
             overflow-x: hidden; 
             position: relative; 
             width: 100%; 
             margin: 0; 
             padding: 0;
+            -webkit-text-size-adjust: 100%;
         }
 
         * { box-sizing: border-box; }
+        
         body { 
             font-family: Arial, sans-serif; 
             background:#525659; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            padding-bottom: 80px; /* Espaço para os botões no rodapé */
+            padding-bottom: 100px; 
         }
         
+        /* CONTAINER PARA ESCALONAMENTO NO MOBILE */
+        @media (max-width: 850px) {
+            #relatorio {
+                zoom: 0.45; /* Ajusta o zoom para telas pequenas */
+                -moz-transform: scale(0.45);
+                -moz-transform-origin: top center;
+                margin-top: 10px !important;
+            }
+            body { padding-bottom: 20px; }
+        }
+
+        /* Mantém o tamanho real para telas grandes e impressão */
         #relatorio { 
             width: 210mm; 
             min-height: 297mm;
@@ -33,10 +47,10 @@
             border: 1px solid #000;
             position: relative;
             margin-top: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
         h2 { font-size: 11px; background: #eee; padding: 4px; border: 1px solid #000; margin: 10px 0 5px 0; font-weight: bold; }
-        
         label { font-size: 9px; font-weight: bold; display: block; margin-top: 4px; }
         input, textarea { font-size: 11px; padding: 5px; border: 1px solid #000; width: 100%; outline: none; }
         
@@ -49,22 +63,25 @@
             cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
         
-        /* PAINEL DE BOTÕES FIXO NO RODAPÉ */
+        /* BOTÕES FIXOS */
         .btn-panel { 
             position: fixed; 
             bottom: 0; 
             left: 0; 
             width: 100%; 
-            background: #333; 
+            background: #222; 
             padding: 15px; 
             display: flex; 
             justify-content: center; 
-            gap: 15px; 
+            gap: 10px; 
             z-index: 1000; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
         }
 
         .btn-panel button { 
-            padding: 12px 25px; 
+            flex: 1;
+            max-width: 150px;
+            padding: 12px; 
             border: none; 
             border-radius: 5px; 
             font-weight: bold; 
@@ -73,18 +90,19 @@
             font-size: 11px; 
             text-transform: uppercase;
         }
-        .btn-pdf { background: #e1251b; } /* Vermelho padrão para PDF */
-        .btn-clear { background: #d9534f; }
-        .btn-back { background: #5bc0de; }
+        .btn-pdf { background: #e1251b; }
+        .btn-clear { background: #666; }
+        .btn-back { background: #444; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: #fff; padding: 15px; width: 95%; max-width: 600px; border-radius: 8px; }
-        canvas#canvasModal { border: 2px solid #333; width: 100%; height: 300px; touch-action: none; background: #fff; }
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 10px; width: 95%; border-radius: 8px; }
+        canvas#canvasModal { border: 1px solid #333; width: 100%; height: 300px; touch-action: none; background: #fff; }
 
         @media print {
             body { background: white; padding: 0; overflow: visible; }
             .btn-panel, .modal { display: none !important; }
-            #relatorio { border: none; width: 100%; margin: 0; padding: 5mm; }
+            #relatorio { border: none; width: 100%; margin: 0; padding: 5mm; box-shadow: none; zoom: 1 !important; transform: scale(1) !important; }
         }
     </style>
 </head>
@@ -92,8 +110,8 @@
 
 <div class="btn-panel">
     <button class="btn-pdf" onclick="window.print()">GERAR PDF</button>
-    <button class="btn-clear" onclick="limparTudo()">ZERAR FORMULÁRIO</button>
-    <button class="btn-back" onclick="window.location.href='index.html'">VOLTAR AO MENU</button>
+    <button class="btn-clear" onclick="limparTudo()">ZERAR</button>
+    <button class="btn-back" onclick="window.location.href='index.html'">VOLTAR</button>
 </div>
 
 <div id="relatorio">
@@ -200,12 +218,11 @@
 
 <div id="modalAssinatura" class="modal">
     <div class="modal-content">
-        <div style="text-align:center; font-weight:bold; margin-bottom:10px;">ASSINATURA DIGITAL</div>
         <canvas id="canvasModal"></canvas>
         <div style="display:flex; justify-content: space-between; margin-top:15px; gap: 10px;">
             <button onclick="fecharModal()" style="flex:1; background:#666; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold;">Sair</button>
             <button onclick="limparModal()" style="flex:1; background:#d9534f; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold;">Limpar</button>
-            <button onclick="salvarAssinatura()" style="flex:1; background:#28a745; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold;">Confirmar</button>
+            <button onclick="salvarAssinatura()" style="flex:1; background:#28a745; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold;">Salvar</button>
         </div>
     </div>
 </div>
