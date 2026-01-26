@@ -38,18 +38,47 @@
             overflow: hidden;
         }
 
-        /* MARCA D'ÁGUA PRESA AO CONTEÚDO (ROLA JUNTO) */
-        .embratel-bg { 
+        //* MARCA D'ÁGUA - Ajustada para fundo transparente */
+.embratel-bg { 
     position: absolute; 
     top: 45%; 
     left: 50%; 
     transform: translate(-50%, -50%); 
     width: 85%; 
     max-width: 450px; 
-    opacity: 0.4; /* Aumentado de 0.22 para 0.40 */
-    filter: saturate(1.8) brightness(0.9); /* Cores mais vivas e levemente mais escuras */
+    opacity: 0.4; 
+    filter: saturate(1.8) brightness(1.1); /* Brilho levemente aumentado para eliminar cinza */
     z-index: 0; 
-    pointer-events: none; 
+    pointer-events: none;
+    background: transparent !important; /* Garante que a imagem não tenha fundo próprio */
+}
+
+/* CAIXAS DE ASSINATURA - Removendo o fundo cinza */
+.sig-box { 
+    width: 100%; 
+    height: 90px; 
+    border-bottom: 2px solid black; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer; 
+    background: transparent !important; /* Mudado de #fdfdfd para transparente */
+    margin-bottom: 8px;
+}
+
+/* Garante que a imagem da assinatura também não traga fundo */
+.sig-box img { 
+    max-height: 100%; 
+    mix-blend-mode: multiply; 
+    background: transparent !important;
+}
+
+/* AJUSTE FINAL PARA O PDF */
+@media print { 
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body, .page { background: white !important; }
+    .sig-box { background: transparent !important; border-bottom: 2px solid black !important; }
+} 
         }
 
         .content { position: relative; z-index: 2; width: 100%; }
@@ -240,5 +269,6 @@
     </script>
 </body>
 </html>
+
 
 
