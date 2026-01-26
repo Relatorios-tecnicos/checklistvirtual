@@ -6,7 +6,6 @@
     <title>RAT - Global Hitss Ultra HD</title>
 
     <style>
-        /* Bloqueio de rolagem lateral */
         html, body { 
             overflow-x: hidden; 
             margin: 0; 
@@ -25,76 +24,60 @@
             padding-bottom: 80px; 
         }
         
-        /* Layout fixo A4 */
+        /* Layout fixo A4 - Ajustado para evitar cortes */
         #relatorio { 
             width: 210mm; 
-            height: 296mm; /* Reduzido 1mm para garantir folha única */
+            height: 297mm;
             background: #fff; 
-            padding: 8mm 10mm; /* Ajuste leve na margem interna */
+            padding: 8mm 10mm; 
             border: 1px solid #000;
             position: relative;
             margin-top: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            overflow: hidden; /* Impede que conteúdo vaze para 2ª página */
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Estilos Internos Preservados */
-        h2 { font-size: 11px; background: #eee; padding: 4px; border: 1px solid #000; margin: 8px 0 4px 0; font-weight: bold; }
-        label { font-size: 9px; font-weight: bold; display: block; margin-top: 3px; }
+        /* Estilos Internos */
+        h2 { font-size: 11px; background: #eee; padding: 4px; border: 1px solid #000; margin: 6px 0 3px 0; font-weight: bold; }
+        label { font-size: 9px; font-weight: bold; display: block; margin-top: 2px; }
         input, textarea { font-size: 11px; padding: 4px; border: 1px solid #000; width: 100%; outline: none; background: transparent; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 5px; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 4px; table-layout: fixed; }
         td, th { border: 1px solid #000; padding: 4px; vertical-align: middle; }
         th { background: #f2f2f2; font-size: 9px; }
 
         .signature-pad { 
-            border: 1px solid #000; width: 100%; height: 90px; background: #fafafa; 
+            border: 1px solid #000; width: 100%; height: 80px; background: #fafafa; 
             cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
         
-        /* Botões do Rodapé */
+        /* Botões */
         .btn-panel { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: #222; 
-            padding: 12px; 
-            display: flex; 
-            justify-content: center; 
-            gap: 10px; 
-            z-index: 1000; 
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #222; 
+            padding: 12px; display: flex; justify-content: center; gap: 10px; z-index: 1000; 
         }
-
         .btn-panel button { 
-            flex: 1;
-            max-width: 140px;
-            padding: 12px; 
-            border: none; 
-            border-radius: 5px; 
-            font-weight: bold; 
-            color: white; 
-            font-size: 11px; 
-            text-transform: uppercase;
-            cursor: pointer;
+            flex: 1; max-width: 140px; padding: 12px; border: none; border-radius: 5px; 
+            font-weight: bold; color: white; font-size: 11px; text-transform: uppercase; cursor: pointer;
         }
         .btn-pdf { background: #e1251b; }
         .btn-clear { background: #555; }
         .btn-back { background: #444; }
 
-        /* Modal de Assinatura */
+        /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: #fff; padding: 10px; width: 95%; max-width: 500px; border-radius: 8px; }
         canvas#canvasModal { border: 1px solid #333; width: 100%; height: 300px; touch-action: none; background: #fff; }
 
-        /* CONFIGURAÇÃO PARA FOLHA ÚNICA NO PDF */
+        /* AJUSTE CRÍTICO PARA IMPRESSÃO SEM CORTES */
         @media print {
             @page { 
                 size: A4; 
-                margin: 0; 
+                margin: 0; /* Remove margens do navegador */
             }
             html, body { 
-                height: 100%; 
+                height: 297mm; 
                 overflow: hidden; 
                 background: #fff;
             }
@@ -103,11 +86,11 @@
             #relatorio { 
                 border: none; 
                 width: 210mm; 
-                height: 297mm; 
+                height: 290mm; /* Um pouco menor que o papel para garantir que a assinatura suba */
                 margin: 0; 
                 padding: 10mm; 
                 box-shadow: none; 
-                transform: none !important;
+                overflow: hidden;
             }
         }
     </style>
@@ -133,7 +116,7 @@
         </tr>
     </table>
 
-    <div style="text-align: center; border: 1px solid #000; padding: 6px; background: #f2f2f2; margin-bottom: 10px;">
+    <div style="text-align: center; border: 1px solid #000; padding: 6px; background: #f2f2f2; margin-bottom: 8px;">
         <strong style="font-size: 13px; letter-spacing: 1px;">RELATÓRIO DE ATENDIMENTO TÉCNICO - GLOBAL HITSS</strong>
     </div>
 
@@ -166,14 +149,6 @@
             <td><input type="checkbox" id="at-211"> 211 - Mudança Layout</td>
             <td><input type="checkbox" id="at-202"> 202 - Implantação</td>
         </tr>
-        <tr>
-            <td><input type="checkbox" id="at-207"> 207 - Manutenção</td>
-            <td><input type="checkbox" id="at-212"> 212 - Mudança Endereço</td>
-        </tr>
-        <tr>
-            <td><input type="checkbox" id="at-203"> 203 - Infra Estrutura</td>
-            <td><input type="checkbox" id="at-215"> 215 - Man. Corretiva</td>
-        </tr>
     </table>
 
     <h2>TIPO DE TECNOLOGIA</h2>
@@ -183,10 +158,10 @@
     </table>
 
     <h2>JUSTIFICATIVA / ANORMALIDADE</h2>
-    <textarea id="rat-justificativa" style="height: 40px;"></textarea>
+    <textarea id="rat-justificativa" style="height: 35px;"></textarea>
 
     <h2>DESCRIÇÃO DAS ATIVIDADES EXECUTADAS</h2>
-    <textarea id="rat-descricao" style="height: 100px;"></textarea>
+    <textarea id="rat-descricao" style="height: 110px;"></textarea>
 
     <div style="margin: 5px 0;">
         <label>Operador (Telmex / GCF):</label>
@@ -201,7 +176,7 @@
     </table>
 
     <h2 style="margin-top: 5px;">VALIDAÇÃO DO ATENDIMENTO</h2>
-    <table>
+    <table style="margin-bottom: 0;">
         <tr><th width="50%">CLIENTE</th><th width="50%">EMPRESA PARCEIRA</th></tr>
         <tr>
             <td>
@@ -222,9 +197,9 @@
     <div class="modal-content">
         <canvas id="canvasModal"></canvas>
         <div style="display:flex; justify-content: space-between; margin-top:15px; gap: 10px;">
-            <button onclick="fecharModal()" style="background:#666;">Sair</button>
-            <button onclick="limparModal()" style="background:#d9534f;">Limpar</button>
-            <button onclick="salvarAssinatura()" style="background:#28a745;">Confirmar</button>
+            <button onclick="fecharModal()" style="background:#666; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold;">Sair</button>
+            <button onclick="limparModal()" style="background:#d9534f; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold;">Limpar</button>
+            <button onclick="salvarAssinatura()" style="background:#28a745; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold;">Confirmar</button>
         </div>
     </div>
 </div>
