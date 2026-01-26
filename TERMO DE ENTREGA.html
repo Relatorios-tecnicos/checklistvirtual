@@ -146,7 +146,7 @@
 
             <div class="obs">
                 <strong>Observações:</strong><br>
-                * Confirmar se os aparelhos TARS contem fonte de alimentação AC [cite: 14]
+                * Confirmar se os aparelhos TARS contem fonte de alimentação AC 
             </div>
 
             <div class="sig-section">
@@ -176,34 +176,41 @@
 
     <script>
     let currentTarget = '';
-    const modal = document.getElementById("modalAssinatura");
-    const canvasM = document.getElementById("canvasModal");
+    // Corrigido para bater com os IDs do seu HTML
+    const modal = document.getElementById("sig-modal"); 
+    const canvasM = document.getElementById("modal-canvas");
     const ctxM = canvasM.getContext("2d");
     let desenhando = false;
 
     function openModal(id) {
         currentTarget = id;
         modal.style.display = "flex";
-        const ratio = window.devicePixelRatio || 2;
+        
+        // Ajuste de sensibilidade e resolução
+        const ratio = 2;
         const rect = canvasM.getBoundingClientRect();
         canvasM.width = rect.width * ratio;
         canvasM.height = rect.height * ratio;
         ctxM.scale(ratio, ratio);
-        ctxM.lineWidth = 2.5;
-        ctxM.strokeStyle = "#003399";
+        
+        ctxM.lineWidth = 3;
+        ctxM.lineCap = 'round';
+        ctxM.strokeStyle = "#00008B"; // Azul escuro
         limparModal();
     }
 
-    function fecharModal() { modal.style.display = "none"; }
-    function limparModal() { ctxM.clearRect(0, 0, canvasM.width, canvasM.height); }
+    // Funções com os nomes corretos para os botões do seu Modal
+    function closeModal() { modal.style.display = "none"; }
+    function clearModal() { ctxM.clearRect(0, 0, canvasM.width, canvasM.height); }
 
-    function salvarAssinatura() {
+    function saveSignature() {
         const box = document.getElementById('box-' + currentTarget);
         const dataUrl = canvasM.toDataURL();
         box.innerHTML = `<img src="${dataUrl}" style="max-height:100%; width:auto; mix-blend-mode: multiply;">`;
-        fecharModal();
+        closeModal();
     }
 
+    // Lógica de desenho
     const getPos = (e) => {
         const r = canvasM.getBoundingClientRect();
         const p = e.touches ? e.touches[0] : e;
@@ -213,8 +220,22 @@
     canvasM.onmousedown = (e) => { desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
     canvasM.onmousemove = (e) => { if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
     window.onmouseup = () => desenhando = false;
-    canvasM.ontouchstart = (e) => { e.preventDefault(); desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
-    canvasM.ontouchmove = (e) => { e.preventDefault(); if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
+
+    canvasM.ontouchstart = (e) => { 
+        e.preventDefault(); 
+        desenhando = true; 
+        ctxM.beginPath(); 
+        const p = getPos(e); 
+        ctxM.moveTo(p.x, p.y); 
+    };
+    canvasM.ontouchmove = (e) => { 
+        e.preventDefault(); 
+        if(desenhando) { 
+            const p = getPos(e); 
+            ctxM.lineTo(p.x, p.y); 
+            ctxM.stroke(); 
+        } 
+    };
 
     // SALVAMENTO AUTOMÁTICO
     window.addEventListener('load', () => {
@@ -227,7 +248,7 @@
                 if (campo.type === 'checkbox') campo.checked = (salvo === 'true');
                 else campo.value = salvo;
             }
-            campo.addEventListener('change', () => {
+            campo.addEventListener('input', () => { // Mudado para 'input' para salvar enquanto digita
                 const val = campo.type === 'checkbox' ? campo.checked : campo.value;
                 localStorage.setItem(prefixo + campo.id, val);
             });
@@ -237,13 +258,12 @@
     function limparTudo() {
         if (confirm("Deseja apagar todos os dados digitados?")) {
             const prefixo = window.location.pathname;
-            document.querySelectorAll('input, textarea').forEach(c => {
-                if (c.id) localStorage.removeItem(prefixo + c.id);
-            });
+            localStorage.clear();
             location.reload();
         }
     }
 </script>
 </body>
 </html>
+
 
