@@ -12,52 +12,53 @@
             width: 794px; 
             height: 1120px; 
             padding: 40px 60px; 
-            position: relative; 
-            display: flex;
-            flex-direction: column;
+            position: relative; /* Base para o posicionamento da marca d'água */
+            display: block; 
         }
 
-        /* MARCA D'ÁGUA: Movida para baixo, perto das assinaturas */
+        /* MARCA D'ÁGUA: Posicionada especificamente na área das assinaturas */
         .marca-dagua { 
             position: absolute; 
-            top: 70%; /* Desceu para ficar na região das assinaturas */
+            top: 75%; /* Ajustado para ficar embaixo, perto das assinaturas */
             left: 50%; 
             transform: translate(-50%, -50%); 
-            width: 500px; /* Um pouco maior para destaque */
-            opacity: 0.25; 
-            z-index: 0; 
+            width: 480px; 
+            opacity: 0.3; 
+            z-index: 0; /* Fica atrás de tudo */
             pointer-events: none; 
         }
 
         .conteudo { 
             position: relative; 
-            z-index: 1; 
+            z-index: 1; /* Fica à frente da marca d'água */
             width: 100%;
         }
 
-        .header-logo { text-align: right; margin-bottom: 20px; }
-        .logo-claro { width: 150px; }
+        .header-logo { text-align: right; margin-bottom: 10px; }
+        .logo-claro { width: 160px; height: auto; }
 
         .titulo { 
             text-align: center; 
             font-size: 16px; 
             font-weight: bold; 
+            margin-top: 10px;
             margin-bottom: 30px; 
+            text-decoration: underline;
         }
-        .titulo input { font-size: 16px; font-weight: bold; border: none; border-bottom: 1px solid #000; width: 120px; text-align: center; background: transparent; }
+        .titulo input { font-size: 16px; font-weight: bold; border: none; width: 120px; text-align: center; background: transparent; text-decoration: underline; }
 
         .texto-principal { font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 25px; }
         .input-linha { border: none; border-bottom: 1px solid #ccc; font-weight: bold; font-size: 14px; background: transparent; }
 
-        .tabela-itens { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .tabela-itens { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .tabela-itens th, .tabela-itens td { border: 1px solid black; padding: 10px; font-size: 13px; text-align: center; }
         .tabela-itens th { background: #f0f0f0 !important; }
         .tabela-itens input { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 13px; background: transparent; }
 
-        .observacao { font-size: 11px; font-style: italic; margin-bottom: 50px; }
+        .observacao { font-size: 11px; font-style: italic; margin-bottom: 60px; }
 
-        /* Estilo das Assinaturas */
-        .assinatura-bloco { margin-bottom: 40px; position: relative; }
+        /* Assinaturas */
+        .assinatura-bloco { margin-bottom: 45px; }
         .assinatura-linha { display: flex; align-items: flex-end; margin-bottom: 5px; }
         .label { font-size: 14px; font-weight: bold; width: 110px; }
         .campo-assinatura { 
@@ -68,25 +69,26 @@
             display: flex; 
             justify-content: center; 
             align-items: center;
-            background: rgba(255, 255, 255, 0.1); /* Deixa transparente para ver a marca d'água atrás */
         }
         .campo-assinatura img { max-height: 100%; mix-blend-mode: multiply; }
         .sub-label { font-size: 10px; margin-left: 110px; font-weight: bold; display: block; }
 
-        .data-footer { text-align: right; margin-top: 60px; font-size: 14px; }
+        .data-footer { text-align: right; margin-top: 20px; font-size: 14px; }
         .data-footer input { border: none; border-bottom: 1px solid #000; text-align: center; background: transparent; }
 
+        /* Painel de Botões */
         .botoes { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 1000; }
         .btn { padding: 12px 25px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; }
         .btn-pdf { background: #e1251b; }
         .btn-limpar { background: #666; }
 
         @media print { 
-            .botoes { display: none; } 
+            .botoes, #modal-sig { display: none; } 
             body { background: white; }
             .page { padding: 40px 60px; }
         }
 
+        /* Modal */
         #modal-sig { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 15px; border-radius: 8px; width: 600px; }
         canvas { border: 1px solid #ccc; background: #fff; width: 100%; height: 300px; touch-action: none; }
@@ -151,7 +153,7 @@
             </div>
 
             <div class="data-footer">
-                São Paulo, <input type="text" value="26" style="width: 30px;"> de <input type="text" style="width: 80px;" value="Janeiro"> de <input type="text" value="2026" style="width: 50px;">.
+                São Paulo, <input type="text" value="26" style="width: 30px;"> de <input type="text" style="width: 85px;" value="Janeiro"> de <input type="text" value="2026" style="width: 50px;">.
             </div>
         </div>
     </div>
@@ -160,8 +162,8 @@
         <div class="modal-box">
             <canvas id="canvas"></canvas>
             <div style="margin-top: 10px; display: flex; gap: 10px;">
-                <button onclick="salvarAssinatura()" style="flex: 1; padding: 10px; background: green; color: white; border: none; font-weight: bold;">Confirmar</button>
-                <button onclick="fecharAssinar()" style="flex: 1; padding: 10px; background: red; color: white; border: none; font-weight: bold;">Cancelar</button>
+                <button onclick="salvarAssinatura()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; border-radius: 4px;">Confirmar</button>
+                <button onclick="fecharAssinar()" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; font-weight: bold; border-radius: 4px;">Cancelar</button>
             </div>
         </div>
     </div>
@@ -202,7 +204,7 @@
             ctx.lineTo(e.offsetX, e.offsetY);
             ctx.stroke();
         });
-        
+
         canvas.addEventListener('touchstart', (e) => { desenhando = true; e.preventDefault(); });
         canvas.addEventListener('touchmove', (e) => {
             if (!desenhando) return;
@@ -213,7 +215,7 @@
             e.preventDefault();
         });
 
-        function limpar() { if(confirm("Limpar tudo?")) location.reload(); }
+        function limpar() { if(confirm("Deseja zerar o formulário?")) location.reload(); }
     </script>
 </body>
 </html>
