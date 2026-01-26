@@ -5,63 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=2.0">
     <title>Termo de Entrega</title>
     <style>
-        html, body { overflow-x: hidden; position: relative; width: 100%; -webkit-print-color-adjust: exact; }
+        /* Reset total para garantir que nada empurre o texto */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { overflow-x: hidden; width: 100%; -webkit-print-color-adjust: exact; }
         body { font-family: Arial, sans-serif; background: #525659; display: flex; justify-content: center; padding-bottom: 80px; }
         
         .page { 
             background: white; 
             width: 794px; 
             height: 1120px; 
-            padding: 20px 50px; /* Reduzi o padding superior */
+            padding: 20px 50px; 
             position: relative; 
-            display: flex; 
-            flex-direction: column;
+            display: block; /* Mudei de flex para block para o texto não centralizar */
             overflow: hidden;
         }
 
-        /* MANTIDA A MARCA D'ÁGUA ONDE ESTÁ */
+        /* MARCA D'ÁGUA - Fixada no fundo, sem afetar o texto */
         .embratel-bg { 
             position: absolute; 
             top: 50%; 
             left: 50%; 
             transform: translate(-50%, -50%); 
-            width: 450px; 
+            width: 480px; 
             opacity: 0.25; 
             z-index: 1; 
             pointer-events: none; 
         }
 
-        .content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
+        .content { 
+            position: relative; 
+            z-index: 2; 
+            width: 100%;
+            height: 100%;
+        }
         
-        /* Ajuste para o texto subir: reduzi as margens do topo */
-        .header-logo { text-align: right; margin-bottom: 0px; }
+        /* LOGO CLARO - Espaçamento mínimo */
+        .header-logo { text-align: right; margin-bottom: 5px; }
         .logo-claro { max-width: 150px; height: auto; }
         
-        /* Título colado no topo para subir todo o resto */
-        .title { text-align: center; font-weight: bold; font-size: 14px; margin-top: 0px; margin-bottom: 20px; }
-        .title input { font-size: 14px; width: 120px; text-align: center; font-weight: bold; border: none; background: transparent; text-decoration: underline; }
+        /* TÍTULO - Forçado para cima */
+        .title { 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 15px; 
+            margin-top: 5px; 
+            margin-bottom: 25px; 
+            width: 100%;
+        }
+        .title input { font-size: 15px; width: 130px; text-align: center; font-weight: bold; border: none; background: transparent; text-decoration: underline; }
 
-        .text-body { font-size: 13px; line-height: 1.6; text-align: justify; margin-bottom: 15px; }
+        .text-body { font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 20px; }
         .input-fill { border: none; border-bottom: 1px solid #ccc; font-weight: bold; outline: none; background: transparent; }
 
-        .table-container { width: 100%; display: flex; justify-content: center; margin-bottom: 15px; }
+        .table-container { width: 100%; margin-bottom: 20px; }
         .item-table { width: 100%; border-collapse: collapse; }
-        .item-table th, .item-table td { border: 1px solid black; padding: 8px; font-size: 12px; }
+        .item-table th, .item-table td { border: 1px solid black; padding: 10px; font-size: 13px; }
         .item-table th { background-color: #eeeeee !important; }
         
         .td-center { text-align: center !important; }
         .td-center input { text-align: center; width: 100%; border: none; outline: none; background: transparent; font-weight: bold; }
 
-        .obs { font-size: 10px; font-style: italic; margin-bottom: 30px; color: #333; }
+        .obs { font-size: 11px; font-style: italic; margin-bottom: 35px; color: #333; }
 
-        /* Assinaturas */
+        /* SEÇÃO DE ASSINATURAS */
         .sig-section { margin-top: 10px; }
         .sig-row { margin-bottom: 5px; display: flex; align-items: flex-end; }
-        .sig-label { width: 100px; font-size: 13px; font-weight: bold; }
+        .sig-label { width: 110px; font-size: 14px; font-weight: bold; }
         .sig-box { 
-            width: 350px; 
-            height: 60px; 
+            width: 380px; 
+            height: 65px; 
             border-bottom: 2px solid black; 
             display: flex; 
             align-items: center; 
@@ -69,27 +81,29 @@
             cursor: pointer;
         }
         .sig-box img { max-height: 100%; mix-blend-mode: multiply; }
-        .label-sub { font-size: 9px; margin-left: 105px; font-weight: bold; margin-bottom: 25px; display: block; }
+        .label-sub { font-size: 10px; margin-left: 115px; font-weight: bold; margin-bottom: 30px; display: block; }
 
+        /* DATA NO RODAPÉ */
         .date-footer { 
             position: absolute;
-            bottom: 80px; 
+            bottom: 100px; 
             right: 50px;
-            font-size: 13px; 
-            text-align: right;
+            font-size: 14px; 
         }
         .date-input { border: none; border-bottom: 1px solid #000; outline: none; text-align: center; background: transparent; }
 
+        /* PAINEL DE BOTÕES */
         .btn-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: #333; padding: 15px; display: flex; justify-content: center; gap: 15px; z-index: 1000; }
         .btn-print { padding: 10px 25px; background: #e1251b; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
 
         @media print { 
             @page { size: A4; margin: 0; } 
             body { background: white; padding-bottom: 0; }
-            .page { width: 100%; height: 100vh; box-shadow: none; padding: 20px 60px; } 
+            .page { width: 100%; height: 100vh; box-shadow: none; padding: 30px 60px; } 
             .btn-panel, #sig-modal { display: none !important; } 
         }
 
+        /* MODAL */
         #sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 95%; max-width: 600px; border-radius: 8px; overflow: hidden; }
         #modal-canvas { background: #fff; width: 100%; height: 350px; touch-action: none; display: block; }
@@ -129,7 +143,7 @@
                 Este presente termo visa atestar que foram entregues no endereço/site 
                 <input type="text" id="id-loc" class="input-fill" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 014677/08">, 
                 os seguintes itens constantes da solicitação de ativação VoIP sob o Protocolo <strong>SAOG – </strong> 
-                <input type="text" id="id-prot" class="input-fill" style="width: 115px;" value="251506777778">.
+                <input type="text" id="id-prot" class="input-fill" style="width: 130px;" value="251506777778">.
             </div>
 
             <div class="table-container">
@@ -137,7 +151,7 @@
                     <thead>
                         <tr>
                             <th>DESCRIÇÃO</th>
-                            <th style="width: 130px;">QUANTIDADE</th>
+                            <th style="width: 150px;">QUANTIDADE</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -159,22 +173,22 @@
                     <span class="sig-label">Entregue por:</span>
                     <div class="sig-box" id="box-s1" onclick="openModal('s1')"></div>
                 </div>
-                <input type="text" id="id-tec" placeholder="Nome / CPF do Técnico" style="width: 350px; margin-left: 105px; border:none; border-bottom: 1px dotted #ccc; font-size: 10px; outline:none; background:transparent;">
+                <input type="text" id="id-tec" placeholder="Nome / CPF do Técnico" style="width: 380px; margin-left: 115px; border:none; border-bottom: 1px dotted #ccc; font-size: 11px; outline:none; background:transparent;">
                 <span class="label-sub">(Assinatura / Carimbo)</span>
 
                 <div class="sig-row">
                     <span class="sig-label">Recebido por:</span>
                     <div class="sig-box" id="box-s2" onclick="openModal('s2')"></div>
                 </div>
-                <input type="text" id="id-rec" placeholder="Nome / RG do Recebedor" style="width: 350px; margin-left: 105px; border:none; border-bottom: 1px dotted #ccc; font-size: 10px; outline:none; background:transparent;">
+                <input type="text" id="id-rec" placeholder="Nome / RG do Recebedor" style="width: 380px; margin-left: 115px; border:none; border-bottom: 1px dotted #ccc; font-size: 11px; outline:none; background:transparent;">
                 <span class="label-sub">(Assinatura / Carimbo)</span>
             </div>
 
             <div class="date-footer">
                 São Paulo, 
-                <input type="text" id="id-dia" class="date-input" style="width: 30px;" placeholder="00"> de 
-                <input type="text" id="id-mes" class="date-input" style="width: 80px;" placeholder="mês"> de 
-                <input type="text" id="id-ano" class="date-input" style="width: 50px;" value="2026">. 
+                <input type="text" id="id-dia" class="date-input" style="width: 35px;" placeholder="00"> de 
+                <input type="text" id="id-mes" class="date-input" style="width: 90px;" placeholder="mês"> de 
+                <input type="text" id="id-ano" class="date-input" style="width: 55px;" value="2026">. 
             </div>
         </div>
     </div>
@@ -188,8 +202,7 @@
         function setupModalCanvas() {
             const ratio = 2; 
             const rect = mCanvas.getBoundingClientRect();
-            mCanvas.width = rect.width * ratio; 
-            mCanvas.height = rect.height * ratio;
+            mCanvas.width = rect.width * ratio; mCanvas.height = rect.height * ratio;
             mCtx.scale(ratio, ratio); 
             mCtx.lineWidth = 3; mCtx.lineCap = 'round'; mCtx.strokeStyle = '#0000FF'; 
         }
@@ -222,7 +235,6 @@
                 input.addEventListener('input', () => localStorage.setItem(window.location.pathname + input.id, input.value));
             });
         };
-
         function limparTudo() { if (confirm("Deseja apagar todos os dados?")) { localStorage.clear(); location.reload(); } }
     </script>
 </body>
