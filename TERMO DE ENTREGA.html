@@ -5,68 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Termo de Entrega</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #525659; display: flex; flex-direction: column; align-items: center; }
-        
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+        font-family: Arial, sans-serif; 
+        background: #525659; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        width: 100%;
+        overflow-x: hidden; /* Impede que a página dance para os lados */
+    }
+    
+    .page { 
+        background: white; 
+        width: 794px; /* Largura padrão A4 */
+        min-height: 1120px; 
+        padding: 30px 50px; 
+        position: relative; 
+        display: flex; 
+        flex-direction: column;
+        margin-top: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    /* AJUSTE PARA O CELULAR - Faz a folha caber na tela */
+    @media (max-width: 800px) {
+        body { padding: 10px 0; }
         .page { 
-            background: white; 
-            width: 794px; 
-            min-height: 1120px; 
-            padding: 30px 50px; 
-            position: relative; 
-            display: flex; 
-            flex-direction: column;
-            margin-top: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            width: 95vw; /* Usa 95% da largura da tela do celular */
+            min-height: auto; 
+            padding: 20px 15px; 
+            margin-top: 10px;
+            zoom: 0.9; /* Dá uma leve reduzida para caber tudo melhor */
         }
-
-        .embratel-bg { 
-            position: absolute; 
-            bottom: 350px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 350px; 
-            opacity: 0.15; 
-            z-index: 1; 
-            pointer-events: none; 
-        }
-
-        .content { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; }
-        .header-logo { text-align: right; margin-bottom: 10px; }
-        .logo-claro { max-width: 140px; height: auto; }
-        
-        .title { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 15px; }
-        .title input { font-size: 14px; width: 120px; text-align: center; font-weight: bold; border: none; background: #f9f9f9; }
-
-        .text-body { font-size: 13px; line-height: 1.5; text-align: justify; margin-bottom: 10px; }
-        .input-fill { border: none; border-bottom: 1px solid #ccc; font-weight: bold; outline: none; }
-
-        .table-container { width: 100%; display: flex; justify-content: center; margin-bottom: 10px; }
-        .item-table { width: 80%; border-collapse: collapse; }
-        .item-table th, .item-table td { border: 1px solid black; padding: 6px; font-size: 12px; }
-        .item-table th { background-color: #eeeeee !important; -webkit-print-color-adjust: exact; }
-        
-        .td-center { text-align: center !important; }
-        .td-center input { text-align: center; width: 100%; border: none; outline: none; background: transparent; }
-
-        .sig-section { margin-top: 20px; }
-        .sig-row { margin-bottom: 10px; display: flex; align-items: flex-end; }
-        .sig-label { width: 90px; font-size: 13px; }
-        .sig-box { 
-            width: 350px; 
-            height: 60px; 
-            border-bottom: 2px solid black; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            cursor: pointer; 
-            background: #fafafa; 
-        }
-        .sig-box img { max-height: 100%; mix-blend-mode: multiply; }
-        .label-sub { font-size: 9px; margin-left: 95px; font-weight: bold; margin-bottom: 15px; display: block; }
-
-        .date-footer { margin-top: 30px; margin-bottom: 20px; text-align: right; font-size: 13px; }
-        .date-input { border: none !important; border-bottom: 1px solid #000 !important; outline: none !important; text-align: center; background: transparent; }
+        .sig-box { width: 100% !important; } /* Faz as assinaturas ocuparem a largura disponível */
+        .item-table { width: 100% !important; } /* Tabela ocupa toda a largura */
+        .header-logo { text-align: center; } /* Centraliza o logo no celular */
+        .date-footer { position: static; text-align: center; margin-top: 40px; } /* Tira a data do canto para não sumir */
+    }
 
         /* PAINEL DE BOTÕES - Fica no final no celular */
         .btn-panel { 
@@ -248,3 +224,4 @@
     </script>
 </body>
 </html>
+
