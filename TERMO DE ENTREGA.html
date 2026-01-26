@@ -12,37 +12,28 @@
             width: 794px; 
             height: 1120px; 
             padding: 40px 60px; 
-            position: relative; /* Essencial para o posicionamento absoluto */
+            position: relative; /* Base para os elementos absolutos */
+            overflow: hidden;
         }
 
-        /* POSICIONAMENTO FIXO DA MARCA D'ÁGUA NO FUNDO */
+        /* MARCA D'ÁGUA: Travada perto da DATA (Rodapé) */
         .marca-dagua { 
             position: absolute; 
-            bottom: 150px; /* Distância fixa do final da folha para ficar nas assinaturas */
+            bottom: 60px; /* Ficou bem perto da data agora */
             left: 50%; 
             transform: translateX(-50%); 
-            width: 520px; 
-            opacity: 0.25; 
+            width: 500px; 
+            opacity: 0.3; 
             z-index: 0; 
             pointer-events: none; 
         }
 
-        .conteudo { 
-            position: relative; 
-            z-index: 1; 
-            width: 100%;
-        }
+        .conteudo { position: relative; z-index: 1; width: 100%; }
 
         .header-logo { text-align: right; margin-bottom: 10px; }
         .logo-claro { width: 160px; height: auto; }
 
-        .titulo { 
-            text-align: center; 
-            font-size: 16px; 
-            font-weight: bold; 
-            margin-top: 10px;
-            margin-bottom: 30px; 
-        }
+        .titulo { text-align: center; font-size: 16px; font-weight: bold; margin-top: 10px; margin-bottom: 30px; }
         .titulo input { font-size: 16px; font-weight: bold; border: none; width: 120px; text-align: center; background: transparent; text-decoration: underline; }
 
         .texto-principal { font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 25px; }
@@ -51,39 +42,27 @@
         .tabela-itens { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .tabela-itens th, .tabela-itens td { border: 1px solid black; padding: 10px; font-size: 13px; text-align: center; }
         .tabela-itens th { background: #f0f0f0 !important; }
-        .tabela-itens input { width: 100%; border: none; text-align: center; font-weight: bold; font-size: 13px; background: transparent; }
 
-        .observacao { font-size: 11px; font-style: italic; margin-bottom: 60px; }
-
-        /* Estrutura das Assinaturas */
-        .assinatura-bloco { margin-bottom: 45px; }
+        .assinatura-bloco { margin-bottom: 40px; }
         .assinatura-linha { display: flex; align-items: flex-end; margin-bottom: 5px; }
-        .label { font-size: 14px; font-weight: bold; width: 110px; }
-        .campo-assinatura { 
-            border-bottom: 2px solid black; 
-            width: 450px; 
-            height: 70px; 
-            cursor: pointer; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            background: transparent;
-        }
+        .campo-assinatura { border-bottom: 2px solid black; width: 450px; height: 70px; cursor: pointer; display: flex; justify-content: center; align-items: center; background: transparent; }
         .campo-assinatura img { max-height: 100%; mix-blend-mode: multiply; }
         .sub-label { font-size: 10px; margin-left: 110px; font-weight: bold; display: block; }
 
-        .data-footer { text-align: right; margin-top: 20px; font-size: 14px; }
+        .data-footer { text-align: right; margin-top: 50px; font-size: 14px; position: relative; z-index: 2; }
         .data-footer input { border: none; border-bottom: 1px solid #000; text-align: center; background: transparent; }
 
+        /* PAINEL DE BOTÕES RECORRIGIDO */
         .botoes { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 1000; }
-        .btn { padding: 12px 25px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; }
+        .btn { padding: 12px 25px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; }
         .btn-pdf { background: #e1251b; }
         .btn-limpar { background: #666; }
+        .btn-voltar { background: #444; }
 
         @media print { 
-            .botoes, #modal-sig { display: none; } 
+            .botoes, #modal-sig { display: none !important; } 
             body { background: white; }
-            .page { padding: 40px 60px; height: 100vh; }
+            .page { padding: 40px 60px; height: 1120px; }
         }
 
         #modal-sig { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
@@ -96,6 +75,7 @@
     <div class="botoes">
         <button class="btn btn-pdf" onclick="window.print()">GERAR PDF</button>
         <button class="btn btn-limpar" onclick="limpar()">ZERAR</button>
+        <a href="index.html" class="btn btn-voltar">VOLTAR</a>
     </div>
 
     <div class="page">
@@ -128,14 +108,14 @@
                 </tr>
             </table>
 
-            <div class="observacao">
+            <div style="font-size: 11px; font-style: italic; margin-bottom: 40px;">
                 Observações:<br>
                 * Confirmar se os aparelhos TARS contem fonte de alimentação AC
             </div>
 
             <div class="assinatura-bloco">
                 <div class="assinatura-linha">
-                    <span class="label">Entregue por:</span>
+                    <span style="font-size: 14px; font-weight: bold; width: 110px;">Entregue por:</span>
                     <div class="campo-assinatura" onclick="abrirAssinar('sig1')"></div>
                 </div>
                 <span class="sub-label">(Assinatura / Carimbo)</span>
@@ -143,7 +123,7 @@
 
             <div class="assinatura-bloco">
                 <div class="assinatura-linha">
-                    <span class="label">Recebido por:</span>
+                    <span style="font-size: 14px; font-weight: bold; width: 110px;">Recebido por:</span>
                     <div class="campo-assinatura" onclick="abrirAssinar('sig2')"></div>
                 </div>
                 <span class="sub-label">(Assinatura / Carimbo)</span>
@@ -159,14 +139,13 @@
         <div class="modal-box">
             <canvas id="canvas"></canvas>
             <div style="margin-top: 10px; display: flex; gap: 10px;">
-                <button onclick="salvarAssinatura()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; border-radius: 4px;">Confirmar</button>
-                <button onclick="fecharAssinar()" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; font-weight: bold; border-radius: 4px;">Cancelar</button>
+                <button onclick="salvarAssinatura()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold;">Confirmar</button>
+                <button onclick="fecharAssinar()" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; font-weight: bold;">Cancelar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ... (Script de assinatura igual ao anterior)
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext('2d');
         let desenhando = false;
