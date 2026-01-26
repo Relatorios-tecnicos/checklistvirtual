@@ -174,96 +174,104 @@
         </div>
     </div>
 
-    <script>
-    let currentTarget = '';
-    // Corrigido para bater com os IDs do seu HTML
-    const modal = document.getElementById("sig-modal"); 
-    const canvasM = document.getElementById("modal-canvas");
-    const ctxM = canvasM.getContext("2d");
-    let desenhando = false;
-
-    function openModal(id) {
-        currentTarget = id;
-        modal.style.display = "flex";
-        
-        // Ajuste de sensibilidade e resolução
-        const ratio = 2;
-        const rect = canvasM.getBoundingClientRect();
-        canvasM.width = rect.width * ratio;
-        canvasM.height = rect.height * ratio;
-        ctxM.scale(ratio, ratio);
-        
-        ctxM.lineWidth = 3;
-        ctxM.lineCap = 'round';
-        ctxM.strokeStyle = "#00008B"; // Azul escuro
-        limparModal();
+    <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #525659; display: flex; flex-direction: column; align-items: center; }
+    
+    .page { 
+        background: white; 
+        width: 794px; 
+        min-height: 1120px; 
+        padding: 30px 50px; 
+        position: relative; 
+        display: flex; 
+        flex-direction: column;
+        margin-top: 20px;
     }
 
-    // Funções com os nomes corretos para os botões do seu Modal
-    function closeModal() { modal.style.display = "none"; }
-    function clearModal() { ctxM.clearRect(0, 0, canvasM.width, canvasM.height); }
+    /* Marca d'água */
+    .embratel-bg { position: absolute; bottom: 350px; left: 50%; transform: translateX(-50%); width: 350px; opacity: 0.1; z-index: 1; pointer-events: none; }
 
-    function saveSignature() {
-        const box = document.getElementById('box-' + currentTarget);
-        const dataUrl = canvasM.toDataURL();
-        box.innerHTML = `<img src="${dataUrl}" style="max-height:100%; width:auto; mix-blend-mode: multiply;">`;
-        closeModal();
+    .content { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; }
+    .header-logo { text-align: right; margin-bottom: 10px; }
+    .logo-claro { max-width: 140px; height: auto; }
+    
+    .title { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 15px; }
+    .title input { font-size: 14px; width: 120px; text-align: center; font-weight: bold; border: none; background: #f9f9f9; }
+
+    .text-body { font-size: 13px; line-height: 1.5; text-align: justify; margin-bottom: 10px; }
+    .input-fill { border: none; border-bottom: 1px solid #ccc; font-weight: bold; outline: none; }
+
+    .table-container { width: 100%; display: flex; justify-content: center; margin-bottom: 10px; }
+    .item-table { width: 80%; border-collapse: collapse; }
+    .item-table th, .item-table td { border: 1px solid black; padding: 6px; font-size: 12px; }
+    .item-table th { background-color: #eeeeee !important; -webkit-print-color-adjust: exact; }
+    
+    .td-center { text-align: center !important; }
+    .td-center input { text-align: center; width: 100%; border: none; outline: none; background: transparent; }
+
+    .sig-section { margin-top: 20px; }
+    .sig-row { margin-bottom: 10px; display: flex; align-items: flex-end; }
+    .sig-label { width: 90px; font-size: 13px; }
+    .sig-box { width: 350px; height: 60px; border-bottom: 2px solid black; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fafafa; }
+    .sig-box img { max-height: 100%; mix-blend-mode: multiply; }
+    .label-sub { font-size: 9px; margin-left: 95px; font-weight: bold; margin-bottom: 15px; display: block; }
+
+    .date-footer { margin-top: 30px; margin-bottom: 50px; text-align: right; font-size: 13px; }
+    .date-input { border: none !important; border-bottom: 1px solid #000 !important; outline: none !important; text-align: center; }
+
+    /* PAINEL DE BOTÕES - RESOLVENDO O PROBLEMA DO CELULAR */
+    .btn-panel { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 10px; 
+        width: 90%; 
+        max-width: 400px; 
+        margin: 20px auto 40px auto; /* Centraliza e dá espaço no fim */
+        position: static; /* No celular ele fica parado no fim da página */
     }
 
-    // Lógica de desenho
-    const getPos = (e) => {
-        const r = canvasM.getBoundingClientRect();
-        const p = e.touches ? e.touches[0] : e;
-        return { x: p.clientX - r.left, y: p.clientY - r.top };
-    };
-
-    canvasM.onmousedown = (e) => { desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
-    canvasM.onmousemove = (e) => { if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
-    window.onmouseup = () => desenhando = false;
-
-    canvasM.ontouchstart = (e) => { 
-        e.preventDefault(); 
-        desenhando = true; 
-        ctxM.beginPath(); 
-        const p = getPos(e); 
-        ctxM.moveTo(p.x, p.y); 
-    };
-    canvasM.ontouchmove = (e) => { 
-        e.preventDefault(); 
-        if(desenhando) { 
-            const p = getPos(e); 
-            ctxM.lineTo(p.x, p.y); 
-            ctxM.stroke(); 
-        } 
-    };
-
-    // SALVAMENTO AUTOMÁTICO
-    window.addEventListener('load', () => {
-        const prefixo = window.location.pathname;
-        const campos = document.querySelectorAll('input, textarea');
-        campos.forEach(campo => {
-            if (!campo.id) return;
-            const salvo = localStorage.getItem(prefixo + campo.id);
-            if (salvo) {
-                if (campo.type === 'checkbox') campo.checked = (salvo === 'true');
-                else campo.value = salvo;
-            }
-            campo.addEventListener('input', () => { // Mudado para 'input' para salvar enquanto digita
-                const val = campo.type === 'checkbox' ? campo.checked : campo.value;
-                localStorage.setItem(prefixo + campo.id, val);
-            });
-        });
-    });
-
-    function limparTudo() {
-        if (confirm("Deseja apagar todos os dados digitados?")) {
-            const prefixo = window.location.pathname;
-            localStorage.clear();
-            location.reload();
+    /* APENAS NO COMPUTADOR ELES FICAM FIXOS NA LATERAL */
+    @media (min-width: 1100px) {
+        .btn-panel { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            width: 160px; 
+            margin: 0;
         }
     }
-</script>
+
+    .btn-panel button { 
+        width: 100%; 
+        padding: 15px; 
+        border: none; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        color: white; 
+        cursor: pointer; 
+        font-size: 12px; 
+        text-transform: uppercase;
+    }
+    
+    .btn-print { background: #e1251b !important; }
+    .btn-clear { background: #d9534f !important; }
+    .btn-back { background: #5bc0de !important; }
+
+    /* Modal Assinatura */
+    #sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; }
+    .modal-content { background: white; width: 95%; max-width: 600px; border-radius: 8px; overflow: hidden; }
+    #modal-canvas { background: #fff; width: 100%; height: 350px; touch-action: none; border-bottom: 1px solid #ddd; }
+    .modal-footer { display: flex; padding: 10px; gap: 10px; }
+
+    @media print { 
+        body { background: white; }
+        .btn-panel, #sig-modal { display: none !important; } 
+        .page { margin: 0; border: none; box-shadow: none; width: 100%; height: auto; }
+    }
+</style>
 </body>
 </html>
+
 
 
