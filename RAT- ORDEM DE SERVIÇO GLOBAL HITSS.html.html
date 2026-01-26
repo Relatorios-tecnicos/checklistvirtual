@@ -2,14 +2,15 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=810">
+    <meta name="viewport" content="width=device-width, initial-scale=0.4, maximum-scale=2.0">
     <title>RAT - Global Hitss Ultra HD</title>
 
     <style>
-        html, body { overflow-x: hidden; margin: 0; padding: 0; background:#525659; width: 100%; }
+        html, body { overflow-x: auto; margin: 0; padding: 0; background:#525659; width: 100%; }
         * { box-sizing: border-box; }
         body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding-bottom: 80px; }
         
+        /* Layout travado em A4 para garantir a impressão perfeita */
         #relatorio { 
             width: 210mm; height: 297mm; background: #fff; padding: 8mm 12mm; 
             border: 1px solid #000; position: relative; margin-top: 5px;
@@ -24,7 +25,7 @@
         td, th { border: 1px solid #000; padding: 3px; vertical-align: middle; }
         th { background: #f2f2f2; font-size: 8px; }
 
-        /* X Centralizado e Preto */
+        /* Mantendo o X Centralizado e Preto como ajustado anteriormente */
         .check-container { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; font-size: 8.5px; height: 17px; }
         .bracket { 
             font-weight: bold; font-size: 12px; position: relative; 
@@ -214,7 +215,7 @@
         canvasM.height = rect.height;
         ctxM.lineWidth = 3;
         ctxM.lineCap = "round";
-        ctxM.strokeStyle = "#0000FF"; // Azul
+        ctxM.strokeStyle = "#0000FF";
     }
 
     function fecharModal() { modal.style.display = "none"; }
