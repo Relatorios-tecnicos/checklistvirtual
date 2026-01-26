@@ -175,73 +175,75 @@
     </div>
 
     <script>
-        const modal = document.getElementById('sig-modal');
-        const mCanvas = document.getElementById('modal-canvas');
-        const mCtx = mCanvas.getContext('2d');
-        let currentTarget = ''; let drawing = false;
+    let currentTarget = '';
+    const modal = document.getElementById("modalAssinatura");
+    const canvasM = document.getElementById("canvasModal");
+    const ctxM = canvasM.getContext("2d");
+    let desenhando = false;
 
-        function setupModalCanvas() {
-            const ratio = 2; mCanvas.width = mCanvas.offsetWidth * ratio; mCanvas.height = mCanvas.offsetHeight * ratio;
-            mCtx.scale(ratio, ratio); mCtx.lineWidth = 3; mCtx.lineCap = 'round'; mCtx.strokeStyle = '#00008B';
-        }
-        function openModal(id) { currentTarget = id; modal.style.display = 'flex'; setupModalCanvas(); }
-        function closeModal() { modal.style.display = 'none'; }
-        function clearModal() { mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height); }
-        function saveSignature() {
-            const box = document.getElementById('box-' + currentTarget);
-            box.innerHTML = `<img src="${mCanvas.toDataURL()}">`;
-            closeModal();
-        }
-        function getPos(e) {
-            const rect = mCanvas.getBoundingClientRect();
-            const touch = e.touches ? e.touches[0] : e;
-            return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-        }
-        mCanvas.addEventListener('touchstart', (e) => { drawing = true; mCtx.beginPath(); const p = getPos(e); mCtx.moveTo(p.x, p.y); e.preventDefault(); });
-        mCanvas.addEventListener('touchmove', (e) => { if(!drawing) return; const p = getPos(e); mCtx.lineTo(p.x, p.y); mCtx.stroke(); e.preventDefault(); });
-        mCanvas.addEventListener('touchend', () => drawing = false);
-        mCanvas.addEventListener('mousedown', (e) => { drawing = true; mCtx.beginPath(); const p = getPos(e); mCtx.moveTo(p.x, p.y); });
-        mCanvas.addEventListener('mousemove', (e) => { if(!drawing) return; const p = getPos(e); mCtx.lineTo(p.x, p.y); mCtx.stroke(); });
-        window.addEventListener('mouseup', () => drawing = false);
-    <script>
-    // Função para salvar automaticamente no Navegador (LocalStorage)
-    function salvarDados() {
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            if (input.id) { // Só salva se o input tiver um ID
-                localStorage.setItem(input.id, input.value);
-            }
-        });
+    function openModal(id) {
+        currentTarget = id;
+        modal.style.display = "flex";
+        const ratio = window.devicePixelRatio || 2;
+        const rect = canvasM.getBoundingClientRect();
+        canvasM.width = rect.width * ratio;
+        canvasM.height = rect.height * ratio;
+        ctxM.scale(ratio, ratio);
+        ctxM.lineWidth = 2.5;
+        ctxM.strokeStyle = "#003399";
+        limparModal();
     }
 
-    // Função para carregar os dados ao abrir a página
-    function carregarDados() {
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            if (input.id && localStorage.getItem(input.id)) {
-                input.value = localStorage.getItem(input.id);
-            }
-        });
+    function fecharModal() { modal.style.display = "none"; }
+    function limparModal() { ctxM.clearRect(0, 0, canvasM.width, canvasM.height); }
+
+    function salvarAssinatura() {
+        const box = document.getElementById('box-' + currentTarget);
+        const dataUrl = canvasM.toDataURL();
+        box.innerHTML = `<img src="${dataUrl}" style="max-height:100%; width:auto; mix-blend-mode: multiply;">`;
+        fecharModal();
     }
 
-    // Função para o botão "ZERAR FORMULÁRIO"
+    const getPos = (e) => {
+        const r = canvasM.getBoundingClientRect();
+        const p = e.touches ? e.touches[0] : e;
+        return { x: p.clientX - r.left, y: p.clientY - r.top };
+    };
+
+    canvasM.onmousedown = (e) => { desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
+    canvasM.onmousemove = (e) => { if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
+    window.onmouseup = () => desenhando = false;
+    canvasM.ontouchstart = (e) => { e.preventDefault(); desenhando = true; ctxM.beginPath(); const p = getPos(e); ctxM.moveTo(p.x, p.y); };
+    canvasM.ontouchmove = (e) => { e.preventDefault(); if(desenhando) { const p = getPos(e); ctxM.lineTo(p.x, p.y); ctxM.stroke(); } };
+
+    // SALVAMENTO AUTOMÁTICO
+    window.addEventListener('load', () => {
+        const prefixo = window.location.pathname;
+        const campos = document.querySelectorAll('input, textarea');
+        campos.forEach(campo => {
+            if (!campo.id) return;
+            const salvo = localStorage.getItem(prefixo + campo.id);
+            if (salvo) {
+                if (campo.type === 'checkbox') campo.checked = (salvo === 'true');
+                else campo.value = salvo;
+            }
+            campo.addEventListener('change', () => {
+                const val = campo.type === 'checkbox' ? campo.checked : campo.value;
+                localStorage.setItem(prefixo + campo.id, val);
+            });
+        });
+    });
+
     function limparTudo() {
-        if (confirm("Tem certeza que deseja apagar todos os dados do formulário?")) {
-            localStorage.clear();
+        if (confirm("Deseja apagar todos os dados digitados?")) {
+            const prefixo = window.location.pathname;
+            document.querySelectorAll('input, textarea').forEach(c => {
+                if (c.id) localStorage.removeItem(prefixo + c.id);
+            });
             location.reload();
         }
     }
-
-    // Executa ao carregar a página
-    window.onload = function() {
-        carregarDados();
-
-        // Adiciona o evento de salvar em cada input automaticamente
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('input', salvarDados);
-        });
-    };
 </script>
 </body>
 </html>
+
