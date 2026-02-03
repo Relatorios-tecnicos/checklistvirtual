@@ -107,7 +107,7 @@ a:hover {
 
 <script>
 // ================== CONFIG ==================
-const HASH_SENHA = "6c5d7c0a2f0e0c65a2b6d0a6b84f9b1c7a0f4a0a3a1f1f3d9d4b7b5f7a8c2b9";
+const SENHA_REAL = "Hitss123";
 
 // ================== FUNÇÕES =================
 async function sha256(text) {
@@ -119,10 +119,12 @@ async function sha256(text) {
 }
 
 async function login() {
-  const senha = document.getElementById("senha").value;
-  const hash = await sha256(senha);
+  const senhaDigitada = document.getElementById("senha").value;
 
-  if (hash === HASH_SENHA) {
+  const hashDigitada = await sha256(senhaDigitada);
+  const hashReal = await sha256(SENHA_REAL);
+
+  if (hashDigitada === hashReal) {
     sessionStorage.setItem("logado","true");
     mostrarMenu();
   } else {
