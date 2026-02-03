@@ -96,6 +96,11 @@
     </style>
 </head>
 <body>
+<script>
+if (sessionStorage.getItem("logado") !== "true") {
+  window.location.href = "index.html";
+}
+</script>
 
     <div class="botoes">
         <button class="btn btn-pdf" onclick="window.print()">GERAR PDF</button>
@@ -219,4 +224,5 @@
     </script>
 </body>
 </html>
+
 
