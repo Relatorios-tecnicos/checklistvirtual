@@ -60,6 +60,11 @@
     </style>
 </head>
 <body>
+<script>
+if (sessionStorage.getItem("logado") !== "true") {
+  window.location.href = "index.html";
+}
+</script>
 
 <div class="btn-panel">
     <button style="background:#e1251b;" onclick="window.print()">GERAR PDF</button>
@@ -260,3 +265,4 @@
 </script>
 </body>
 </html>
+
