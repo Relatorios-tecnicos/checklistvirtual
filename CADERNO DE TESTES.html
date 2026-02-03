@@ -99,6 +99,11 @@
     </style>
 </head>
 <body>
+<script>
+if (sessionStorage.getItem("logado") !== "true") {
+  window.location.href = "index.html";
+}
+</script>
 
 <div class="btn-panel">
     <button class="btn-print" onclick="window.print()">GERAR PDF</button>
@@ -270,3 +275,4 @@
 
 </body>
 </html>
+
