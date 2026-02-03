@@ -1,46 +1,150 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu de Relatórios</title>
-    <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background-color: #f4f4f4; }
-        .btn { width: 300px; padding: 20px; margin: 10px; text-align: center; background: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; border: none; cursor: pointer; display: block; }
-        .btn:hover { background: #0056b3; }
-        h1 { color: #333; }
-    </style>
-    <script>
-        // Função de verificação de senha
-        function verificarAcesso() {
-            const SENHA_CORRETA = "Hitss123"; 
-            
-            // Verifica se já foi feito o login nesta sessão
-            if (sessionStorage.getItem("logado") === "true") {
-                return; // Já está logado, não faz nada e mostra a página
-            }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatórios Técnicos</title>
 
-            // Se não estiver logado, pede a senha
-            let tentativa = prompt("Digite a senha de acesso:");
-            
-            if (tentativa === SENHA_CORRETA) {
-                sessionStorage.setItem("logado", "true"); // Salva que logou com sucesso
-            } else {
-                alert("Senha incorreta! Acesso negado.");
-                window.location.href = "https://www.google.com";
-            }
-        }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f4f4f4;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
 
-        // Executa a verificação assim que abre a página
-        verificarAcesso();
-    </script>
+.container {
+  background:#fff;
+  padding:30px;
+  border-radius:10px;
+  width:100%;
+  max-width:380px;
+  box-shadow:0 0 10px rgba(0,0,0,.15);
+}
+
+h2 {
+  text-align:center;
+  margin-bottom:20px;
+}
+
+input {
+  width:100%;
+  padding:12px;
+  margin-bottom:15px;
+  font-size:16px;
+}
+
+button {
+  width:100%;
+  padding:12px;
+  background:#007bff;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:hover {
+  background:#0056b3;
+}
+
+.menu {
+  display:none;
+}
+
+a {
+  display:block;
+  margin:10px 0;
+  padding:14px;
+  text-align:center;
+  background:#007bff;
+  color:#fff;
+  text-decoration:none;
+  border-radius:6px;
+  font-weight:bold;
+}
+
+a:hover {
+  background:#0056b3;
+}
+
+.logout {
+  background:#dc3545;
+}
+
+.logout:hover {
+  background:#b52a37;
+}
+</style>
 </head>
+
 <body>
-    <h1>Selecione o Relatório</h1>
-    
-    <a class="btn" href="RAT-%20ORDEM%20DE%20SERVI%C3%87O%20GLOBAL%20HITSS.html.html">RAT - Ordem de Serviço</a>
-    <a class="btn" href="CADERNO%20DE%20TESTES.html">Caderno de Testes</a>
-    <a class="btn" href="TERMO%20DE%20ENTREGA.html">Termo de Entrega</a>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="login">
+  <h2>Acesso Restrito</h2>
+  <input type="password" id="senha" placeholder="Digite a senha">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<!-- MENU -->
+<div id="menu" class="menu">
+  <h2>Selecione o Relatório</h2>
+
+  <a href="RAT- ORDEM DE SERVIÇO GLOBAL HITSS.html">RAT - Ordem de Serviço</a>
+  <a href="CADERNO DE TESTES.html">Caderno de Testes</a>
+  <a href="TERMO DE ENTREGA.html">Termo de Entrega</a>
+
+  <a href="#" class="logout" onclick="logout()">Sair</a>
+</div>
+
+</div>
+
+<script>
+// ================== CONFIG ==================
+const HASH_SENHA = "f2a7d3b4a48b5a6d41d5a8f4e5f9d3f5e2f6c5c8f1e8a4c7d9b6f5e8a9c4";
+
+// ================== FUNÇÕES =================
+async function sha256(text) {
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+async function login() {
+  const senha = document.getElementById("senha").value;
+  const hash = await sha256(senha);
+
+  if (hash === HASH_SENHA) {
+    sessionStorage.setItem("logado","true");
+    mostrarMenu();
+  } else {
+    alert("Senha incorreta");
+  }
+}
+
+function mostrarMenu() {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("menu").style.display = "block";
+}
+
+function logout() {
+  sessionStorage.clear();
+  location.reload();
+}
+
+// ================== AUTO LOGIN ==================
+if (sessionStorage.getItem("logado") === "true") {
+  mostrarMenu();
+}
+</script>
 
 </body>
 </html>
