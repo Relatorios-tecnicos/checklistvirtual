@@ -96,9 +96,9 @@ a:hover {
 <div id="menu" class="menu">
   <h2>Selecione o Relatório</h2>
 
-  <a href="RAT- ORDEM DE SERVIÇO GLOBAL HITSS.html">RAT - Ordem de Serviço</a>
-  <a href="CADERNO DE TESTES.html">Caderno de Testes</a>
-  <a href="TERMO DE ENTREGA.html">Termo de Entrega</a>
+  <a href="rat-ordem-servico.html">RAT - Ordem de Serviço</a>
+  <a href="caderno-testes.html">Caderno de Testes</a>
+  <a href="termo-entrega.html">Termo de Entrega</a>
 
   <a href="#" class="logout" onclick="logout()">Sair</a>
 </div>
@@ -106,10 +106,11 @@ a:hover {
 </div>
 
 <script>
-// ================== CONFIG ==================
-const SENHA_REAL = "Hitss123";
+// ================= CONFIG =================
+// 🔒 COLE AQUI O HASH GERADO
+const HASH_SENHA = 36f902b21693d7bcb092376835dc464bc7146e606436abd7f1e686d247c0d7af;
 
-// ================== FUNÇÕES =================
+// ================= FUNÇÕES =================
 async function sha256(text) {
   const enc = new TextEncoder().encode(text);
   const buf = await crypto.subtle.digest("SHA-256", enc);
@@ -119,12 +120,10 @@ async function sha256(text) {
 }
 
 async function login() {
-  const senhaDigitada = document.getElementById("senha").value;
+  const senha = document.getElementById("senha").value;
+  const hash = await sha256(senha);
 
-  const hashDigitada = await sha256(senhaDigitada);
-  const hashReal = await sha256(SENHA_REAL);
-
-  if (hashDigitada === hashReal) {
+  if (hash === HASH_SENHA) {
     sessionStorage.setItem("logado","true");
     mostrarMenu();
   } else {
@@ -142,7 +141,7 @@ function logout() {
   location.reload();
 }
 
-// ================== AUTO LOGIN ==================
+// ================= AUTO LOGIN =================
 if (sessionStorage.getItem("logado") === "true") {
   mostrarMenu();
 }
