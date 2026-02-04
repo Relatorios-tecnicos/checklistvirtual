@@ -36,7 +36,7 @@ input {
   font-size:16px;
 }
 
-button {
+button, a.btn {
   width:100%;
   padding:12px;
   background:#007bff;
@@ -45,30 +45,19 @@ button {
   border-radius:6px;
   font-size:16px;
   cursor:pointer;
+  display:block;
+  text-align:center;
+  text-decoration:none;
+  font-weight:bold;
+  margin-bottom:10px;
 }
 
-button:hover {
+button:hover, a.btn:hover {
   background:#0056b3;
 }
 
 .menu {
   display:none;
-}
-
-a {
-  display:block;
-  margin:10px 0;
-  padding:14px;
-  text-align:center;
-  background:#007bff;
-  color:#fff;
-  text-decoration:none;
-  border-radius:6px;
-  font-weight:bold;
-}
-
-a:hover {
-  background:#0056b3;
 }
 
 .logout {
@@ -96,11 +85,19 @@ a:hover {
 <div id="menu" class="menu">
   <h2>Selecione o Relatório</h2>
 
-  <a href="rat-ordem-servico.html">RAT - Ordem de Serviço</a>
-  <a href="caderno-testes.html">Caderno de Testes</a>
-  <a href="termo-entrega.html">Termo de Entrega</a>
+  <a class="btn" href="RAT-%20ORDEM%20DE%20SERVI%C3%87O%20GLOBAL%20HITSS.html">
+    RAT - Ordem de Serviço
+  </a>
 
-  <a href="#" class="logout" onclick="logout()">Sair</a>
+  <a class="btn" href="CADERNO%20DE%20TESTES.html">
+    Caderno de Testes
+  </a>
+
+  <a class="btn" href="TERMO%20DE%20ENTREGA.html">
+    Termo de Entrega
+  </a>
+
+  <a class="btn logout" href="#" onclick="logout()">Sair</a>
 </div>
 
 </div>
@@ -119,11 +116,11 @@ async function sha256(text) {
 }
 
 async function login() {
-  const senha = document.getElementById("senha").value.trim(); // 🔥 CORREÇÃO CRÍTICA
+  const senha = document.getElementById("senha").value.trim();
   const hash = await sha256(senha);
 
   if (hash === HASH_SENHA) {
-    sessionStorage.setItem("logado","true");
+    sessionStorage.setItem("logado", "true");
     mostrarMenu();
   } else {
     alert("Senha incorreta");
