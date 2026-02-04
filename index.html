@@ -110,4 +110,41 @@ a:hover {
 const HASH_SENHA = "36f902b21693d7bcb092376835dc464bc7146e606436abd7f1e686d247c0d7af";
 
 // ================= FUNÇÕES =================
-async function s
+async function sha256(text) {
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+async function login() {
+  const senha = document.getElementById("senha").value.trim(); // 🔥 CORREÇÃO CRÍTICA
+  const hash = await sha256(senha);
+
+  if (hash === HASH_SENHA) {
+    sessionStorage.setItem("logado","true");
+    mostrarMenu();
+  } else {
+    alert("Senha incorreta");
+  }
+}
+
+function mostrarMenu() {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("menu").style.display = "block";
+}
+
+function logout() {
+  sessionStorage.clear();
+  location.href = "index.html";
+}
+
+// ================= AUTO LOGIN =================
+if (sessionStorage.getItem("logado") === "true") {
+  mostrarMenu();
+}
+</script>
+
+</body>
+</html>
