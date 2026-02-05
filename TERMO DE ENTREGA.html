@@ -87,6 +87,10 @@
             .botoes, #modal-sig { display: none !important; } 
             body { background: white; }
             .page { height: 1120px; border: none; }
+            /* NÃO MOSTRAR USUÁRIO NO PDF */
+    #userInfo {
+        display: none !important;
+    }
         }
 
         /* MODAL DE ASSINATURA */
@@ -247,6 +251,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 
 </body>
 </html>
+
 
 
 
