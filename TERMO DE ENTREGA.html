@@ -227,13 +227,25 @@ if (sessionStorage.getItem("logado") !== "true") {
         function limpar() { if(confirm("Deseja zerar o formulário?")) location.reload(); }
     </script>
     <script type="module">
+  /* 🔥 FIREBASE CORE */
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+  /* 🔐 AUTH */
   import { 
     getAuth, 
     onAuthStateChanged, 
     signOut 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+  /* 🗄️ FIRESTORE */
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  /* ⚙️ CONFIG */
   const firebaseConfig = {
     apiKey: "AIzaSyA1CQ8LDia_nedDsttlbxKhFD9NMvj29Kw",
     authDomain: "checklistvirtual.firebaseapp.com",
@@ -243,17 +255,32 @@ if (sessionStorage.getItem("logado") !== "true") {
     appId: "1:421292656328:web:2a2d4eb79c64a54ba9c7fd"
   };
 
+  /* 🚀 INIT */
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  // 🔒 BLOQUEIA ACESSO SEM LOGIN
-  onAuthStateChanged(auth, (user) => {
+  /* 🔒 BLOQUEIA ACESSO SEM LOGIN + REGISTRA ACESSO */
+  onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = "index.html";
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "acessos_relatorios"), {
+        uid: user.uid,
+        nome: user.displayName || "",
+        email: user.email || "",
+        relatorio: document.title,
+        dataHora: serverTimestamp()
+      });
+    } catch (erro) {
+      console.error("Erro ao registrar acesso:", erro);
     }
   });
 
-  // 🚪 BOTÃO SAIR
+  /* 🚪 BOTÃO SAIR */
   window.logout = function () {
     signOut(auth).then(() => {
       sessionStorage.clear();
@@ -264,6 +291,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 
 </body>
 </html>
+
 
 
 
