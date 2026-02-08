@@ -348,43 +348,46 @@
 
   /* 📄 GERADOR DE PDF CORRIGIDO PARA MIRAR O CONTEÚDO CERTO */
  window.gerarPDF = function() {
-    // Selecionamos o container que criamos anteriormente
-    const elementoOriginal = document.getElementById('conteudo-principal');
-    
-    if (!elementoOriginal) {
+    // Seleciona o container que travamos em 794px no CSS
+    const elemento = document.getElementById('conteudo-principal');
+
+    if (!elemento) {
         alert("Erro: Container 'conteudo-principal' não encontrado!");
         return;
     }
 
-    // Configurações para PDF exato de 3 páginas
     const opt = {
         margin: 0,
         filename: `Termo_VoIP_${new Date().getTime()}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
+            scale: 2,           // Melhora a resolução dos textos
+            useCORS: true,      // Permite carregar as logos
             letterRendering: true,
-            scrollY: 0,
-            windowWidth: 794
+            width: 794,         // Força a largura da captura
+            windowWidth: 794,   // Força o navegador a "pensar" que a tela tem 794px
+            scrollY: 0,         // Começa do topo
+            scrollX: 0
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait',
+            precision: 32       // Maior precisão no posicionamento dos elementos
+        },
         pagebreak: { mode: ['css', 'legacy'] }
     };
 
-    console.log("Gerando PDF...");
+    console.log("Gerando PDF com ajuste de margens...");
 
-    // Gerar o PDF
-    html2pdf().set(opt).from(elementoOriginal).toPdf().output('blob').then((pdfBlob) => {
-        // Envia para o Firebase (Sua função existente)
+    html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
+        // Envia para o seu Firebase
         salvarPDFNoFirebase(pdfBlob); 
         
-        // Faz o download local
-        html2pdf().set(opt).from(elementoOriginal).save();
-        
-        alert("PDF Gerado com sucesso (3 páginas)!");
+        // Faz o download para o usuário
+        html2pdf().set(opt).from(elemento).save();
     }).catch(err => {
-        console.error("Erro Crítico:", err);
+        console.error("Erro na geração:", err);
     });
 };
   window.logout = function () {
@@ -397,6 +400,7 @@
 
 </body>
 </html>
+
 
 
 
