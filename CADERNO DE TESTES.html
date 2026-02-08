@@ -54,18 +54,18 @@
         .btn-back { background: #444; }
 
         .page { 
-            background: white; 
-            width: 794px; 
-            min-height: 1120px; 
-            padding: 40px 50px; 
-            position: relative; 
-            display: flex; 
-            flex-direction: column;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
-            page-break-after: always;
-        }
+    background: white; 
+    width: 794px; 
+    height: 1122px; /* Altura fixa para A4 exato */
+    padding: 40px 50px; 
+    position: relative; 
+    display: flex; 
+    flex-direction: column;
+    margin: 0 auto; /* Centraliza */
+    box-shadow: none; /* Remove sombra para não bugar no PDF */
+    page-break-after: avoid; /* Mudamos de always para avoid */
+    overflow: hidden;
+}
 
         /* Cabeçalho */
         .header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #0070c0; padding-bottom: 10px; }
@@ -328,34 +328,28 @@
 
   /* 📄 GERADOR DE PDF CORRIGIDO PARA MIRAR O CONTEÚDO CERTO */
   window.gerarPDF = function() {
-    // MIRANDO APENAS NA DIV DO RELATÓRIO
     const elemento = document.getElementById('conteudo-principal');
     
-    const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-    const nomeFinalArquivo = `Termo_VoIP_${dataAtual}.pdf`;
-
     const opt = {
       margin: 0,
-      filename: nomeFinalArquivo,
-      image: { type: 'jpeg', quality: 0.98 },
+      filename: `Termo_VoIP_${new Date().getTime()}.pdf`,
+      image: { type: 'jpeg', quality: 1.0 }, // Qualidade máxima
       html2canvas: { 
         scale: 2, 
         useCORS: true,
-        letterRendering: true
+        letterRendering: true,
+        scrollY: 0 // Garante que comece do topo
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: 'avoid-all', before: '.page' }
+      // O SEGREDO ESTÁ AQUI:
+      pagebreak: { mode: 'css', before: '.page' } 
     };
 
     html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
       salvarPDFNoFirebase(pdfBlob); 
       html2pdf().set(opt).from(elemento).save(); 
-      alert("Relatório gerado e salvo na nuvem!");
-    }).catch(err => {
-      console.error("Erro:", err);
     });
-  };
-
+};
   window.logout = function () {
     signOut(auth).then(() => {
       sessionStorage.clear();
@@ -366,3 +360,4 @@
 
 </body>
 </html>
+
