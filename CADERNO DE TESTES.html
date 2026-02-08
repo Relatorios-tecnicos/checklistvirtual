@@ -30,7 +30,8 @@
     #conteudo-principal {
         width: 794px;
         background: transparent;
-        display: block;
+        display: block; /* Garante que o container se comporte como bloco fixo */
+        margin: 0 auto;
     }
 
     /* PAINEL DE BOTÕES FIXO NO RODAPÉ */
@@ -68,14 +69,14 @@
     .page { 
         background: white; 
         width: 794px; 
-        height: 1122px; /* Altura exata A4 */
+        height: 1120px; /* Reduzido 2px para evitar transbordo e páginas extras */
         padding: 40px 50px; 
         position: relative; 
         display: flex; 
         flex-direction: column;
-        margin: 0 !important; /* Zero margem para não transbordar */
+        margin: 0 !important; 
         box-shadow: none !important; 
-        overflow: hidden;
+        overflow: hidden; /* Corta qualquer conteúdo que tente sair da borda */
         page-break-after: always;
         page-break-inside: avoid;
     }
@@ -94,6 +95,7 @@
     .form-info { font-size: 13px; margin-bottom: 15px; font-weight: bold; }
     .editable-input { border: none; border-bottom: 1px solid #000; outline: none; padding: 2px; font-size: 14px; background: transparent; }
     
+    /* Tabelas travadas para não estourarem a lateral */
     table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 20px; table-layout: fixed; }
     th { background-color: #0070c0 !important; color: white; font-size: 10px; padding: 8px; border: 1px solid #000; }
     td { border: 1px solid #000; padding: 6px 10px; font-size: 11px; word-wrap: break-word; }
@@ -348,7 +350,7 @@
 
   /* 📄 GERADOR DE PDF CORRIGIDO PARA MIRAR O CONTEÚDO CERTO */
  window.gerarPDF = function() {
-    // Seleciona o container que travamos em 794px no CSS
+    // 1. Seleciona o container principal que definimos no CSS
     const elemento = document.getElementById('conteudo-principal');
 
     if (!elemento) {
@@ -356,38 +358,46 @@
         return;
     }
 
+    // 2. Configurações para travar o layout e evitar páginas extras
     const opt = {
         margin: 0,
         filename: `Termo_VoIP_${new Date().getTime()}.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-            scale: 2,           // Melhora a resolução dos textos
-            useCORS: true,      // Permite carregar as logos
+            scale: 2,           // Mantém a alta qualidade/nitidez
+            useCORS: true,      // Permite carregar as logos da Embratel/Prodesp
             letterRendering: true,
-            width: 794,         // Força a largura da captura
-            windowWidth: 794,   // Força o navegador a "pensar" que a tela tem 794px
-            scrollY: 0,         // Começa do topo
+            width: 794,         // TRAVA a captura na largura do A4
+            windowWidth: 794,   // SIMULA uma tela de 794px para evitar o corte lateral
+            scrollY: 0,
             scrollX: 0
         },
         jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
             orientation: 'portrait',
-            precision: 32       // Maior precisão no posicionamento dos elementos
+            precision: 32
         },
+        // O modo 'css' garante que as 3 divs .page sejam respeitadas
         pagebreak: { mode: ['css', 'legacy'] }
     };
 
-    console.log("Gerando PDF com ajuste de margens...");
+    console.log("Iniciando geração de PDF (Layout A4)...");
 
+    // 3. Execução do processo
     html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
-        // Envia para o seu Firebase
-        salvarPDFNoFirebase(pdfBlob); 
+        // Envia para o Firebase (Sua função personalizada)
+        if (typeof salvarPDFNoFirebase === "function") {
+            salvarPDFNoFirebase(pdfBlob);
+        }
         
-        // Faz o download para o usuário
+        // Gera o download para o usuário
         html2pdf().set(opt).from(elemento).save();
+        
+        console.log("PDF gerado com sucesso!");
     }).catch(err => {
-        console.error("Erro na geração:", err);
+        console.error("Erro ao gerar o PDF:", err);
+        alert("Ocorreu um erro ao gerar o PDF. Verifique o console.");
     });
 };
   window.logout = function () {
@@ -400,6 +410,7 @@
 
 </body>
 </html>
+
 
 
 
