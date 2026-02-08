@@ -8,98 +8,114 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        /* Reset e Base */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; }
-        @page { size: A4; margin: 0; }
-        
-        body { 
-            font-family: Arial, sans-serif; 
-            background: #525659; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-width: 794px; 
-            padding-bottom: 100px; 
-        }
+    /* Reset e Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; }
+    
+    @page { 
+        size: A4; 
+        margin: 0; 
+    }
+    
+    body { 
+        font-family: Arial, sans-serif; 
+        background: #525659; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        min-width: 794px; 
+        padding-bottom: 100px; 
+    }
 
-        /* PAINEL DE BOTÕES FIXO NO RODAPÉ */
-        .btn-panel { 
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #222;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            z-index: 1000;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-        }
+    /* Trava a largura do container para não cortar a lateral */
+    #conteudo-principal {
+        width: 794px;
+        background: transparent;
+        display: block;
+    }
 
-        .btn-panel button { 
-            flex: 1;
-            max-width: 180px;
-            padding: 12px; 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            color: white; 
-            font-size: 13px;
-            text-transform: uppercase;
-        }
-        .btn-print { background: #e1251b; }
-        .btn-clear { background: #555; }
-        .btn-back { background: #444; }
+    /* PAINEL DE BOTÕES FIXO NO RODAPÉ */
+    .btn-panel { 
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #222;
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+    }
 
-        .page { 
-    background: white; 
-    width: 794px; 
-    height: 1122px; 
-    padding: 40px 50px; 
-    position: relative; 
-    display: flex; 
-    flex-direction: column;
-    margin: 0 !important; /* Remove margens que criam páginas vazias */
-    box-shadow: none !important; 
-    page-break-after: always; /* Força a quebra apenas entre as .page */
-}
+    .btn-panel button { 
+        flex: 1;
+        max-width: 180px;
+        padding: 12px; 
+        border: none; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        cursor: pointer; 
+        color: white; 
+        font-size: 13px;
+        text-transform: uppercase;
+    }
+    .btn-print { background: #e1251b; }
+    .btn-clear { background: #555; }
+    .btn-back { background: #444; }
 
-/* Remove a quebra na última página para não criar uma folha em branco no fim */
-.page:last-child {
-    page-break-after: avoid !important;
-}
+    /* Configuração rigorosa de página para evitar brancos e cortes */
+    .page { 
+        background: white; 
+        width: 794px; 
+        height: 1122px; /* Altura exata A4 */
+        padding: 40px 50px; 
+        position: relative; 
+        display: flex; 
+        flex-direction: column;
+        margin: 0 !important; /* Zero margem para não transbordar */
+        box-shadow: none !important; 
+        overflow: hidden;
+        page-break-after: always;
+        page-break-inside: avoid;
+    }
 
-        /* Cabeçalho */
-        .header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #0070c0; padding-bottom: 10px; }
-        .logo-box { width: 180px; display: flex; align-items: center; height: 50px; }
-        .logo-img { max-height: 45px; max-width: 100%; object-fit: contain; }
-        .header-center { text-align: center; font-size: 12px; font-weight: bold; flex: 1; padding: 0 10px; color: #0070c0; }
+    /* Remove a quebra na última página para eliminar a folha em branco final */
+    .page:last-child {
+        page-break-after: avoid !important;
+    }
 
-        .form-info { font-size: 13px; margin-bottom: 15px; font-weight: bold; }
-        .editable-input { border: none; border-bottom: 1px solid #000; outline: none; padding: 2px; font-size: 14px; background: transparent; }
-        table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 20px; }
-        th { background-color: #0070c0 !important; color: white; font-size: 10px; padding: 8px; border: 1px solid #000; }
-        td { border: 1px solid #000; padding: 6px 10px; font-size: 11px; }
-        .input-ok { width: 100%; border: none; text-align: center; font-weight: bold; outline: none; background: transparent; text-transform: uppercase; }
+    /* Cabeçalho */
+    .header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #0070c0; padding-bottom: 10px; }
+    .logo-box { width: 180px; display: flex; align-items: center; height: 50px; }
+    .logo-img { max-height: 45px; max-width: 100%; object-fit: contain; }
+    .header-center { text-align: center; font-size: 12px; font-weight: bold; flex: 1; padding: 0 10px; color: #0070c0; }
 
-        .sig-container { margin-top: 20px; display: flex; flex-direction: column; gap: 30px; }
-        .sig-row { display: flex; justify-content: space-between; align-items: flex-end; }
-        .sig-box { width: 45%; }
-        .sig-line { border: 1px solid #000; height: 80px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; background: transparent; border-radius: 0; }
-        .sig-line img { max-height: 90%; mix-blend-mode: multiply; }
+    .form-info { font-size: 13px; margin-bottom: 15px; font-weight: bold; }
+    .editable-input { border: none; border-bottom: 1px solid #000; outline: none; padding: 2px; font-size: 14px; background: transparent; }
+    
+    table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 20px; table-layout: fixed; }
+    th { background-color: #0070c0 !important; color: white; font-size: 10px; padding: 8px; border: 1px solid #000; }
+    td { border: 1px solid #000; padding: 6px 10px; font-size: 11px; word-wrap: break-word; }
+    
+    .input-ok { width: 100%; border: none; text-align: center; font-weight: bold; outline: none; background: transparent; text-transform: uppercase; }
 
-        #sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 95%; max-width: 600px; border-radius: 12px; overflow: hidden; }
-        #modal-canvas { background: #fff; width: 100%; height: 350px; touch-action: none; display: block; cursor: crosshair; }
+    .sig-container { margin-top: auto; padding-bottom: 20px; display: flex; flex-direction: column; gap: 30px; }
+    .sig-row { display: flex; justify-content: space-between; align-items: flex-end; }
+    .sig-box { width: 45%; }
+    .sig-line { border-bottom: 1px solid #000; height: 80px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; background: transparent; }
+    .sig-line img { max-height: 90%; mix-blend-mode: multiply; }
 
-        @media print {
-            body { background: white; padding: 0; }
-            .btn-panel, #sig-modal, #userInfo { display: none !important; }
-            .page { margin: 0; box-shadow: none; width: 100%; border: none; }
-        }
-    </style>
+    #sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
+    .modal-content { background: white; width: 95%; max-width: 600px; border-radius: 12px; overflow: hidden; }
+    #modal-canvas { background: #fff; width: 100%; height: 350px; touch-action: none; display: block; cursor: crosshair; }
+
+    @media print {
+        body { background: white; padding: 0; }
+        .btn-panel, #sig-modal, #userInfo { display: none !important; }
+        .page { margin: 0; box-shadow: none; width: 100%; border: none; }
+    }
+</style>
 </head>
 <body>
     <div id="userInfo" data-html2canvas-ignore="true" style="position: fixed; top: 10px; right: 20px; font-size: 12px; background: #fff; padding: 6px 10px; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,.2); z-index: 9999;">
@@ -381,6 +397,7 @@
 
 </body>
 </html>
+
 
 
 
