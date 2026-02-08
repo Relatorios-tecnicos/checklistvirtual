@@ -310,7 +310,7 @@ if (sessionStorage.getItem("logado") !== "true") {
     serverTimestamp 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  /* ☁️ STORAGE (NOVO) */
+  /* ☁️ STORAGE */
   import { 
     getStorage, 
     ref, 
@@ -332,55 +332,62 @@ if (sessionStorage.getItem("logado") !== "true") {
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const storage = getStorage(app); // Inicializa o Storage
+  const storage = getStorage(app);
 
   /* 🔒 BLOQUEIA ACESSO SEM LOGIN */
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       window.location.href = "index.html";
+    } else {
+      console.log("Usuário autenticado:", user.email);
     }
   });
 
-  /* 📤 FUNÇÃO PARA SALVAR O PDF NO FIREBASE (NOVA) */
+  /* 📤 FUNÇÃO PARA SALVAR O PDF NO FIREBASE */
   async function salvarPDFNoFirebase(pdfBlob) {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) {
+      console.error("Erro: Nenhum usuário logado para realizar o upload.");
+      return;
+    }
 
     const nomeRelatorio = document.title || "Relatorio";
     const timestamp = new Date().getTime();
-    const nomeArquivo = `${timestamp}_${nomeRelatorio}.pdf`;
-
-    // Caminho: relatorios/email_do_tecnico/nome_do_arquivo.pdf
-    const storageRef = ref(storage, `relatorios/${user.email}/${nomeArquivo}`);
+    // Pasta organizada por e-mail do técnico
+    const caminhoArquivo = `relatorios/${user.email}/${timestamp}_${nomeRelatorio}.pdf`;
+    const storageRef = ref(storage, caminhoArquivo);
 
     try {
-      // 1. Faz o upload do arquivo
+      console.log("Iniciando upload para o Storage...");
+      
+      // 1. Faz o upload do arquivo (Blob)
       const snapshot = await uploadBytes(storageRef, pdfBlob);
-      // 2. Pega a URL pública
+      console.log("Upload concluído com sucesso!");
+
+      // 2. Pega a URL pública para o log
       const downloadURL = await getDownloadURL(snapshot.ref);
 
-      // 3. Registra o Log no Firestore já com o link do PDF
+      // 3. Registra o Log no Firestore
       await addDoc(collection(db, "acessos_relatorios"), {
         uid: user.uid,
-        nome: user.displayName || "",
-        email: user.email || "",
+        nome: user.displayName || "Técnico",
+        email: user.email,
         relatorio: nomeRelatorio,
         dataHora: serverTimestamp(),
-        pdf_url: downloadURL // Link direto para abrir o PDF
+        pdf_url: downloadURL 
       });
 
-      console.log("Cópia de segurança salva com sucesso!");
+      console.log("Log registrado no Firestore com sucesso!");
     } catch (erro) {
-      console.error("Erro ao salvar no Storage/Firestore:", erro);
+      console.error("Falha total no salvamento (Storage/Firestore):", erro);
     }
   }
 
- /* 📄 GERADOR DE PDF COM UPLOAD AUTOMÁTICO PARA FIREBASE */
+  /* 📄 GERADOR DE PDF COM CHAMADA DO FIREBASE */
   window.gerarPDF = function() {
-    // 1. Seleciona o conteúdo (tenta pegar a tag <main>, se não existir, pega o <body> todo)
+    // Tenta pegar a div principal do conteúdo, senão pega o body
     const elemento = document.querySelector('main') || document.body;
     
-    // 2. Define o nome do arquivo usando o título da página e a data atual
     const nomeRelatorio = document.title || "Relatorio_Tecnico";
     const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     const nomeFinalArquivo = `${nomeRelatorio}_${dataAtual}.pdf`;
@@ -393,21 +400,22 @@ if (sessionStorage.getItem("logado") !== "true") {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    console.log("Iniciando processo de geração e backup...");
+    console.log("Gerando PDF...");
 
-    // 3. Executa o fluxo: Gera o Blob -> Envia para Nuvem -> Faz o Download local
+    // Fluxo: Gera o PDF -> Transforma em Blob -> Envia para Firebase -> Baixa no PC
     html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
       
-      // Chama a função de salvamento no Firebase Storage que adicionamos antes
+      // DISPARA O UPLOAD PARA O FIREBASE
       salvarPDFNoFirebase(pdfBlob); 
 
-      // Faz o download para o técnico (usuário)
+      // FAZ O DOWNLOAD LOCAL PARA O TÉCNICO
       html2pdf().set(opt).from(elemento).save(); 
       
-      console.log("Relatório enviado para o Storage e download iniciado.");
+      alert("Relatório gerado! A cópia de segurança está sendo salva na nuvem.");
+      
     }).catch(err => {
-      console.error("Erro ao gerar PDF:", err);
-      alert("Erro ao gerar PDF. Verifique o console.");
+      console.error("Erro crítico na geração do PDF:", err);
+      alert("Erro ao gerar PDF.");
     });
   };
 
@@ -424,6 +432,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 
 </body>
 </html>
+
 
 
 
