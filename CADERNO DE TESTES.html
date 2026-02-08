@@ -310,6 +310,14 @@ if (sessionStorage.getItem("logado") !== "true") {
     serverTimestamp 
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+  /* ☁️ STORAGE (NOVO) */
+  import { 
+    getStorage, 
+    ref, 
+    uploadBytes, 
+    getDownloadURL 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
   /* ⚙️ CONFIG */
   const firebaseConfig = {
     apiKey: "AIzaSyA1CQ8LDia_nedDsttlbxKhFD9NMvj29Kw",
@@ -324,26 +332,69 @@ if (sessionStorage.getItem("logado") !== "true") {
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const storage = getStorage(app); // Inicializa o Storage
 
-  /* 🔒 BLOQUEIA ACESSO SEM LOGIN + REGISTRA ACESSO */
-  onAuthStateChanged(auth, async (user) => {
+  /* 🔒 BLOQUEIA ACESSO SEM LOGIN */
+  onAuthStateChanged(auth, (user) => {
     if (!user) {
       window.location.href = "index.html";
-      return;
     }
+  });
+
+  /* 📤 FUNÇÃO PARA SALVAR O PDF NO FIREBASE (NOVA) */
+  async function salvarPDFNoFirebase(pdfBlob) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const nomeRelatorio = document.title || "Relatorio";
+    const timestamp = new Date().getTime();
+    const nomeArquivo = `${timestamp}_${nomeRelatorio}.pdf`;
+
+    // Caminho: relatorios/email_do_tecnico/nome_do_arquivo.pdf
+    const storageRef = ref(storage, `relatorios/${user.email}/${nomeArquivo}`);
 
     try {
+      // 1. Faz o upload do arquivo
+      const snapshot = await uploadBytes(storageRef, pdfBlob);
+      // 2. Pega a URL pública
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // 3. Registra o Log no Firestore já com o link do PDF
       await addDoc(collection(db, "acessos_relatorios"), {
         uid: user.uid,
         nome: user.displayName || "",
         email: user.email || "",
-        relatorio: document.title,
-        dataHora: serverTimestamp()
+        relatorio: nomeRelatorio,
+        dataHora: serverTimestamp(),
+        pdf_url: downloadURL // Link direto para abrir o PDF
       });
+
+      console.log("Cópia de segurança salva com sucesso!");
     } catch (erro) {
-      console.error("Erro ao registrar acesso:", erro);
+      console.error("Erro ao salvar no Storage/Firestore:", erro);
     }
-  });
+  }
+
+  /* 📄 INTEGRAÇÃO COM SEU GERADOR DE PDF */
+  // Você deve chamar essa função dentro do seu botão 'Gerar PDF'
+  // Exemplo se usar html2pdf:
+  window.gerarRelatorioFinal = function() {
+    const elemento = document.body; // ou a div do seu relatório
+    
+    const opt = {
+      margin: 10,
+      filename: 'Relatorio.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Gera o PDF, envia para o Firebase e depois baixa
+    html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
+      salvarPDFNoFirebase(pdfBlob); // SALVA NA NUVEM
+      html2pdf().set(opt).from(elemento).save(); // BAIXA NO PC
+    });
+  };
 
   /* 🚪 BOTÃO SAIR */
   window.logout = function () {
@@ -356,6 +407,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 
 </body>
 </html>
+
 
 
 
