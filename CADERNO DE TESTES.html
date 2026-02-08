@@ -56,15 +56,16 @@
         .page { 
     background: white; 
     width: 794px; 
-    height: 1122px; /* Altura fixa para A4 exato */
+    height: 1122px; /* Altura exata do A4 em 96dpi */
     padding: 40px 50px; 
     position: relative; 
     display: flex; 
     flex-direction: column;
-    margin: 0 auto; /* Centraliza */
-    box-shadow: none; /* Remove sombra para não bugar no PDF */
-    page-break-after: avoid; /* Mudamos de always para avoid */
-    overflow: hidden;
+    margin: 0; /* Remova margens para o PDF não bugar */
+    box-shadow: none; 
+    overflow: hidden; /* Não deixa o conteúdo vazar e criar páginas extras */
+    page-break-after: avoid; /* Deixe o script controlar a quebra */
+    page-break-inside: avoid;
 }
 
         /* Cabeçalho */
@@ -330,24 +331,31 @@
   window.gerarPDF = function() {
     const elemento = document.getElementById('conteudo-principal');
     
+    // Configurações otimizadas para evitar páginas em branco
     const opt = {
       margin: 0,
       filename: `Termo_VoIP_${new Date().getTime()}.pdf`,
-      image: { type: 'jpeg', quality: 1.0 }, // Qualidade máxima
+      image: { type: 'jpeg', quality: 1.0 },
       html2canvas: { 
         scale: 2, 
-        useCORS: true,
+        useCORS: true, 
         letterRendering: true,
-        scrollY: 0 // Garante que comece do topo
+        scrollY: 0,
+        windowWidth: 794 // Força a largura do canvas ao tamanho da página
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      // O SEGREDO ESTÁ AQUI:
-      pagebreak: { mode: 'css', before: '.page' } 
+      // O modo 'css' respeita a sua estrutura de DIVs sem inventar páginas
+      pagebreak: { mode: 'css', before: '.page' }
     };
 
+    console.log("Gerando PDF oficial...");
+
     html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
-      salvarPDFNoFirebase(pdfBlob); 
-      html2pdf().set(opt).from(elemento).save(); 
+      salvarPDFNoFirebase(pdfBlob); // Mantém o seu backup
+      html2pdf().set(opt).from(elemento).save(); // Faz o download
+    }).catch(err => {
+      console.error("Erro:", err);
+      alert("Erro ao gerar PDF.");
     });
 };
   window.logout = function () {
@@ -360,4 +368,5 @@
 
 </body>
 </html>
+
 
