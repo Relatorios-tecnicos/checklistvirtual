@@ -56,16 +56,19 @@
         .page { 
     background: white; 
     width: 794px; 
-    height: 1122px; /* Altura exata do A4 em 96dpi */
+    height: 1122px; 
     padding: 40px 50px; 
     position: relative; 
     display: flex; 
     flex-direction: column;
-    margin: 0; /* Remova margens para o PDF não bugar */
-    box-shadow: none; 
-    overflow: hidden; /* Não deixa o conteúdo vazar e criar páginas extras */
-    page-break-after: avoid; /* Deixe o script controlar a quebra */
-    page-break-inside: avoid;
+    margin: 0 !important; /* Remove margens que criam páginas vazias */
+    box-shadow: none !important; 
+    page-break-after: always; /* Força a quebra apenas entre as .page */
+}
+
+/* Remove a quebra na última página para não criar uma folha em branco no fim */
+.page:last-child {
+    page-break-after: avoid !important;
 }
 
         /* Cabeçalho */
@@ -328,34 +331,44 @@
   }
 
   /* 📄 GERADOR DE PDF CORRIGIDO PARA MIRAR O CONTEÚDO CERTO */
-  window.gerarPDF = function() {
-    const elemento = document.getElementById('conteudo-principal');
+ window.gerarPDF = function() {
+    // Selecionamos o container que criamos anteriormente
+    const elementoOriginal = document.getElementById('conteudo-principal');
     
-    // Configurações otimizadas para evitar páginas em branco
+    if (!elementoOriginal) {
+        alert("Erro: Container 'conteudo-principal' não encontrado!");
+        return;
+    }
+
+    // Configurações para PDF exato de 3 páginas
     const opt = {
-      margin: 0,
-      filename: `Termo_VoIP_${new Date().getTime()}.pdf`,
-      image: { type: 'jpeg', quality: 1.0 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
-        scrollY: 0,
-        windowWidth: 794 // Força a largura do canvas ao tamanho da página
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      // O modo 'css' respeita a sua estrutura de DIVs sem inventar páginas
-      pagebreak: { mode: 'css', before: '.page' }
+        margin: 0,
+        filename: `Termo_VoIP_${new Date().getTime()}.pdf`,
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            letterRendering: true,
+            scrollY: 0,
+            windowWidth: 794
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
     };
 
-    console.log("Gerando PDF oficial...");
+    console.log("Gerando PDF...");
 
-    html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
-      salvarPDFNoFirebase(pdfBlob); // Mantém o seu backup
-      html2pdf().set(opt).from(elemento).save(); // Faz o download
+    // Gerar o PDF
+    html2pdf().set(opt).from(elementoOriginal).toPdf().output('blob').then((pdfBlob) => {
+        // Envia para o Firebase (Sua função existente)
+        salvarPDFNoFirebase(pdfBlob); 
+        
+        // Faz o download local
+        html2pdf().set(opt).from(elementoOriginal).save();
+        
+        alert("PDF Gerado com sucesso (3 páginas)!");
     }).catch(err => {
-      console.error("Erro:", err);
-      alert("Erro ao gerar PDF.");
+        console.error("Erro Crítico:", err);
     });
 };
   window.logout = function () {
@@ -368,5 +381,6 @@
 
 </body>
 </html>
+
 
 
