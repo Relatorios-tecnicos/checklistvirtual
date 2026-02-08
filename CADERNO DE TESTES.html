@@ -375,24 +375,39 @@ if (sessionStorage.getItem("logado") !== "true") {
     }
   }
 
-  /* 📄 INTEGRAÇÃO COM SEU GERADOR DE PDF */
-  // Você deve chamar essa função dentro do seu botão 'Gerar PDF'
-  // Exemplo se usar html2pdf:
-  window.gerarRelatorioFinal = function() {
-    const elemento = document.body; // ou a div do seu relatório
+ /* 📄 GERADOR DE PDF COM UPLOAD AUTOMÁTICO PARA FIREBASE */
+  window.gerarPDF = function() {
+    // 1. Seleciona o conteúdo (tenta pegar a tag <main>, se não existir, pega o <body> todo)
+    const elemento = document.querySelector('main') || document.body;
     
+    // 2. Define o nome do arquivo usando o título da página e a data atual
+    const nomeRelatorio = document.title || "Relatorio_Tecnico";
+    const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const nomeFinalArquivo = `${nomeRelatorio}_${dataAtual}.pdf`;
+
     const opt = {
       margin: 10,
-      filename: 'Relatorio.pdf',
+      filename: nomeFinalArquivo,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
+      html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // Gera o PDF, envia para o Firebase e depois baixa
+    console.log("Iniciando processo de geração e backup...");
+
+    // 3. Executa o fluxo: Gera o Blob -> Envia para Nuvem -> Faz o Download local
     html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
-      salvarPDFNoFirebase(pdfBlob); // SALVA NA NUVEM
-      html2pdf().set(opt).from(elemento).save(); // BAIXA NO PC
+      
+      // Chama a função de salvamento no Firebase Storage que adicionamos antes
+      salvarPDFNoFirebase(pdfBlob); 
+
+      // Faz o download para o técnico (usuário)
+      html2pdf().set(opt).from(elemento).save(); 
+      
+      console.log("Relatório enviado para o Storage e download iniciado.");
+    }).catch(err => {
+      console.error("Erro ao gerar PDF:", err);
+      alert("Erro ao gerar PDF. Verifique o console.");
     });
   };
 
@@ -401,12 +416,15 @@ if (sessionStorage.getItem("logado") !== "true") {
     signOut(auth).then(() => {
       sessionStorage.clear();
       window.location.href = "index.html";
+    }).catch((error) => {
+      console.error("Erro ao deslogar:", error);
     });
   };
 </script>
 
 </body>
 </html>
+
 
 
 
