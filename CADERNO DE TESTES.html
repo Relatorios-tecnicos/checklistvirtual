@@ -2,101 +2,64 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Termo de Aceitação VoIP - Global Hitss</title>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <style>
-        /* RESET BÁSICO */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; }
+        /* RESET E ESTRUTURA BASE */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #525659; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         
-        body { 
-            font-family: Arial, sans-serif; 
-            background: #525659; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding-bottom: 80px;
-        }
+        /* CONTAINER DO TERMO */
+        #meu-termo { width: 794px; background: white; padding: 0; }
 
-        /* PÁGINA A4 ESTILIZADA */
+        /* PÁGINAS */
         .page { 
             background: white; 
             width: 794px; 
-            min-height: 1120px; 
+            min-height: 1122px; 
             padding: 40px 50px; 
-            margin-top: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
             display: flex; 
             flex-direction: column;
             page-break-after: always;
+            position: relative;
         }
 
-        /* CABEÇALHO ORIGINAL */
-        .header-main { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
-            border-bottom: 2px solid #0070c0; 
-            padding-bottom: 10px;
-        }
+        /* CABEÇALHO */
+        .header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #0070c0; padding-bottom: 10px; }
         .logo-box { width: 150px; }
-        .logo-img { max-height: 45px; max-width: 100%; object-fit: contain; }
-        .header-center { text-align: center; font-size: 13px; font-weight: bold; flex: 1; color: #0070c0; }
+        .logo-img { max-height: 50px; max-width: 100%; object-fit: contain; }
+        .header-center { text-align: center; font-size: 12px; font-weight: bold; flex: 1; color: #0070c0; padding: 0 10px; }
 
         /* TABELAS */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
         th { background-color: #0070c0; color: white; font-size: 11px; padding: 8px; border: 1px solid #000; }
-        td { border: 1px solid #000; padding: 6px; font-size: 11px; }
+        td { border: 1px solid #000; padding: 6px; font-size: 11px; word-wrap: break-word; }
 
         /* INPUTS */
         .editable-input { border: none; border-bottom: 1px solid #000; outline: none; font-size: 12px; }
-        .input-ok { width: 100%; border: none; text-align: center; font-weight: bold; background: transparent; }
+        .input-ok { width: 100%; border: none; text-align: center; font-weight: bold; background: transparent; text-transform: uppercase; }
 
-        /* ÁREA DE ASSINATURA CORRIGIDA (LOGO ABAIXO DO CONTEÚDO) */
-        .sig-container { 
-            margin-top: 20px; /* Distância curta do texto */
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-        }
+        /* ASSINATURAS (AGORA NO TOPO DA PÁGINA 3) */
+        .sig-container { margin-top: 20px; display: flex; flex-direction: column; gap: 20px; }
         .sig-row { display: flex; justify-content: space-between; align-items: flex-end; }
         .sig-box { width: 45%; }
-        .sig-line { 
-            border-bottom: 1px solid #000; 
-            height: 60px; 
-            margin-bottom: 5px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            background: #f9f9f9;
-            cursor: pointer;
-        }
-        .sig-line img { max-height: 100%; }
+        .sig-line { border-bottom: 1px solid #000; height: 70px; margin-bottom: 5px; display: flex; justify-content: center; align-items: center; background: #f9f9f9; cursor: pointer; }
+        .sig-line img { max-height: 90%; }
 
         /* BOTÕES */
-        .btn-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: #222; padding: 15px; display: flex; justify-content: center; gap: 15px; z-index: 1000; }
-        .btn-panel button { padding: 12px 25px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-print { background: #e1251b; }
+        .btn-panel { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 1000; }
+        .btn-print { padding: 15px 30px; background: #e1251b; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
         /* MODAL */
         #sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; }
-        .modal-content { background: white; border-radius: 8px; width: 90%; max-width: 500px; }
-        #modal-canvas { background: #fff; width: 100%; height: 300px; touch-action: none; border-bottom: 1px solid #ddd; }
-
-        @media print {
-            body { background: white; padding: 0; }
-            .btn-panel { display: none; }
-            .page { margin: 0; box-shadow: none; width: 100%; }
-        }
+        .modal-content { background: white; border-radius: 8px; width: 500px; padding: 10px; }
+        #modal-canvas { background: #fff; width: 100%; height: 300px; border: 1px solid #ccc; touch-action: none; }
     </style>
 </head>
 <body>
 
 <div class="btn-panel">
-    <button class="btn-print" onclick="window.gerarPDF()">GERAR PDF</button>
+    <button class="btn-print" onclick="window.gerarPDF()">GERAR PDF AGORA</button>
 </div>
 
 <div id="meu-termo">
@@ -117,7 +80,17 @@
             <tbody>
                 <tr><td>1- LOCAL - FIXO</td><td>Ligar para telefone fixo da região.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
                 <tr><td>2- LOCAL - CELULAR</td><td>Ligar para telefone móvel da região.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
-                <tr><td>...</td><td>Continuação dos testes...</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>3- DDD FIXO - Intra</td><td>((0)0XX18) 3355-6363. Códigos: 21; 15; 41; 29</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>4- DDD - FIXO</td><td>((0)0XX11) 3003-2717. Códigos: 21; 15; 41; 29</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>5- DDD FIXO - Pref 19</td><td>((0)0XX11) 4583-6500 (Jundiaí).</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>6- DDD - CEL (VC2)</td><td>((0)0XX19) 99351-2736.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>7- DDD - CEL (VC3)</td><td>((0)0XX21) 99333-7548.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>8- DDI</td><td>((0)00XX) 1 718 244 4444.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>9- LOCAL - 0800</td><td>(0) 0800 721 1021.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>10- EMERGÊNCIA</td><td>Ligar para o número (0) 193.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>11- SERVIÇOS</td><td>Ligar para o número (0) 10321.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>12- ENTRE OES</td><td>Ligar para o número (11) 2868-4017.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>13- 0500 е 0900</td><td>Ligar para serviços pagos (bloqueio esperado).</td><td><input type="text" class="input-ok" value="OK"></td></tr>
             </tbody>
         </table>
     </div>
@@ -129,25 +102,57 @@
             <div class="logo-box" style="text-align:right;"><img src="https://www.prodesp.sp.gov.br/wp-content/uploads/2021/08/logo-prodesp.png" class="logo-img"></div>
         </div>
 
-        <h2 style="font-size: 14px; text-decoration: underline; margin-bottom: 15px; text-align:center;">RESPONSABILIDADE DE EXECUÇÃO / APROVAÇÃO TÉCNICA</h2>
+        <table>
+            <thead><tr><th style="width: 88%;">Tipo de chamada (Recebimento)</th><th style="width:12%">OK</th></tr></thead>
+            <tbody>
+                <tr><td>1 - Recebimento de chamada via pública para ramal IP</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>2 - Chamada e recebimento de chamadas on-net</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>3 - Verificação do número de A para chamadas de saída</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+            </tbody>
+        </table>
+
+        <div style="font-size:12px; font-weight:bold; margin: 10px 0;">Procedimento de funcionalidades</div>
+        <table>
+            <thead><tr><th style="width: 88%;">Tipo de Funcionalidade</th><th style="width:12%">OK</th></tr></thead>
+            <tbody>
+                <tr><td>1. Consulta - Chamada em espera e resumo da chamada.</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>2. Transferência de Chamadas (Com e sem consulta)</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>3. Conferência (ad-hoc)</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>4. Estacionamento de chamada (Call Park)</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>5. Música em Espera</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>6. Características</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>&nbsp;&nbsp;&nbsp;6.1 Tom de discar após digitar 0</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+                <tr><td>&nbsp;&nbsp;&nbsp;6.2 - Display dos telefones</td><td><input type="text" class="input-ok" value="OK"></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page">
+        <div class="header-main">
+            <div class="logo-box"><img src="https://upload.wikimedia.org/wikipedia/pt/thumb/a/af/Embratel_Logo.png/250px-Embratel_Logo.png" class="logo-img"></div>
+            <div class="header-center">Termo de Aceitação do Site - Ativação VoIP SCV2 – PRODESP e OES</div>
+            <div class="logo-box" style="text-align:right;"><img src="https://www.prodesp.sp.gov.br/wp-content/uploads/2021/08/logo-prodesp.png" class="logo-img"></div>
+        </div>
+
+        <h2 style="font-size: 14px; text-decoration: underline; margin-bottom: 20px; text-align:center;">RESPONSABILIDADE DE EXECUÇÃO / APROVAÇÃO TÉCNICA</h2>
 
         <div class="sig-container">
             <div class="sig-row">
                 <div class="sig-box">
                     <span style="font-size:11px; font-weight:bold;">Responsável para aceite (OES):</span>
                     <div class="sig-line" id="box-oes" onclick="openModal('oes')"></div>
-                    <input type="text" class="editable-input" style="width:100%" placeholder="Nome / CPF">
+                    <input type="text" class="editable-input" style="width:100%" placeholder="Nome / CPF / Matrícula">
                 </div>
                 <div>
                     <span style="font-size:11px; font-weight:bold;">Data:</span><br>
-                    <input type="text" class="editable-input" style="width:120px; text-align:center;" value="26/01/2026">
+                    <input type="text" class="editable-input" style="width:140px; text-align:center;" value="26 / 01 / 2026">
                 </div>
             </div>
             <div class="sig-row">
                 <div class="sig-box">
-                    <span style="font-size:11px; font-weight:bold;">Técnico (Global Hitss):</span>
+                    <span style="font-size:11px; font-weight:bold;">Técnico responsável (Global Hitss):</span>
                     <div class="sig-line" id="box-tec" onclick="openModal('tec')"></div>
-                    <input type="text" class="editable-input" style="width:100%" placeholder="Nome / Matrícula">
+                    <input type="text" class="editable-input" style="width:100%" placeholder="Nome / CPF / Matrícula">
                 </div>
             </div>
         </div>
@@ -173,8 +178,8 @@
         currentTarget = id; 
         document.getElementById('sig-modal').style.display = 'flex'; 
         mCanvas.width = mCanvas.offsetWidth;
-        mCanvas.height = mCanvas.offsetHeight;
-        mCtx.lineWidth = 2; mCtx.strokeStyle = '#0000FF';
+        mCanvas.height = 300;
+        mCtx.lineWidth = 2.5; mCtx.strokeStyle = '#0000FF'; mCtx.lineCap = 'round';
     }
     function closeModal() { document.getElementById('sig-modal').style.display = 'none'; mCtx.clearRect(0,0,mCanvas.width,mCanvas.height); }
     function saveSignature() {
@@ -198,7 +203,7 @@
         const elemento = document.getElementById('meu-termo');
         const opt = {
             margin: 0,
-            filename: 'Termo_VoIP.pdf',
+            filename: 'Termo_VoIP_Completo.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
