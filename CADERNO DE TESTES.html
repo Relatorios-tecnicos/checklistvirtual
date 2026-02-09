@@ -7,9 +7,15 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <style>
-    /* Reset e Base */
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; }
+   <style>
+    /* 1. Reset Radical para PDF */
+    * { 
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
+    }
     
     @page { 
         size: A4; 
@@ -22,41 +28,25 @@
         display: flex; 
         flex-direction: column; 
         align-items: center; 
-        min-width: 794px; 
-        padding-bottom: 100px;
-        -webkit-font-smoothing: antialiased;
+        width: 100%;
+        overflow-x: hidden;
     }
 
-    /* Container Principal - Trava absoluta de largura */
+    /* 2. Container Principal - Aumentamos a segurança da largura */
     #conteudo-principal {
         width: 794px !important;
-        max-width: 794px !important;
-        background: transparent;
-        display: block;
+        background: white;
         margin: 0 auto;
+        padding: 0;
+        display: block;
     }
 
-    /* Painel de Botões */
-    .btn-panel { 
-        position: fixed; bottom: 0; left: 0; width: 100%; background: #222;
-        padding: 15px; display: flex; justify-content: center; gap: 15px;
-        z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-    }
-
-    .btn-panel button { 
-        flex: 1; max-width: 180px; padding: 12px; border: none; border-radius: 8px; 
-        font-weight: bold; cursor: pointer; color: white; font-size: 13px; text-transform: uppercase;
-    }
-    .btn-print { background: #e1251b; }
-    .btn-clear { background: #555; }
-    .btn-back { background: #444; }
-
-    /* Configuração de Página - Ajuste de altura e overflow */
+    /* 3. Configuração da Página - Ajuste de Respiro Lateral */
     .page { 
         background: white; 
         width: 794px !important; 
-        height: 1120px !important; 
-        padding: 30px 40px; /* Reduzido levemente para dar margem de manobra */
+        height: 1121px !important; 
+        padding: 35px 50px; /* Aumentamos o respiro lateral para 50px */
         position: relative; 
         display: flex; 
         flex-direction: column;
@@ -71,51 +61,82 @@
         page-break-after: avoid !important;
     }
 
-    /* Cabeçalho - Ajustado para largura total */
-    .header-main { 
-        display: flex; justify-content: space-between; align-items: center; 
-        margin-bottom: 20px; border-bottom: 2px solid #0070c0; padding-bottom: 10px;
-        width: 100%;
-    }
-    .logo-box { width: 150px; display: flex; align-items: center; height: 50px; }
-    .logo-img { max-height: 40px; max-width: 100%; object-fit: contain; }
-    .header-center { text-align: center; font-size: 11px; font-weight: bold; flex: 1; color: #0070c0; }
-
-    /* Tabelas - O segredo para não cortar a lateral */
+    /* 4. Tabelas - Forçar quebra de texto em qualquer lugar */
     table { 
         width: 100% !important; 
         max-width: 100% !important;
         border-collapse: collapse; 
         border: 1px solid #000; 
-        margin-bottom: 15px; 
-        table-layout: fixed; /* Força o respeito aos limites da página */
+        margin-bottom: 12px; 
+        table-layout: fixed; /* OBRIGATÓRIO */
     }
-    th { background-color: #0070c0 !important; color: white; font-size: 10px; padding: 6px; border: 1px solid #000; }
+
+    th { 
+        background-color: #0070c0 !important; 
+        color: white !important; 
+        font-size: 9px; 
+        padding: 5px; 
+        border: 1px solid #000; 
+    }
+
     td { 
-        border: 1px solid #000; padding: 5px 8px; font-size: 10px; 
+        border: 1px solid #000; 
+        padding: 4px 6px; 
+        font-size: 9px; /* Reduzido para evitar que o conteúdo empurre a borda */
         word-wrap: break-word; 
-        overflow-wrap: anywhere; /* Impede que textos longos "empurrem" a tabela */
+        overflow-wrap: break-word; /* Garante que links ou nomes longos quebrem a linha */
+        white-space: normal;
     }
     
-    .editable-input { border: none; border-bottom: 1px solid #000; outline: none; width: 100%; font-size: 12px; }
+    /* 5. Inputs e Cabeçalho */
+    .header-main { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 15px; 
+        border-bottom: 2px solid #0070c0; 
+        padding-bottom: 8px;
+        width: 100%;
+    }
 
-    /* Assinaturas - Fixadas na parte inferior */
+    .logo-box { width: 140px; }
+    .logo-img { max-height: 35px; width: auto; }
+
+    .editable-input { 
+        border: none; 
+        border-bottom: 1px solid #000; 
+        width: 100%; 
+        font-size: 11px; 
+        background: transparent;
+    }
+
+    /* 6. Assinaturas - Proteção de Transbordo */
     .sig-container { 
-        margin-top: auto; /* Empurra para o fim da página */
-        padding-bottom: 10px; 
+        margin-top: auto; 
+        padding-top: 10px;
         display: flex; 
         flex-direction: column; 
-        gap: 20px; 
+        gap: 15px; 
     }
-    .sig-row { display: flex; justify-content: space-between; align-items: flex-end; }
-    .sig-box { width: 45%; }
-    .sig-line { border-bottom: 1px solid #000; height: 60px; margin-bottom: 5px; display: flex; justify-content: center; align-items: center; }
+
+    .sig-line { 
+        border-bottom: 1px solid #000; 
+        height: 50px; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+    }
+
     .sig-line img { max-height: 100%; mix-blend-mode: multiply; }
 
+    /* Botões (Não saem no PDF) */
+    .btn-panel { position: fixed; bottom: 0; width: 100%; background: #222; padding: 15px; display: flex; justify-content: center; z-index: 1000; }
+    .btn-panel button { margin: 0 10px; padding: 10px 20px; border-radius: 5px; cursor: pointer; color: white; border: none; font-weight: bold; }
+    .btn-print { background: #e1251b; }
+
     @media print {
-        body { background: white; padding: 0; }
-        .btn-panel, #sig-modal, #userInfo { display: none !important; }
-        .page { margin: 0; width: 100%; height: 100%; border: none; }
+        body { background: white; }
+        .btn-panel { display: none !important; }
     }
 </style>
 </head>
@@ -382,6 +403,7 @@ window.gerarPDF = function() {
 
 </body>
 </html>
+
 
 
 
