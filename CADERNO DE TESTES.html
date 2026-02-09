@@ -23,99 +23,99 @@
         flex-direction: column; 
         align-items: center; 
         min-width: 794px; 
-        padding-bottom: 100px; 
+        padding-bottom: 100px;
+        -webkit-font-smoothing: antialiased;
     }
 
-    /* Trava a largura do container para não cortar a lateral */
+    /* Container Principal - Trava absoluta de largura */
     #conteudo-principal {
-        width: 794px;
+        width: 794px !important;
+        max-width: 794px !important;
         background: transparent;
-        display: block; /* Garante que o container se comporte como bloco fixo */
+        display: block;
         margin: 0 auto;
     }
 
-    /* PAINEL DE BOTÕES FIXO NO RODAPÉ */
+    /* Painel de Botões */
     .btn-panel { 
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: #222;
-        padding: 15px;
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        z-index: 1000;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+        position: fixed; bottom: 0; left: 0; width: 100%; background: #222;
+        padding: 15px; display: flex; justify-content: center; gap: 15px;
+        z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
     }
 
     .btn-panel button { 
-        flex: 1;
-        max-width: 180px;
-        padding: 12px; 
-        border: none; 
-        border-radius: 8px; 
-        font-weight: bold; 
-        cursor: pointer; 
-        color: white; 
-        font-size: 13px;
-        text-transform: uppercase;
+        flex: 1; max-width: 180px; padding: 12px; border: none; border-radius: 8px; 
+        font-weight: bold; cursor: pointer; color: white; font-size: 13px; text-transform: uppercase;
     }
     .btn-print { background: #e1251b; }
     .btn-clear { background: #555; }
     .btn-back { background: #444; }
 
-    /* Configuração rigorosa de página para evitar brancos e cortes */
+    /* Configuração de Página - Ajuste de altura e overflow */
     .page { 
         background: white; 
-        width: 794px; 
-        height: 1120px; /* Reduzido 2px para evitar transbordo e páginas extras */
-        padding: 40px 50px; 
+        width: 794px !important; 
+        height: 1120px !important; 
+        padding: 30px 40px; /* Reduzido levemente para dar margem de manobra */
         position: relative; 
         display: flex; 
         flex-direction: column;
         margin: 0 !important; 
         box-shadow: none !important; 
-        overflow: hidden; /* Corta qualquer conteúdo que tente sair da borda */
+        overflow: hidden; 
         page-break-after: always;
         page-break-inside: avoid;
     }
 
-    /* Remove a quebra na última página para eliminar a folha em branco final */
     .page:last-child {
         page-break-after: avoid !important;
     }
 
-    /* Cabeçalho */
-    .header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #0070c0; padding-bottom: 10px; }
-    .logo-box { width: 180px; display: flex; align-items: center; height: 50px; }
-    .logo-img { max-height: 45px; max-width: 100%; object-fit: contain; }
-    .header-center { text-align: center; font-size: 12px; font-weight: bold; flex: 1; padding: 0 10px; color: #0070c0; }
+    /* Cabeçalho - Ajustado para largura total */
+    .header-main { 
+        display: flex; justify-content: space-between; align-items: center; 
+        margin-bottom: 20px; border-bottom: 2px solid #0070c0; padding-bottom: 10px;
+        width: 100%;
+    }
+    .logo-box { width: 150px; display: flex; align-items: center; height: 50px; }
+    .logo-img { max-height: 40px; max-width: 100%; object-fit: contain; }
+    .header-center { text-align: center; font-size: 11px; font-weight: bold; flex: 1; color: #0070c0; }
 
-    .form-info { font-size: 13px; margin-bottom: 15px; font-weight: bold; }
-    .editable-input { border: none; border-bottom: 1px solid #000; outline: none; padding: 2px; font-size: 14px; background: transparent; }
+    /* Tabelas - O segredo para não cortar a lateral */
+    table { 
+        width: 100% !important; 
+        max-width: 100% !important;
+        border-collapse: collapse; 
+        border: 1px solid #000; 
+        margin-bottom: 15px; 
+        table-layout: fixed; /* Força o respeito aos limites da página */
+    }
+    th { background-color: #0070c0 !important; color: white; font-size: 10px; padding: 6px; border: 1px solid #000; }
+    td { 
+        border: 1px solid #000; padding: 5px 8px; font-size: 10px; 
+        word-wrap: break-word; 
+        overflow-wrap: anywhere; /* Impede que textos longos "empurrem" a tabela */
+    }
     
-    /* Tabelas travadas para não estourarem a lateral */
-    table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 20px; table-layout: fixed; }
-    th { background-color: #0070c0 !important; color: white; font-size: 10px; padding: 8px; border: 1px solid #000; }
-    td { border: 1px solid #000; padding: 6px 10px; font-size: 11px; word-wrap: break-word; }
-    
-    .input-ok { width: 100%; border: none; text-align: center; font-weight: bold; outline: none; background: transparent; text-transform: uppercase; }
+    .editable-input { border: none; border-bottom: 1px solid #000; outline: none; width: 100%; font-size: 12px; }
 
-    .sig-container { margin-top: auto; padding-bottom: 20px; display: flex; flex-direction: column; gap: 30px; }
+    /* Assinaturas - Fixadas na parte inferior */
+    .sig-container { 
+        margin-top: auto; /* Empurra para o fim da página */
+        padding-bottom: 10px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 20px; 
+    }
     .sig-row { display: flex; justify-content: space-between; align-items: flex-end; }
     .sig-box { width: 45%; }
-    .sig-line { border-bottom: 1px solid #000; height: 80px; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; background: transparent; }
-    .sig-line img { max-height: 90%; mix-blend-mode: multiply; }
-
-    #sig-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
-    .modal-content { background: white; width: 95%; max-width: 600px; border-radius: 12px; overflow: hidden; }
-    #modal-canvas { background: #fff; width: 100%; height: 350px; touch-action: none; display: block; cursor: crosshair; }
+    .sig-line { border-bottom: 1px solid #000; height: 60px; margin-bottom: 5px; display: flex; justify-content: center; align-items: center; }
+    .sig-line img { max-height: 100%; mix-blend-mode: multiply; }
 
     @media print {
         body { background: white; padding: 0; }
         .btn-panel, #sig-modal, #userInfo { display: none !important; }
-        .page { margin: 0; box-shadow: none; width: 100%; border: none; }
+        .page { margin: 0; width: 100%; height: 100%; border: none; }
     }
 </style>
 </head>
@@ -349,56 +349,28 @@
   }
 
   /* 📄 GERADOR DE PDF CORRIGIDO PARA MIRAR O CONTEÚDO CERTO */
- window.gerarPDF = function() {
-    // 1. Seleciona o container principal que definimos no CSS
+window.gerarPDF = function() {
     const elemento = document.getElementById('conteudo-principal');
 
-    if (!elemento) {
-        alert("Erro: Container 'conteudo-principal' não encontrado!");
-        return;
-    }
-
-    // 2. Configurações para travar o layout e evitar páginas extras
     const opt = {
         margin: 0,
-        filename: `Termo_VoIP_${new Date().getTime()}.pdf`,
+        filename: `Termo_VoIP_Final.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
-            scale: 2,           // Mantém a alta qualidade/nitidez
-            useCORS: true,      // Permite carregar as logos da Embratel/Prodesp
-            letterRendering: true,
-            width: 794,         // TRAVA a captura na largura do A4
-            windowWidth: 794,   // SIMULA uma tela de 794px para evitar o corte lateral
-            scrollY: 0,
-            scrollX: 0
+            scale: 2,           // Mantém nitidez
+            useCORS: true, 
+            width: 794,         // Trava a largura da foto
+            windowWidth: 794,   // Trava a largura do navegador
+            x: 0,               // Garante que comece do zero na esquerda
+            y: 0,               // Garante que comece do zero no topo
+            scrollX: 0,
+            scrollY: 0
         },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait',
-            precision: 32
-        },
-        // O modo 'css' garante que as 3 divs .page sejam respeitadas
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
     };
 
-    console.log("Iniciando geração de PDF (Layout A4)...");
-
-    // 3. Execução do processo
-    html2pdf().set(opt).from(elemento).toPdf().output('blob').then((pdfBlob) => {
-        // Envia para o Firebase (Sua função personalizada)
-        if (typeof salvarPDFNoFirebase === "function") {
-            salvarPDFNoFirebase(pdfBlob);
-        }
-        
-        // Gera o download para o usuário
-        html2pdf().set(opt).from(elemento).save();
-        
-        console.log("PDF gerado com sucesso!");
-    }).catch(err => {
-        console.error("Erro ao gerar o PDF:", err);
-        alert("Ocorreu um erro ao gerar o PDF. Verifique o console.");
-    });
+    html2pdf().set(opt).from(elemento).save();
 };
   window.logout = function () {
     signOut(auth).then(() => {
@@ -410,6 +382,7 @@
 
 </body>
 </html>
+
 
 
 
