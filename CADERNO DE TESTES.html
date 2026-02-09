@@ -316,7 +316,6 @@ location.reload();
     authDomain: "checklistvirtual.firebaseapp.com",
     projectId: "checklistvirtual",
     storageBucket: "checklistvirtual.appspot.com",
-    messagingSenderId: "421292656328",
     appId: "1:421292656328:web:2a2d4eb79c64a54ba9c7fd"
   };
 
@@ -325,33 +324,33 @@ location.reload();
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  /* 🔒 BLOQUEIA ACESSO SEM LOGIN + REGISTRA ACESSO */
+  /* 🔒 CONTROLE DE ACESSO E LOG DE RELATÓRIO */
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = "index.html";
       return;
     }
 
-    // Exibe o email na tela se houver o elemento userInfo
+    // Exibe o email do técnico na tela se o elemento existir
     const userInfo = document.getElementById('userInfo');
     if (userInfo) userInfo.innerText = user.email;
 
     try {
+      // Registra o acesso ao Caderno de Testes no Firestore
       await addDoc(collection(db, "acessos_relatorios"), {
         uid: user.uid,
-        nome: user.displayName || "Usuário",
+        nome: user.displayName || "Técnico",
         email: user.email || "",
-        relatorio: document.title,
+        relatorio: "Caderno de Testes VoIP",
         dataHora: serverTimestamp()
       });
-      console.log("Acesso registrado com sucesso!");
+      console.log("Log de acesso registrado.");
     } catch (erro) {
-      console.error("Erro ao registrar acesso:", erro);
+      console.error("Erro ao registrar log no Firestore:", erro);
     }
   });
 
-  /* 🚪 BOTÃO SAIR */
-  // No modo module, precisamos anexar a função ao window explicitamente
+  /* 🚪 FUNÇÃO DE LOGOUT */
   window.logout = function () {
     signOut(auth).then(() => {
       sessionStorage.clear();
@@ -365,6 +364,7 @@ location.reload();
 
 </body>
 </html>
+
 
 
 
