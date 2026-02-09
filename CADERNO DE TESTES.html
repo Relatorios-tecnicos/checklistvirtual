@@ -8,19 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
    <style>
-    /* 1. Reset Radical para PDF */
-    * { 
-        margin: 0; 
-        padding: 0; 
-        box-sizing: border-box; 
-        -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact;
-    }
-    
-    @page { 
-        size: A4; 
-        margin: 0; 
-    }
+    /* 1. Reset e Base - Força o comportamento de caixa */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; }
     
     body { 
         font-family: Arial, sans-serif; 
@@ -29,114 +18,75 @@
         flex-direction: column; 
         align-items: center; 
         width: 100%;
-        overflow-x: hidden;
     }
 
-    /* 2. Container Principal - Aumentamos a segurança da largura */
+    /* 2. Container Pai - Não pode ter NADA maior que 794px */
     #conteudo-principal {
         width: 794px !important;
         background: white;
-        margin: 0 auto;
-        padding: 0;
+        margin: 20px auto;
         display: block;
     }
 
-    /* 3. Configuração da Página - Ajuste de Respiro Lateral */
+    /* 3. A Página - Reduzi o padding para o conteúdo ter mais espaço */
     .page { 
         background: white; 
         width: 794px !important; 
-        height: 1121px !important; 
-        padding: 35px 50px; /* Aumentamos o respiro lateral para 50px */
+        height: 1120px !important; 
+        padding: 30px 35px; /* Reduzi as margens internas */
         position: relative; 
         display: flex; 
         flex-direction: column;
-        margin: 0 !important; 
-        box-shadow: none !important; 
+        margin: 0 auto !important; 
         overflow: hidden; 
         page-break-after: always;
-        page-break-inside: avoid;
     }
 
-    .page:last-child {
-        page-break-after: avoid !important;
-    }
-
-    /* 4. Tabelas - Forçar quebra de texto em qualquer lugar */
+    /* 4. Tabelas - O ponto crítico do erro lateral */
     table { 
         width: 100% !important; 
         max-width: 100% !important;
         border-collapse: collapse; 
-        border: 1px solid #000; 
-        margin-bottom: 12px; 
-        table-layout: fixed; /* OBRIGATÓRIO */
+        table-layout: fixed; /* Força o texto a quebrar em vez de esticar a tabela */
+        margin-bottom: 10px;
     }
 
-    th { 
-        background-color: #0070c0 !important; 
-        color: white !important; 
-        font-size: 9px; 
-        padding: 5px; 
-        border: 1px solid #000; 
-    }
-
-    td { 
+    td, th { 
         border: 1px solid #000; 
         padding: 4px 6px; 
-        font-size: 9px; /* Reduzido para evitar que o conteúdo empurre a borda */
+        font-size: 10px; /* Fonte menor para caber mais dados */
         word-wrap: break-word; 
-        overflow-wrap: break-word; /* Garante que links ou nomes longos quebrem a linha */
-        white-space: normal;
+        overflow-wrap: anywhere; 
+        vertical-align: middle;
     }
-    
-    /* 5. Inputs e Cabeçalho */
+
+    /* 5. Cabeçalho e Logos */
     .header-main { 
         display: flex; 
         justify-content: space-between; 
         align-items: center; 
         margin-bottom: 15px; 
         border-bottom: 2px solid #0070c0; 
-        padding-bottom: 8px;
         width: 100%;
     }
+    .logo-box { width: 120px; }
+    .logo-img { max-height: 35px; max-width: 100%; object-fit: contain; }
 
-    .logo-box { width: 140px; }
-    .logo-img { max-height: 35px; width: auto; }
-
-    .editable-input { 
-        border: none; 
-        border-bottom: 1px solid #000; 
-        width: 100%; 
-        font-size: 11px; 
-        background: transparent;
-    }
-
-    /* 6. Assinaturas - Proteção de Transbordo */
+    /* 6. Assinaturas - margin-top: auto resolve o empurramento */
     .sig-container { 
         margin-top: auto; 
-        padding-top: 10px;
+        padding-bottom: 10px;
         display: flex; 
         flex-direction: column; 
         gap: 15px; 
     }
+    .sig-row { display: flex; justify-content: space-between; }
+    .sig-box { width: 48%; }
+    .sig-line { border-bottom: 1px solid #000; height: 50px; margin-bottom: 5px; }
 
-    .sig-line { 
-        border-bottom: 1px solid #000; 
-        height: 50px; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-    }
-
-    .sig-line img { max-height: 100%; mix-blend-mode: multiply; }
-
-    /* Botões (Não saem no PDF) */
-    .btn-panel { position: fixed; bottom: 0; width: 100%; background: #222; padding: 15px; display: flex; justify-content: center; z-index: 1000; }
-    .btn-panel button { margin: 0 10px; padding: 10px 20px; border-radius: 5px; cursor: pointer; color: white; border: none; font-weight: bold; }
-    .btn-print { background: #e1251b; }
-
+    /* Esconde botões no PDF */
     @media print {
-        body { background: white; }
-        .btn-panel { display: none !important; }
+        .btn-panel, #userInfo { display: none !important; }
     }
 </style>
 </head>
@@ -403,6 +353,7 @@ window.gerarPDF = function() {
 
 </body>
 </html>
+
 
 
 
