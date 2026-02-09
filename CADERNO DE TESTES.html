@@ -293,14 +293,14 @@ location.reload();
 </script>
 <script type="module">
   /* 🔥 FIREBASE CORE */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
   /* 🔐 AUTH */
-import { 
-getAuth, 
-onAuthStateChanged, 
-signOut 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { 
+    getAuth, 
+    onAuthStateChanged, 
+    signOut 
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
   /* 🗄️ FIRESTORE */
   import { 
@@ -311,52 +311,61 @@ signOut
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   /* ⚙️ CONFIG */
-const firebaseConfig = {
-apiKey: "AIzaSyA1CQ8LDia_nedDsttlbxKhFD9NMvj29Kw",
-authDomain: "checklistvirtual.firebaseapp.com",
-@@ -308,17 +320,32 @@
-appId: "1:421292656328:web:2a2d4eb79c64a54ba9c7fd"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1CQ8LDia_nedDsttlbxKhFD9NMvj29Kw",
+    authDomain: "checklistvirtual.firebaseapp.com",
+    projectId: "checklistvirtual",
+    storageBucket: "checklistvirtual.appspot.com",
+    messagingSenderId: "421292656328",
+    appId: "1:421292656328:web:2a2d4eb79c64a54ba9c7fd"
+  };
 
   /* 🚀 INIT */
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // 🔒 BLOQUEIA ACESSO SEM LOGIN
-  onAuthStateChanged(auth, (user) => {
   /* 🔒 BLOQUEIA ACESSO SEM LOGIN + REGISTRA ACESSO */
   onAuthStateChanged(auth, async (user) => {
-if (!user) {
-window.location.href = "index.html";
+    if (!user) {
+      window.location.href = "index.html";
       return;
     }
+
+    // Exibe o email na tela se houver o elemento userInfo
+    const userInfo = document.getElementById('userInfo');
+    if (userInfo) userInfo.innerText = user.email;
 
     try {
       await addDoc(collection(db, "acessos_relatorios"), {
         uid: user.uid,
-        nome: user.displayName || "",
+        nome: user.displayName || "Usuário",
         email: user.email || "",
         relatorio: document.title,
         dataHora: serverTimestamp()
       });
+      console.log("Acesso registrado com sucesso!");
     } catch (erro) {
       console.error("Erro ao registrar acesso:", erro);
-}
-});
+    }
+  });
 
-  // 🚪 BOTÃO SAIR
   /* 🚪 BOTÃO SAIR */
-window.logout = function () {
-signOut(auth).then(() => {
-sessionStorage.clear();
-@@ -327,11 +354,11 @@
-};
+  // No modo module, precisamos anexar a função ao window explicitamente
+  window.logout = function () {
+    signOut(auth).then(() => {
+      sessionStorage.clear();
+      window.location.href = "index.html";
+    }).catch((error) => {
+      console.error("Erro ao sair:", error);
+    });
+  };
 </script>
 
 
 </body>
 </html>
+
 
 
 
