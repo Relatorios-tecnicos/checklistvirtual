@@ -17,7 +17,7 @@
             background-size: 280px auto;
             
             width: 794px; 
-            height: 1123px; /* Tamanho A4 padrão */
+            height: 1123px; 
             padding: 40px 60px; 
             position: relative; 
             display: flex;
@@ -36,11 +36,11 @@
         .texto-principal { font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 25px; }
         .input-linha { border: none; border-bottom: 1px solid #ccc; font-weight: bold; background: transparent; }
 
-        /* TABELA CORRIGIDA PARA 3 COLUNAS - IGUAL À FOTO */
+        /* TABELA COM 5 LINHAS EDITÁVEIS */
         .tabela-itens { width: 100%; margin: 20px 0; border-collapse: collapse; table-layout: fixed; }
-        .tabela-itens th, .tabela-itens td { border: 1px solid black; padding: 8px; font-size: 13px; text-align: center; overflow: hidden; }
-        .tabela-itens th { background: #f0f0f0 !important; font-weight: bold; }
-        .tabela-itens input { width: 100%; border: none; background: transparent; text-align: center; font-family: Arial; font-size: 13px; }
+        .tabela-itens th, .tabela-itens td { border: 1px solid black; padding: 0; font-size: 13px; text-align: center; height: 35px; }
+        .tabela-itens th { background: #f0f0f0 !important; font-weight: bold; padding: 8px; }
+        .tabela-itens input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-family: Arial; font-size: 13px; padding: 5px; }
 
         .obs { font-size: 13px; text-align: left; margin: 20px 0 40px 0; line-height: 1.4; }
 
@@ -85,7 +85,7 @@
         @media print { 
             .botoes, #modal-sig { display: none !important; } 
             body { background: white; }
-            .page { height: 1120px; border: none; box-shadow: none; }
+            .page { height: 1120px; border: none; box-shadow: none; margin: 0; padding: 40px 60px; }
             #userInfo { display: none !important; }
         }
 
@@ -110,7 +110,7 @@
     <div class="page">
         <div class="conteudo">
             <div class="header-logo">
-                <img src="COLE_URL_DA_LOGO_AQUI" class="logo-claro">
+                <img src="SUA_LOGO_AQUI" class="logo-claro">
             </div>
 
             <div class="titulo">
@@ -119,168 +119,4 @@
 
             <div class="texto-principal">
                 Este presente termo visa atestar que foram entregues no endereço/site 
-                <input type="text" class="input-linha" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 014677/08">, 
-                os seguintes itens constantes da solicitação de ativação VoIP sob o Protocolo <strong>SAOG – </strong> 
-                <input type="text" class="input-linha" style="width: 130px;" value="251506777778">.
-            </div>
-
-            <table class="tabela-itens">
-                <thead>
-                    <tr>
-                        <th style="width: 12%;">Item</th>
-                        <th style="width: 58%;">Descrição</th>
-                        <th style="width: 30%;">QUANTIDADE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>01</td>
-                        <td><input type="text" value="Gateway Mediant 500 - AudioCodes"></td>
-                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
-                    </tr>
-                    <tr>
-                        <td>02</td>
-                        <td><input type="text" value="Conector Balum"></td>
-                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
-                    </tr>
-                    <tr>
-                        <td>03</td>
-                        <td><input type="text" value="Conector Spinner"></td>
-                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="obs">
-                <strong>Observações:</strong><br>
-                *Confirmar se os aparelhos <strong>TARS</strong> contem fonte de alimentação AC.
-            </div>
-
-            <div class="assinatura-bloco">
-                <div class="assinatura-linha">
-                    <span class="label-sig">Entregue por:</span>
-                    <div class="campo-assinatura" onclick="abrirAssinar('sig1')"></div>
-                </div>
-                <div class="dados-id">
-                    <input type="text" placeholder="Nome Completo">
-                    <input type="text" placeholder="CPF ou Matrícula">
-                    <span class="sub-legenda">(Assinatura / Carimbo)</span>
-                </div>
-            </div>
-
-            <div class="assinatura-bloco">
-                <div class="assinatura-linha">
-                    <span class="label-sig">Recebido por:</span>
-                    <div class="campo-assinatura" onclick="abrirAssinar('sig2')"></div>
-                </div>
-                <div class="dados-id">
-                    <input type="text" placeholder="Nome Completo">
-                    <input type="text" placeholder="CPF ou Matrícula">
-                    <span class="sub-legenda">(Assinatura / Carimbo)</span>
-                </div>
-            </div>
-
-            <div class="data-footer">
-                São Paulo, <input type="text" value="26" style="width: 30px;"> de <input type="text" style="width: 85px;" value="Janeiro"> de <input type="text" value="2026" style="width: 50px;">.
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-sig">
-        <div class="modal-box">
-            <canvas id="canvas"></canvas>
-            <div style="margin-top: 10px; display: flex; gap: 10px;">
-                <button onclick="salvarAssinatura()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Confirmar</button>
-                <button onclick="fecharAssinar()" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext('2d');
-        let desenhando = false;
-        let alvoAtual = null;
-
-        function abrirAssinar(id) {
-            alvoAtual = id;
-            document.getElementById('modal-sig').style.display = 'flex';
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            ctx.lineWidth = 3; ctx.strokeStyle = "blue"; ctx.lineCap = "round";
-        }
-
-        function fecharAssinar() {
-            document.getElementById('modal-sig').style.display = 'none';
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function salvarAssinatura() {
-            const dataURL = canvas.toDataURL();
-            const campos = document.querySelectorAll('.campo-assinatura');
-            const index = alvoAtual === 'sig1' ? 0 : 1;
-            campos[index].innerHTML = `<img src="${dataURL}">`;
-            fecharAssinar();
-        }
-
-        canvas.onmousedown = () => desenhando = true;
-        canvas.onmouseup = () => { desenhando = false; ctx.beginPath(); };
-        canvas.onmousemove = (e) => { if (desenhando) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
-
-        canvas.ontouchstart = (e) => { desenhando = true; e.preventDefault(); };
-        canvas.ontouchmove = (e) => {
-            if (!desenhando) return;
-            let touch = e.touches[0];
-            let rect = canvas.getBoundingClientRect();
-            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-            ctx.stroke(); e.preventDefault();
-        };
-
-        function limpar() { if(confirm("Deseja zerar o formulário?")) location.reload(); }
-    </script>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyA1CQ8LDia_nedDsttlbxKhFD9NMvj29Kw",
-            authDomain: "checklistvirtual.firebaseapp.com",
-            projectId: "checklistvirtual",
-            storageBucket: "checklistvirtual.firebasestorage.app",
-            messagingSenderId: "421292656328",
-            appId: "1:421292656328:web:2a2d4eb79c64a54ba9c7fd"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = "index.html";
-                return;
-            }
-            try {
-                await addDoc(collection(db, "acessos_relatorios"), {
-                    uid: user.uid,
-                    nome: user.displayName || "",
-                    email: user.email || "",
-                    relatorio: document.title,
-                    dataHora: serverTimestamp()
-                });
-            } catch (erro) {
-                console.error("Erro ao registrar acesso:", erro);
-            }
-        });
-
-        window.logout = function () {
-            signOut(auth).then(() => {
-                sessionStorage.clear();
-                window.location.href = "index.html";
-            });
-        };
-    </script>
-</body>
-</html>
+                <input type="text" class="input-linha" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 01467
