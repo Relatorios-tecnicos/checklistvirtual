@@ -119,4 +119,134 @@
 
             <div class="texto-principal">
                 Este presente termo visa atestar que foram entregues no endereço/site 
-                <input type="text" class="input-linha" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 01467
+                <input type="text" class="input-linha" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 014677/08">, 
+                os seguintes itens constantes da solicitação de ativação VoIP sob o Protocolo <strong>SAOG – </strong> 
+                <input type="text" class="input-linha" style="width: 130px;" value="251506777778">.
+            </div>
+
+            <table class="tabela-itens">
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Item</th>
+                        <th style="width: 58%;">Descrição</th>
+                        <th style="width: 30%;">QUANTIDADE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" value="01"></td>
+                        <td><input type="text" value="Gateway Mediant 500 - AudioCodes"></td>
+                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="02"></td>
+                        <td><input type="text" value="Conector Balum"></td>
+                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="03"></td>
+                        <td><input type="text" value="Conector Spinner"></td>
+                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="04"></td>
+                        <td><input type="text" value=""></td>
+                        <td><input type="text" value="" style="font-weight: bold;"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="05"></td>
+                        <td><input type="text" value=""></td>
+                        <td><input type="text" value="" style="font-weight: bold;"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="obs">
+                <strong>Observações:</strong><br>
+                *Confirmar se os aparelhos <strong>TARS</strong> contem fonte de alimentação AC.
+            </div>
+
+            <div class="assinatura-bloco">
+                <div class="assinatura-linha">
+                    <span class="label-sig">Entregue por:</span>
+                    <div class="campo-assinatura" onclick="abrirAssinar('sig1')"></div>
+                </div>
+                <div class="dados-id">
+                    <input type="text" placeholder="Nome Completo">
+                    <input type="text" placeholder="CPF ou Matrícula">
+                    <span class="sub-legenda">(Assinatura / Carimbo)</span>
+                </div>
+            </div>
+
+            <div class="assinatura-bloco">
+                <div class="assinatura-linha">
+                    <span class="label-sig">Recebido por:</span>
+                    <div class="campo-assinatura" onclick="abrirAssinar('sig2')"></div>
+                </div>
+                <div class="dados-id">
+                    <input type="text" placeholder="Nome Completo">
+                    <input type="text" placeholder="CPF ou Matrícula">
+                    <span class="sub-legenda">(Assinatura / Carimbo)</span>
+                </div>
+            </div>
+
+            <div class="data-footer">
+                São Paulo, <input type="text" value="26" style="width: 30px;"> de <input type="text" style="width: 85px;" value="Janeiro"> de <input type="text" value="2026" style="width: 50px;">.
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-sig">
+        <div class="modal-box">
+            <canvas id="canvas"></canvas>
+            <div style="margin-top: 10px; display: flex; gap: 10px;">
+                <button onclick="salvarAssinatura()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Confirmar</button>
+                <button onclick="fecharAssinar()" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let desenhando = false;
+        let alvoAtual = null;
+
+        function abrirAssinar(id) {
+            alvoAtual = id;
+            document.getElementById('modal-sig').style.display = 'flex';
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.lineWidth = 3; ctx.strokeStyle = "blue"; ctx.lineCap = "round";
+        }
+
+        function fecharAssinar() {
+            document.getElementById('modal-sig').style.display = 'none';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function salvarAssinatura() {
+            const dataURL = canvas.toDataURL();
+            const campos = document.querySelectorAll('.campo-assinatura');
+            const index = alvoAtual === 'sig1' ? 0 : 1;
+            campos[index].innerHTML = `<img src="${dataURL}">`;
+            fecharAssinar();
+        }
+
+        canvas.onmousedown = () => desenhando = true;
+        canvas.onmouseup = () => { desenhando = false; ctx.beginPath(); };
+        canvas.onmousemove = (e) => { if (desenhando) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+
+        canvas.ontouchstart = (e) => { desenhando = true; e.preventDefault(); };
+        canvas.ontouchmove = (e) => {
+            if (!desenhando) return;
+            let touch = e.touches[0];
+            let rect = canvas.getBoundingClientRect();
+            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+            ctx.stroke(); e.preventDefault();
+        };
+
+        function limpar() { if(confirm("Deseja zerar o formulário?")) location.reload(); }
+    </script>
+</body>
+</html>
