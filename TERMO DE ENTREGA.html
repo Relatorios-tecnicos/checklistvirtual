@@ -85,7 +85,16 @@
             body { background: white; padding: 0; }
             .botoes, #modal-sig { display: none !important; }
             .page { box-shadow: none; width: 100%; margin: 0; padding: 40px 60px; }
-            .page::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            
+            /* Garante a marca d'água e fundos coloridos no PDF */
+            .page::before, .tabela-itens th { 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+
+            /* Força o cinza no cabeçalho da tabela */
+            .tabela-itens th { background-color: #f0f0f0 !important; }
+
             input { border: none !important; }
             .input-linha { border-bottom: 1px solid #ccc !important; }
         }
@@ -119,9 +128,9 @@
             <table class="tabela-itens">
                 <thead>
                     <tr>
-                        <th style="width: 10%;">Item</th>
-                        <th style="width: 60%;">Descrição</th>
-                        <th style="width: 30%;">QUANTIDADE</th>
+                        <th style="width: 10%; background-color: #f0f0f0 !important;">Item</th>
+                        <th style="width: 60%; background-color: #f0f0f0 !important;">Descrição</th>
+                        <th style="width: 30%; background-color: #f0f0f0 !important;">QUANTIDADE</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -242,4 +251,5 @@
     </script>
 </body>
 </html>
+
 
