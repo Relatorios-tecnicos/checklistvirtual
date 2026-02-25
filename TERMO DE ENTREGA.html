@@ -260,39 +260,44 @@ if (sessionStorage.getItem("logado") !== "true") {
                 <input type="text" class="input-linha" style="width: 130px;" value="251506777778">.
             </div>
 
-            <table class="tabela-itens" style="width: 100%;">
-                <tr>
-                    <th style="width: 5%;">Item</th>
-                    <th style="width: 35%;">DESCRIÇÃO</th>
-                    <th style="width: 20%;">MARCA/MODELO</th>
-                    <th style="width: 25%;">N/S OU PATRIMÔNIO</th>
-                    <th style="width: 15%;">QTD</th>
-                </tr>
-                <tr>
-                    <td>01</td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center; font-weight: bold;"></td>
-                </tr>
-                <tr>
-                    <td>02</td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center; font-weight: bold;"></td>
-                </tr>
-                <tr>
-                    <td>03</td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center;"></td>
-                    <td><input type="text" value="" style="width:100%; border:none; text-align:center; font-weight: bold;"></td>
-                </tr>
+            <table class="tabela-itens" style="width: 100%; table-layout: fixed; margin-left: 0; margin-right: 0;">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">Item</th>
+                        <th style="width: 32%;">DESCRIÇÃO</th>
+                        <th style="width: 20%;">MARCA/MODELO</th>
+                        <th style="width: 25%;">N/S OU PATRIMÔNIO</th>
+                        <th style="width: 15%;">QUANTIDADE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>01</td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; font-weight: bold; background:transparent;"></td>
+                    </tr>
+                    <tr>
+                        <td>02</td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; font-weight: bold; background:transparent;"></td>
+                    </tr>
+                    <tr>
+                        <td>03</td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; background:transparent;"></td>
+                        <td><input type="text" value="" style="width:100%; border:none; text-align:center; font-weight: bold; background:transparent;"></td>
+                    </tr>
+                </tbody>
             </table>
 
-            <div class="obs">
-                Observações: *Confirmar se os aparelhos <strong>TARS</strong> contem fonte de alimentação AC
+            <div class="obs" style="margin-top: 10px; text-align: left; font-style: normal; font-size: 13px;">
+                <strong>Observações:</strong><br>
+                *Confirmar se os aparelhos <strong>TARS</strong> contem fonte de alimentação AC.
             </div>
 
             <div class="assinatura-bloco">
@@ -596,6 +601,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 
 </body>
 </html>
+
 
 
 
