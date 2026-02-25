@@ -4,102 +4,80 @@
     <meta charset="UTF-8">
     <title>Termo de Entrega</title>
     <style>
-        /* Reset de margens */
+        /* Reset Geral */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #525659; display: flex; justify-content: center; -webkit-print-color-adjust: exact; }
+        body { font-family: Arial, sans-serif; background: #525659; display: flex; justify-content: center; padding: 20px; }
 
+        /* Estrutura da Folha A4 */
         .page { 
             background-color: white; 
-            /* MARCA D'ÁGUA */
-            background-image: url('COLE_SUA_MARCA_DAGUA_AQUI');
-            background-repeat: no-repeat;
-            background-position: center 580px; 
-            background-size: 280px auto;
-            
             width: 794px; 
-            height: 1123px; 
-            padding: 40px 60px; 
-            position: relative; 
+            min-height: 1123px; 
+            padding: 50px 60px; 
             display: flex;
             flex-direction: column;
+            position: relative;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        .conteudo { position: relative; z-index: 1; }
-
+        /* Logo e Cabeçalho */
         .header-logo { text-align: right; margin-bottom: 20px; }
         .logo-claro { width: 160px; height: auto; }
 
         .titulo { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 30px; }
         .titulo input { font-size: 16px; font-weight: bold; border: none; width: 120px; text-align: center; background: transparent; text-decoration: underline; }
 
+        /* Texto de introdução */
         .texto-principal { font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 25px; }
-        .input-linha { border: none; border-bottom: 1px solid #ccc; font-weight: bold; background: transparent; }
+        .input-linha { border: none; border-bottom: 1px solid #ccc; font-weight: bold; background: transparent; padding: 2px; }
 
         /* TABELA COM 5 LINHAS EDITÁVEIS */
-        .tabela-itens { width: 100%; margin: 20px 0; border-collapse: collapse; table-layout: fixed; }
-        .tabela-itens th, .tabela-itens td { border: 1px solid black; padding: 0; font-size: 13px; text-align: center; height: 35px; }
-        .tabela-itens th { background: #f0f0f0 !important; font-weight: bold; padding: 8px; }
+        .tabela-itens { width: 100%; border-collapse: collapse; margin: 20px 0; table-layout: fixed; }
+        .tabela-itens th, .tabela-itens td { border: 1px solid black; height: 35px; vertical-align: middle; }
+        .tabela-itens th { background: #f0f0f0 !important; font-size: 13px; font-weight: bold; text-align: center; }
         .tabela-itens input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-family: Arial; font-size: 13px; padding: 5px; }
 
-        .obs { font-size: 13px; text-align: left; margin: 20px 0 40px 0; line-height: 1.4; }
+        /* Observações */
+        .obs { font-size: 13px; text-align: left; margin: 20px 0 40px 0; line-height: 1.5; }
 
-        /* BLOCOS DE ASSINATURA */
-        .assinatura-bloco { margin-bottom: 35px; }
+        /* Assinaturas */
+        .assinatura-bloco { margin-bottom: 30px; }
         .assinatura-linha { display: flex; align-items: flex-end; }
         .label-sig { font-size: 14px; font-weight: bold; width: 110px; padding-bottom: 5px; }
-        
-        .campo-assinatura { 
-            border-bottom: 2px solid black; 
-            width: 350px; 
-            height: 60px; 
-            cursor: pointer; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            background: transparent;
-        }
+        .campo-assinatura { border-bottom: 2px solid black; width: 350px; height: 60px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         .campo-assinatura img { max-height: 100%; mix-blend-mode: multiply; }
         
         .dados-id { margin-left: 110px; margin-top: 5px; }
-        .dados-id input { 
-            border: none; 
-            border-bottom: 1px solid #eee; 
-            width: 350px; 
-            font-size: 13px; 
-            margin-bottom: 2px; 
-            display: block; 
-            background: transparent; 
-        }
+        .dados-id input { border: none; border-bottom: 1px solid #eee; width: 350px; font-size: 13px; margin-bottom: 3px; display: block; background: transparent; }
         .sub-legenda { font-size: 10px; font-weight: bold; color: #555; }
 
-        .data-footer { text-align: right; margin-top: 50px; font-size: 14px; padding-right: 10px; }
+        /* Data e Rodapé */
+        .data-footer { text-align: right; margin-top: 40px; font-size: 14px; }
         .data-footer input { border: none; border-bottom: 1px solid #000; text-align: center; background: transparent; }
 
-        .botoes { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 1000; }
+        /* Interface de botões */
+        .botoes { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 1000; }
         .btn { padding: 12px 25px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 14px; }
         .btn-pdf { background: #e1251b; }
         .btn-limpar { background: #666; }
         .btn-voltar { background: #444; }
 
-        @media print { 
-            .botoes, #modal-sig { display: none !important; } 
-            body { background: white; }
-            .page { height: 1120px; border: none; box-shadow: none; margin: 0; padding: 40px 60px; }
-            #userInfo { display: none !important; }
-        }
-
+        /* Modal de Assinatura */
         #modal-sig { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 15px; border-radius: 8px; width: 600px; }
+        .modal-box { background: white; padding: 20px; border-radius: 8px; width: 600px; }
         canvas { border: 1px solid #ccc; background: #fff; width: 100%; height: 300px; touch-action: none; }
+
+        /* Configuração de Impressão */
+        @media print {
+            body { background: white; padding: 0; }
+            .botoes, #modal-sig { display: none !important; }
+            .page { box-shadow: none; width: 100%; margin: 0; padding: 40px 60px; }
+            input { border: none !important; }
+            .input-linha { border-bottom: 1px solid #ccc !important; }
+        }
     </style>
 </head>
 <body>
-    <script>
-        if (sessionStorage.getItem("logado") !== "true") {
-            window.location.href = "index.html";
-        }
-    </script>
 
     <div class="botoes">
         <button class="btn btn-pdf" onclick="window.print()">GERAR PDF</button>
@@ -108,98 +86,96 @@
     </div>
 
     <div class="page">
-        <div class="conteudo">
-            <div class="header-logo">
-                <img src="SUA_LOGO_AQUI" class="logo-claro">
-            </div>
+        <div class="header-logo">
+            <img src="https://logodownload.org/wp-content/uploads/2014/04/claro-logo-1.png" class="logo-claro">
+        </div>
 
-            <div class="titulo">
-                TERMO DE ENTREGA <input type="text" value="PRO.00.7063"> (PROJETO VOIP)
-            </div>
+        <div class="titulo">
+            TERMO DE ENTREGA <input type="text" value="PRO.00.7063"> (PROJETO VOIP)
+        </div>
 
-            <div class="texto-principal">
-                Este presente termo visa atestar que foram entregues no endereço/site 
-                <input type="text" class="input-linha" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 014677/08">, 
-                os seguintes itens constantes da solicitação de ativação VoIP sob o Protocolo <strong>SAOG – </strong> 
-                <input type="text" class="input-linha" style="width: 130px;" value="251506777778">.
-            </div>
+        <div class="texto-principal">
+            Este presente termo visa atestar que foram entregues no endereço/site 
+            <input type="text" class="input-linha" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 014677/08">, 
+            os seguintes itens constantes da solicitação de ativação VoIP sob o Protocolo <strong>SAOG – </strong> 
+            <input type="text" class="input-linha" style="width: 130px;" value="251506777778">.
+        </div>
 
-            <table class="tabela-itens">
-                <thead>
-                    <tr>
-                        <th style="width: 12%;">Item</th>
-                        <th style="width: 58%;">Descrição</th>
-                        <th style="width: 30%;">QUANTIDADE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><input type="text" value="01"></td>
-                        <td><input type="text" value="Gateway Mediant 500 - AudioCodes"></td>
-                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
-                    </tr>
-                    <tr>
-                        <td><input type="text" value="02"></td>
-                        <td><input type="text" value="Conector Balum"></td>
-                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
-                    </tr>
-                    <tr>
-                        <td><input type="text" value="03"></td>
-                        <td><input type="text" value="Conector Spinner"></td>
-                        <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
-                    </tr>
-                    <tr>
-                        <td><input type="text" value="04"></td>
-                        <td><input type="text" value=""></td>
-                        <td><input type="text" value="" style="font-weight: bold;"></td>
-                    </tr>
-                    <tr>
-                        <td><input type="text" value="05"></td>
-                        <td><input type="text" value=""></td>
-                        <td><input type="text" value="" style="font-weight: bold;"></td>
-                    </tr>
-                </tbody>
-            </table>
+        <table class="tabela-itens">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Item</th>
+                    <th style="width: 60%;">Descrição</th>
+                    <th style="width: 30%;">QUANTIDADE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" value="01"></td>
+                    <td><input type="text" value="Gateway Mediant 500 - AudioCodes"></td>
+                    <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" value="02"></td>
+                    <td><input type="text" value="Conector Balum"></td>
+                    <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" value="03"></td>
+                    <td><input type="text" value="Conector Spinner"></td>
+                    <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" value="04"></td>
+                    <td><input type="text" value=""></td>
+                    <td><input type="text" value="" style="font-weight: bold;"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" value="05"></td>
+                    <td><input type="text" value=""></td>
+                    <td><input type="text" value="" style="font-weight: bold;"></td>
+                </tr>
+            </tbody>
+        </table>
 
-            <div class="obs">
-                <strong>Observações:</strong><br>
-                *Confirmar se os aparelhos <strong>TARS</strong> contem fonte de alimentação AC.
-            </div>
+        <div class="obs">
+            <strong>Observações:</strong><br>
+            *Confirmar se os aparelhos <strong>TARS</strong> contem fonte de alimentação AC.
+        </div>
 
-            <div class="assinatura-bloco">
-                <div class="assinatura-linha">
-                    <span class="label-sig">Entregue por:</span>
-                    <div class="campo-assinatura" onclick="abrirAssinar('sig1')"></div>
-                </div>
-                <div class="dados-id">
-                    <input type="text" placeholder="Nome Completo">
-                    <input type="text" placeholder="CPF ou Matrícula">
-                    <span class="sub-legenda">(Assinatura / Carimbo)</span>
-                </div>
+        <div class="assinatura-bloco">
+            <div class="assinatura-linha">
+                <span class="label-sig">Entregue por:</span>
+                <div class="campo-assinatura" onclick="abrirAssinar('sig1')"></div>
             </div>
+            <div class="dados-id">
+                <input type="text" placeholder="Nome Completo">
+                <input type="text" placeholder="CPF ou Matrícula">
+                <span class="sub-legenda">(Assinatura / Carimbo)</span>
+            </div>
+        </div>
 
-            <div class="assinatura-bloco">
-                <div class="assinatura-linha">
-                    <span class="label-sig">Recebido por:</span>
-                    <div class="campo-assinatura" onclick="abrirAssinar('sig2')"></div>
-                </div>
-                <div class="dados-id">
-                    <input type="text" placeholder="Nome Completo">
-                    <input type="text" placeholder="CPF ou Matrícula">
-                    <span class="sub-legenda">(Assinatura / Carimbo)</span>
-                </div>
+        <div class="assinatura-bloco">
+            <div class="assinatura-linha">
+                <span class="label-sig">Recebido por:</span>
+                <div class="campo-assinatura" onclick="abrirAssinar('sig2')"></div>
             </div>
+            <div class="dados-id">
+                <input type="text" placeholder="Nome Completo">
+                <input type="text" placeholder="CPF ou Matrícula">
+                <span class="sub-legenda">(Assinatura / Carimbo)</span>
+            </div>
+        </div>
 
-            <div class="data-footer">
-                São Paulo, <input type="text" value="26" style="width: 30px;"> de <input type="text" style="width: 85px;" value="Janeiro"> de <input type="text" value="2026" style="width: 50px;">.
-            </div>
+        <div class="data-footer">
+            São Paulo, <input type="text" value="26" style="width: 30px;"> de <input type="text" style="width: 85px;" value="Fevereiro"> de <input type="text" value="2026" style="width: 50px;">.
         </div>
     </div>
 
     <div id="modal-sig">
         <div class="modal-box">
             <canvas id="canvas"></canvas>
-            <div style="margin-top: 10px; display: flex; gap: 10px;">
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
                 <button onclick="salvarAssinatura()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Confirmar</button>
                 <button onclick="fecharAssinar()" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Cancelar</button>
             </div>
