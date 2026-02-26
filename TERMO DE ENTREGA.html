@@ -103,7 +103,7 @@
 <body>
 
     <div class="botoes">
-        <button class="btn btn-pdf" onclick="window.print()">GERAR PDF</button>
+        <button class="btn btn-pdf" onclick="gerarPDF()">GERAR PDF</button>
         <button class="btn btn-limpar" onclick="limpar()">ZERAR</button>
         <a href="index.html" class="btn btn-voltar">VOLTAR</a>
     </div>
@@ -208,48 +208,75 @@
     </div>
 
     <script>
-        let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext('2d');
-        let desenhando = false;
-        let alvoAtual = null;
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    let desenhando = false;
+    let alvoAtual = null;
 
-        function abrirAssinar(id) {
-            alvoAtual = id;
-            document.getElementById('modal-sig').style.display = 'flex';
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            ctx.lineWidth = 3; ctx.strokeStyle = "blue"; ctx.lineCap = "round";
-        }
+    // --- FUNÇÃO QUE FILTRA E GERA O PDF ---
+    function gerarPDF() {
+        // Seleciona todas as linhas de dados da tabela
+        const linhas = document.querySelectorAll('.tabela-itens tbody tr');
+        
+        // 1. Esconde as linhas onde a Descrição (2ª coluna) está vazia
+        linhas.forEach(linha => {
+            const inputDescricao = linha.querySelector('td:nth-child(2) input');
+            if (inputDescricao && inputDescricao.value.trim() === "") {
+                linha.style.display = 'none';
+            }
+        });
 
-        function fecharAssinar() {
-            document.getElementById('modal-sig').style.display = 'none';
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        // 2. Chama a impressão do navegador
+        window.print();
 
-        function salvarAssinatura() {
-            const dataURL = canvas.toDataURL();
-            const campos = document.querySelectorAll('.campo-assinatura');
-            const index = alvoAtual === 'sig1' ? 0 : 1;
-            campos[index].innerHTML = `<img src="${dataURL}">`;
-            fecharAssinar();
-        }
+        // 3. Após fechar a janela de impressão, as linhas voltam a aparecer na tela
+        setTimeout(() => {
+            linhas.forEach(linha => {
+                linha.style.display = 'table-row';
+            });
+        }, 800);
+    }
 
-        canvas.onmousedown = () => desenhando = true;
-        canvas.onmouseup = () => { desenhando = false; ctx.beginPath(); };
-        canvas.onmousemove = (e) => { if (desenhando) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+    // --- FUNÇÕES DE ASSINATURA ---
+    function abrirAssinar(id) {
+        alvoAtual = id;
+        document.getElementById('modal-sig').style.display = 'flex';
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        ctx.lineWidth = 3; ctx.strokeStyle = "blue"; ctx.lineCap = "round";
+    }
 
-        canvas.ontouchstart = (e) => { desenhando = true; e.preventDefault(); };
-        canvas.ontouchmove = (e) => {
-            if (!desenhando) return;
-            let touch = e.touches[0];
-            let rect = canvas.getBoundingClientRect();
-            ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-            ctx.stroke(); e.preventDefault();
-        };
+    function fecharAssinar() {
+        document.getElementById('modal-sig').style.display = 'none';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 
-        function limpar() { if(confirm("Deseja zerar o formulário?")) location.reload(); }
-    </script>
+    function salvarAssinatura() {
+        const dataURL = canvas.toDataURL();
+        const campos = document.querySelectorAll('.campo-assinatura');
+        const index = alvoAtual === 'sig1' ? 0 : 1;
+        campos[index].innerHTML = `<img src="${dataURL}">`;
+        fecharAssinar();
+    }
+
+    // Eventos do Mouse e Touch para desenhar
+    canvas.onmousedown = () => desenhando = true;
+    canvas.onmouseup = () => { desenhando = false; ctx.beginPath(); };
+    canvas.onmousemove = (e) => { if (desenhando) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+
+    canvas.ontouchstart = (e) => { desenhando = true; e.preventDefault(); };
+    canvas.ontouchmove = (e) => {
+        if (!desenhando) return;
+        let touch = e.touches[0];
+        let rect = canvas.getBoundingClientRect();
+        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        ctx.stroke(); e.preventDefault();
+    };
+
+    function limpar() { if(confirm("Deseja zerar o formulário?")) location.reload(); }
+</script>
 </body>
 </html>
+
 
 
