@@ -220,8 +220,11 @@
             </div>
 
             <div class="data-footer">
-                São Paulo, <input type="text" value="26" style="width: 30px;"> de <input type="text" style="width: 85px;" value="Fevereiro"> de <input type="text" value="2026" style="width: 50px;">.
-            </div>
+    São Paulo, 
+    <input type="text" id="dia" style="width: 30px;"> de 
+    <input type="text" id="mes" style="width: 85px;"> de 
+    <input type="text" id="ano" style="width: 50px;">.
+</div>
         </div>
     </div>
 
@@ -235,12 +238,36 @@
         </div>
     </div>
 
-   <script>
+  <script>
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('2d');
     let desenhando = false;
     let alvoAtual = null;
 
+    // --- FUNÇÃO PARA PREENCHER A DATA AUTOMATICAMENTE ---
+    function preencherData() {
+        const dataAtual = new Date();
+        const dia = dataAtual.getDate().toString().padStart(2, '0');
+        const ano = dataAtual.getFullYear();
+        
+        const meses = [
+            "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ];
+        const mesNome = meses[dataAtual.getMonth()];
+
+        // Verifica se os elementos existem antes de preencher para evitar erros
+        if(document.getElementById('dia')) document.getElementById('dia').value = dia;
+        if(document.getElementById('mes')) document.getElementById('mes').value = mesNome;
+        if(document.getElementById('ano')) document.getElementById('ano').value = ano;
+    }
+
+    // Executa funções ao carregar a página
+    window.onload = function() {
+        preencherData();
+    };
+
+    // --- FUNÇÃO QUE FILTRA E GERA O PDF ---
     function gerarPDF() {
         const linhas = document.querySelectorAll('.tabela-itens tbody tr');
         linhas.forEach(linha => {
@@ -257,6 +284,7 @@
         }, 2000);
     }
 
+    // --- FUNÇÕES DA TABELA DINÂMICA ---
     function adicionarLinha() {
         const tabela = document.querySelector('.tabela-itens tbody');
         const totalLinhas = tabela.querySelectorAll('tr').length;
@@ -273,12 +301,12 @@
     function removerLinha() {
         const tabela = document.querySelector('.tabela-itens tbody');
         const linhas = tabela.querySelectorAll('tr');
-        // Agora permite remover até sobrar só a primeira
         if (linhas.length > 1) {
             tabela.removeChild(linhas[linhas.length - 1]);
         }
     }
 
+    // --- FUNÇÕES DE ASSINATURA ---
     function abrirAssinar(id) {
         alvoAtual = id;
         document.getElementById('modal-sig').style.display = 'flex';
@@ -300,6 +328,7 @@
         fecharAssinar();
     }
 
+    // Eventos do Desenho
     canvas.onmousedown = () => desenhando = true;
     canvas.onmouseup = () => { desenhando = false; ctx.beginPath(); };
     canvas.onmousemove = (e) => { if (desenhando) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
@@ -317,6 +346,7 @@
 </script>
 </body>
 </html>
+
 
 
 
