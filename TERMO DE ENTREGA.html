@@ -105,31 +105,32 @@
     input { border: none !important; }
     .input-linha { border-bottom: 1px solid #ccc !important; }
 }
-        function adicionarLinha() {
-    const tabela = document.querySelector('.tabela-itens tbody');
-    const totalLinhas = tabela.querySelectorAll('tr').length;
-    
-    // Gera o próximo número (ex: 04, 05...)
-    const proximoNumero = (totalLinhas + 1).toString().padStart(2, '0');
-
-    const novaLinha = document.createElement('tr');
-    novaLinha.innerHTML = `
-        <td>${proximoNumero}</td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-    `;
-    
-    tabela.appendChild(novaLinha);
+        /* Estilo dos botões de controle da tabela */
+.controle-tabela {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
 }
 
-function removerLinha() {
-    const tabela = document.querySelector('.tabela-itens tbody');
-    const linhas = tabela.querySelectorAll('tr');
-    
-    // Não deixa apagar tudo, mantém pelo menos uma linha
-    if (linhas.length > 1) {
-        tabela.removeChild(linhas[linhas.length - 1]);
-    }
+.btn-controle {
+    padding: 5px 15px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    color: white;
+    transition: 0.3s;
+}
+
+.btn-add { background-color: #28a745; } /* Verde */
+.btn-add:hover { background-color: #218838; }
+
+.btn-rem { background-color: #dc3545; } /* Vermelho */
+.btn-rem:hover { background-color: #c82333; }
+
+/* Esconde os controles na hora de gerar o PDF */
+@media print {
+    .controle-tabela { display: none !important; }
 }
     </style>
 </head>
@@ -168,38 +169,32 @@ function removerLinha() {
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="text" value="01"></td>
+                        <td>01</td>
                         <td><input type="text" value="Gateway Mediant 500 - AudioCodes"></td>
                         <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
                     </tr>
                     <tr>
-                        <td><input type="text" value="02"></td>
+                        <td>02</td>
                         <td><input type="text" value="Conector Balum"></td>
                         <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
                     </tr>
                     <tr>
-                        <td><input type="text" value="03"></td>
+                        <td>03</td>
                         <td><input type="text" value="Conector Spinner"></td>
                         <td><input type="text" value="01 UNIDADE (S)" style="font-weight: bold;"></td>
                     </tr>
-                    <tr>
-                        <td><input type="text" value="04"></td>
-                        <td><input type="text" value=""></td>
-                        <td><input type="text" value="" style="font-weight: bold;"></td>
-                    </tr>
-                    <tr>
-                        <td><input type="text" value="05"></td>
-                        <td><input type="text" value=""></td>
-                        <td><input type="text" value="" style="font-weight: bold;"></td>
-                    </tr>
                 </tbody>
             </table>
+
+            <div class="controle-tabela">
+                <button type="button" class="btn-controle btn-add" onclick="adicionarLinha()">+ Adicionar Linha</button>
+                <button type="button" class="btn-controle btn-rem" onclick="removerLinha()">- Remover Última</button>
+            </div>
 
             <div class="obs">
                 <strong>Observações:</strong><br>
                 *Confirmar se os aparelhos <strong>TARS</strong> contem fonte de alimentação AC.
             </div>
-
             <div class="assinatura-bloco">
                 <div class="assinatura-linha">
                     <span class="label-sig">Entregue por:</span>
@@ -240,7 +235,7 @@ function removerLinha() {
         </div>
     </div>
 
-    <script>
+   <script>
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('2d');
     let desenhando = false;
@@ -248,7 +243,7 @@ function removerLinha() {
 
     // --- FUNÇÃO QUE FILTRA E GERA O PDF ---
     function gerarPDF() {
-        // Seleciona todas as linhas de dados da tabela
+        // Seleciona todas as linhas de dados da tabela (incluindo as novas)
         const linhas = document.querySelectorAll('.tabela-itens tbody tr');
         
         // 1. Esconde as linhas onde a Descrição (2ª coluna) está vazia
@@ -262,12 +257,42 @@ function removerLinha() {
         // 2. Chama a impressão do navegador
         window.print();
 
-        // 3. Após fechar a janela de impressão, as linhas voltam a aparecer na tela
+        // 3. Após 2 segundos (ajuste para celular), as linhas voltam a aparecer
         setTimeout(() => {
             linhas.forEach(linha => {
                 linha.style.display = 'table-row';
             });
         }, 2000);
+    }
+
+    // --- FUNÇÕES DE CONTROLE DA TABELA (DINÂMICA) ---
+    function adicionarLinha() {
+        const tabela = document.querySelector('.tabela-itens tbody');
+        const totalLinhas = tabela.querySelectorAll('tr').length;
+        
+        // Gera o próximo número sequencial (04, 05, 06...)
+        const proximoNumero = (totalLinhas + 1).toString().padStart(2, '0');
+
+        const novaLinha = document.createElement('tr');
+        novaLinha.innerHTML = `
+            <td>${proximoNumero}</td>
+            <td><input type="text" value=""></td>
+            <td><input type="text" value="" style="font-weight: bold;"></td>
+        `;
+        
+        tabela.appendChild(novaLinha);
+    }
+
+    function removerLinha() {
+        const tabela = document.querySelector('.tabela-itens tbody');
+        const linhas = tabela.querySelectorAll('tr');
+        
+        // Mantém pelo menos os 3 itens padrão (Gateway e Conectores)
+        if (linhas.length > 3) {
+            tabela.removeChild(linhas[linhas.length - 1]);
+        } else {
+            alert("Os itens padrão não podem ser removidos.");
+        }
     }
 
     // --- FUNÇÕES DE ASSINATURA ---
@@ -310,10 +335,6 @@ function removerLinha() {
 </script>
 </body>
 </html>
-
-
-
-
 
 
 
