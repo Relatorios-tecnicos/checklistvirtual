@@ -105,6 +105,32 @@
     input { border: none !important; }
     .input-linha { border-bottom: 1px solid #ccc !important; }
 }
+        function adicionarLinha() {
+    const tabela = document.querySelector('.tabela-itens tbody');
+    const totalLinhas = tabela.querySelectorAll('tr').length;
+    
+    // Gera o próximo número (ex: 04, 05...)
+    const proximoNumero = (totalLinhas + 1).toString().padStart(2, '0');
+
+    const novaLinha = document.createElement('tr');
+    novaLinha.innerHTML = `
+        <td>${proximoNumero}</td>
+        <td><input type="text"></td>
+        <td><input type="text"></td>
+    `;
+    
+    tabela.appendChild(novaLinha);
+}
+
+function removerLinha() {
+    const tabela = document.querySelector('.tabela-itens tbody');
+    const linhas = tabela.querySelectorAll('tr');
+    
+    // Não deixa apagar tudo, mantém pelo menos uma linha
+    if (linhas.length > 1) {
+        tabela.removeChild(linhas[linhas.length - 1]);
+    }
+}
     </style>
 </head>
 <body>
@@ -284,6 +310,7 @@
 </script>
 </body>
 </html>
+
 
 
 
