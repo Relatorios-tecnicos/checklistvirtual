@@ -241,23 +241,15 @@
     let desenhando = false;
     let alvoAtual = null;
 
-    // --- FUNÇÃO QUE FILTRA E GERA O PDF ---
     function gerarPDF() {
-        // Seleciona todas as linhas de dados da tabela (incluindo as novas)
         const linhas = document.querySelectorAll('.tabela-itens tbody tr');
-        
-        // 1. Esconde as linhas onde a Descrição (2ª coluna) está vazia
         linhas.forEach(linha => {
             const inputDescricao = linha.querySelector('td:nth-child(2) input');
             if (inputDescricao && inputDescricao.value.trim() === "") {
                 linha.style.display = 'none';
             }
         });
-
-        // 2. Chama a impressão do navegador
         window.print();
-
-        // 3. Após 2 segundos (ajuste para celular), as linhas voltam a aparecer
         setTimeout(() => {
             linhas.forEach(linha => {
                 linha.style.display = 'table-row';
@@ -265,37 +257,28 @@
         }, 2000);
     }
 
-    // --- FUNÇÕES DE CONTROLE DA TABELA (DINÂMICA) ---
     function adicionarLinha() {
         const tabela = document.querySelector('.tabela-itens tbody');
         const totalLinhas = tabela.querySelectorAll('tr').length;
-        
-        // Gera o próximo número sequencial (04, 05, 06...)
         const proximoNumero = (totalLinhas + 1).toString().padStart(2, '0');
-
         const novaLinha = document.createElement('tr');
         novaLinha.innerHTML = `
             <td>${proximoNumero}</td>
             <td><input type="text" value=""></td>
             <td><input type="text" value="" style="font-weight: bold;"></td>
         `;
-        
         tabela.appendChild(novaLinha);
     }
 
     function removerLinha() {
         const tabela = document.querySelector('.tabela-itens tbody');
         const linhas = tabela.querySelectorAll('tr');
-        
-        // Mantém pelo menos os 3 itens padrão (Gateway e Conectores)
-        if (linhas.length > 3) {
+        // Agora permite remover até sobrar só a primeira
+        if (linhas.length > 1) {
             tabela.removeChild(linhas[linhas.length - 1]);
-        } else {
-            alert("Os itens padrão não podem ser removidos.");
         }
     }
 
-    // --- FUNÇÕES DE ASSINATURA ---
     function abrirAssinar(id) {
         alvoAtual = id;
         document.getElementById('modal-sig').style.display = 'flex';
@@ -317,7 +300,6 @@
         fecharAssinar();
     }
 
-    // Eventos do Mouse e Touch para desenhar
     canvas.onmousedown = () => desenhando = true;
     canvas.onmouseup = () => { desenhando = false; ctx.beginPath(); };
     canvas.onmousemove = (e) => { if (desenhando) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
@@ -335,6 +317,7 @@
 </script>
 </body>
 </html>
+
 
 
 
