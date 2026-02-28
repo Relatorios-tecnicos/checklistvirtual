@@ -277,19 +277,29 @@ mCanvas.ontouchstart = (e) => { e.preventDefault(); drawing = true; mCtx.beginPa
 mCanvas.ontouchmove = (e) => { e.preventDefault(); if(drawing) { const p = getPos(e); mCtx.lineTo(p.x, p.y); mCtx.stroke(); } };
 
 window.onload = () => {
-document.querySelectorAll('input').forEach(input => {
-const saved = localStorage.getItem(window.location.pathname + input.id);
-if(saved) input.value = saved;
-input.oninput = () => localStorage.setItem(window.location.pathname + input.id, input.value);
-});
-};
+    // 1. Gera a data atual no formato: 28 / 02 / 2026
+    const dataAtual = new Date();
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+    const ano = dataAtual.getFullYear();
+    const dataFormatada = `${dia} / ${mes} / ${ano}`;
 
-function limparTudo() {
-if(confirm("Deseja zerar todos os campos do formulário?")) { 
-localStorage.clear(); 
-location.reload(); 
-}
-}
+    // 2. Aplica a data ao campo se ele estiver vazio ou se acabar de abrir
+    const campoData = document.getElementById('data-f');
+    if (campoData && !campoData.value) { 
+        campoData.value = dataFormatada; 
+    }
+
+    // 3. Mantém sua lógica de LocalStorage para os outros campos
+    document.querySelectorAll('input').forEach(input => {
+        const saved = localStorage.getItem(window.location.pathname + input.id);
+        if(saved) input.value = saved;
+        
+        input.oninput = () => {
+            localStorage.setItem(window.location.pathname + input.id, input.value);
+        };
+    });
+};
 </script>
 <script type="module">
   /* 🔥 FIREBASE CORE */
@@ -364,6 +374,7 @@ location.reload();
 
 </body>
 </html>
+
 
 
 
