@@ -277,24 +277,29 @@ mCanvas.ontouchstart = (e) => { e.preventDefault(); drawing = true; mCtx.beginPa
 mCanvas.ontouchmove = (e) => { e.preventDefault(); if(drawing) { const p = getPos(e); mCtx.lineTo(p.x, p.y); mCtx.stroke(); } };
 
 window.onload = () => {
-    // 1. Gera a data atual no formato: 28 / 02 / 2026
-    const dataAtual = new Date();
-    const dia = String(dataAtual.getDate()).padStart(2, '0');
-    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-    const ano = dataAtual.getFullYear();
+    // 1. GERAR DATA ATUAL (Ex: 28 / 02 / 2026)
+    const hoje = new Date();
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const ano = hoje.getFullYear();
     const dataFormatada = `${dia} / ${mes} / ${ano}`;
 
-    // 2. Aplica a data ao campo se ele estiver vazio ou se acabar de abrir
+    // 2. FORÇAR A DATA NO CAMPO
     const campoData = document.getElementById('data-f');
-    if (campoData && !campoData.value) { 
-        campoData.value = dataFormatada; 
+    if (campoData) {
+        campoData.value = dataFormatada;
+        // Salva no LocalStorage para garantir que o sistema de persistência veja a data
+        localStorage.setItem(window.location.pathname + 'data-f', dataFormatada);
     }
 
-    // 3. Mantém sua lógica de LocalStorage para os outros campos
+    // 3. CARREGAR RESTANTE DOS CAMPOS (Sua lógica original)
     document.querySelectorAll('input').forEach(input => {
+        // Se for o campo de data, a gente pula porque já definimos acima
+        if (input.id === 'data-f') return;
+
         const saved = localStorage.getItem(window.location.pathname + input.id);
-        if(saved) input.value = saved;
-        
+        if (saved) input.value = saved;
+
         input.oninput = () => {
             localStorage.setItem(window.location.pathname + input.id, input.value);
         };
@@ -374,6 +379,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
