@@ -1162,6 +1162,10 @@ document.addEventListener('click',async ev=>{
 
 document.addEventListener('input',ev=>{
   const t=ev.target;if(t.name==='kmCFTV'||t.name==='kmTELMEX'){const f=t.form;f.elements.km.value=(+f.elements.kmCFTV.value||0)+(+f.elements.kmTELMEX.value||0)}
+  // salva o cadastro enquanto digita (não perde ao trocar de tela)
+  const fm=t.form&&t.form.dataset&&t.form.dataset.form;
+  if(fm==='perfil'&&t.name){const u=U();if(u){const v=String(t.value);u.profile[t.name]=t.name==='adiantamento'?(+v.replace(',','.')||0):v.trim();save()}}
+  else if(fm==='home'&&t.name==='home'){const u=U();if(u){u.profile.home=String(t.value).trim();save()}}
 });
 document.addEventListener('change',async ev=>{
   const t=ev.target;
