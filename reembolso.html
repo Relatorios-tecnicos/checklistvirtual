@@ -650,7 +650,7 @@ function nomeArquivos(user,month){
     controle:`Planilha de controle de despesas dos técnicos - ${n} - ${mes}.xlsx`,
     km:`Reembolso KM - ${n} - ${mes}.xlsx`,
     solic:`Solicitação de Reembolso e Prestação de Contas Não Viagem - Hitss v7 - ${n} - ${mes}.xlsm`,
-    comprov:`COMPROVANTES UNIFICADO - ${mes} - PEDAGIO-ESTACIONAMENTO.pdf`
+    comprov:`COMPROVANTES UNIFICADO ${MESES[m-1]}-${y} (PEDAGIO-ESTACIONAMENTO).pdf`
   };
 }
 async function gerarTodas(user,month){
@@ -1089,7 +1089,8 @@ function vComp(){
   <div class="card">
     <input type="file" id="fileIn" accept="application/pdf,image/jpeg,image/png" multiple style="display:none">
     <div class="row"><button class="btn" data-act="pick">Escolher arquivos</button>
-    <button class="btn primary" data-act="merge" ${comprovFiles.length||U().entries.some(e=>e.date.startsWith(S.month)&&e.fotos&&e.fotos.length)?'':'disabled'}>Gerar PDF unificado</button></div>
+    <button class="btn primary" data-act="merge" title="O arquivo será nomeado com o mês escolhido no topo" ${comprovFiles.length||U().entries.some(e=>e.date.startsWith(S.month)&&e.fotos&&e.fotos.length)?'':'disabled'}>Gerar PDF unificado</button></div>
+    <div class="small muted" style="margin-top:6px">Arquivo: <b>${esc(nomeArquivos(U(),S.month).comprov)}</b>. O mês vem do seletor lá em cima.</div>
     <div class="list" style="margin-top:12px">${comprovFiles.length?comprovFiles.map((f,i)=>`<div class="item"><div class="t"><b>${esc(f.name)}</b><span class="small muted">${(f.size/1024).toFixed(0)} KB</span><span class="num"><button class="btn sm" data-act="rmfile" data-i="${i}">Remover</button></span></div></div>`).join(''):'<div class="empty">Nenhum arquivo anexado.</div>'}</div>
     <div class="msg info">${NUVEM?"Os arquivos anexados aqui ficam só na tela, para montar o PDF, e somem ao recarregar a página. Fotos de recibo aparecem abaixo para você aplicar o valor ao dia: aí elas ficam guardadas no lançamento.":"Nesta demonstração os arquivos ficam só na sua tela e não são enviados a nenhum servidor."}</div>
   </div>
