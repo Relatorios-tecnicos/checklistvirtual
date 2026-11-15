@@ -4,9 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reembolso de Campo</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin><link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<script>
+/* bibliotecas pesadas carregam sob demanda (o site abre mais rápido no celular) */
+const LIBS={jszip:["JSZip","https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"],pdflib:["PDFLib","https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"],pdfjs:["pdfjsLib","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"]};const LIBP={};
+function lib(n){const[g,u]=LIBS[n];if(window[g])return Promise.resolve();return LIBP[n]||(LIBP[n]=new Promise((ok,err)=>{const sc=document.createElement("script");sc.src=u;sc.onload=ok;sc.onerror=()=>{LIBP[n]=null;err(new Error("Não consegui carregar "+n+" (internet ou bloqueio de rede)"))};document.head.appendChild(sc)}))}
+</script>
 <style>
 :root{
   --bg:#f5f6f8; --surface:#ffffff; --surface2:#eef0f4; --text:#15181e; --muted:#5d6675; --line:#dde1e8;
@@ -214,6 +217,7 @@ class Styles{
   xml(){return'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+new XMLSerializer().serializeToString(this.doc).replace(/^<\?xml[^>]*\?>\s*/,'')}
 }
 async function openTpl(key){
+  await lib('jszip');
   const zip=await JSZip.loadAsync(TPL[key],{base64:true});
   const sheet=new Sheet(await zip.file('xl/worksheets/sheet1.xml').async('string'));
   return{zip,sheet};
@@ -412,6 +416,7 @@ function linkMaps(home,stops){
 const RE_TAG=/^(\d{2})\/(\d{2})\/(\d{4}) - (\d{2}:\d{2}) (\S+) (Passagem|Estacionamento|Ped[áa]gio) (.*?) - ([\d.]+,\d{2}) ([\d.]+,\d{2})$/;
 const parseVal=x=>+String(x).replace(/\./g,'').replace(',','.');
 async function lerTag(file){
+  await lib('pdfjs');
   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
   const out=[];
@@ -748,7 +753,7 @@ function setSync(s,m){syncSt={s,m};const el=document.getElementById('sync');if(e
 async function iniciarNuvem(){
   AUTH={status:'loading'};render();
   try{
-    if(!window.firebase)for(const f of['app','auth','firestore'])await loadScript(`https://www.gstatic.com/firebasejs/10.12.2/firebase-${f}-compat.js`);
+    if(!window.firebase)await Promise.all(['app','auth','firestore'].map(f=>new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=`https://www.gstatic.com/firebasejs/10.12.2/firebase-${f}-compat.js`;sc.async=false;sc.onload=ok;sc.onerror=()=>err(new Error('Não consegui carregar o Firebase (internet ou bloqueio de rede)'));document.head.appendChild(sc)})));
     firebase.initializeApp(FIREBASE_CONFIG);fb.auth=firebase.auth();fb.db=firebase.firestore();
     fb.auth.onAuthStateChanged(onAuth);
   }catch(e){AUTH={status:'erro',msg:e.message};render()}
@@ -1183,7 +1188,7 @@ document.addEventListener('click',async ev=>{
     try{
       const nm=nomeArquivos(u,S.month);const k=b.dataset.k;
       if(k==='zip'){
-        const r=await gerarTodas(u,S.month);const z=new JSZip();
+        const r=await gerarTodas(u,S.month);await lib('jszip');const z=new JSZip();
         z.file(nm.controle,r.controle);z.file(nm.km,r.km);z.file(nm.solic,r.solic);
         download(`Reembolso ${u.profile.nome} ${S.month}.zip`,await z.generateAsync({type:'uint8array'}),'application/zip');
       }else{
@@ -1315,7 +1320,7 @@ document.addEventListener('click',async ev=>{
     toast('Aplicado em '+fmtBR(r.dia))}
   else if(a==='merge'){
     try{
-      const{PDFDocument}=PDFLib;const out=await PDFDocument.create();
+      await lib('pdflib');const{PDFDocument}=PDFLib;const out=await PDFDocument.create();
       const font=await out.embedFont(PDFLib.StandardFonts.Helvetica);
       const paginaImg=(img,leg)=>{
         const land=img.width>img.height;const W=land?841.89:595.28,H=land?595.28:841.89,m=28,topo=leg?22:0;
@@ -1423,7 +1428,7 @@ document.addEventListener('submit',async ev=>{
   save();render();
 });
 
-load();render();if(NUVEM)iniciarNuvem();
+load();render();if(NUVEM)iniciarNuvem();setTimeout(()=>{lib('jszip').catch(()=>{});lib('pdflib').catch(()=>{})},2500);
 window.__app={valoresDe,lerTag,tagPorDia,variantes,kmRota,parseChamado,calc,problemas,genControle,genKm,genSolic,gerarTodas,trajeto,get S(){return S},set S(v){S=v}};
 </script>
 </body>
