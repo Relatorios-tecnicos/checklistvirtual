@@ -1248,6 +1248,7 @@ function vAprov(){
         <button class="btn sm" data-act="abrir" data-id="${id}">Ver planilhas</button>
         ${st.s==='Enviado'?`<button class="btn sm ok" data-act="aprovar" data-id="${id}">Aprovar</button><button class="btn sm warn" data-act="ajuste" data-id="${id}">Pedir ajuste</button>`:''}
         ${st.s==='Aprovado'?`<button class="btn sm primary" data-act="pagar" data-id="${id}">Marcar como pago</button>`:''}
+        ${['Enviado','Aprovado','Pago'].includes(st.s)?`<button class="btn sm warn" data-act="reabrir" data-id="${id}">Reabrir mês</button>`:''}
       </div></div>`).join('')}</div>
   <dialog id="dlg"><form method="dialog" data-form="ajuste"><h2 style="margin-top:0">Pedir ajuste</h2><div class="field"><label class="f">Motivo</label><textarea name="motivo" required placeholder="Explique o que o técnico precisa corrigir"></textarea></div><div class="row"><button class="btn primary" value="ok">Enviar</button><button class="btn" value="cancel" formnovalidate>Cancelar</button></div></form></dialog>`;
 }
@@ -1288,6 +1289,10 @@ document.addEventListener('click',async ev=>{
   else if(a==='recolher'){stat(u,S.month).s='Rascunho';toast('Envio recolhido')}
   else if(a==='abrir'){S.userId=b.dataset.id;S.view='mes'}
   else if(a==='aprovar'){stat(S.users[b.dataset.id],S.month).s='Aprovado';await persistStatus(b.dataset.id);toast('Aprovado')}
+  else if(a==='reabrir'){
+    const x=S.users[b.dataset.id];const sx=stat(x,S.month);
+    if(!confirm(`Reabrir ${MESES[+S.month.slice(5)-1]}/${S.month.slice(0,4)} de ${x.profile.nome}? Hoje está "${sx.s}". O técnico volta a poder editar e reenviar.`))return;
+    sx.s='Ajuste';sx.motivo='Mês reaberto pelo supervisor para edição.';await persistStatus(b.dataset.id);toast('Mês reaberto')}
   else if(a==='pagar'){stat(S.users[b.dataset.id],S.month).s='Pago';await persistStatus(b.dataset.id);toast('Marcado como pago')}
   else if(a==='ajuste'){ajusteId=b.dataset.id;document.getElementById('dlg').showModal();return}
   else if(a==='gen'){
