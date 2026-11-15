@@ -1277,7 +1277,7 @@ document.addEventListener('click',async ev=>{
   const b=ev.target.closest('[data-act]');if(!b||b.tagName==='SELECT')return;
   const a=b.dataset.act;const u=U();
   if(a==='login'){try{await fb.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(err){toast('Login cancelado ou bloqueado: '+(err.message||err))}return}
-  if(a==='logout'){draftClear();clearTimeout(saveT);try{await nuvemSave();await fb.auth.signOut()}catch(e){}AUTH={status:'out'};S.users={};S.mine=null;render();return}
+  if(a==='logout'){draftClear();clearTimeout(saveT);try{await nuvemSave();await fb.auth.signOut()}catch(e){}AUTH={status:'out'};S.users={};S.mine=null;location.href='index.html';return}
   if(a==='recarrega'){location.reload();return}
   if(a==='view'){S.view=b.dataset.v;editId=null}
   else if(a==='ptab'){prevTab=b.dataset.t}
