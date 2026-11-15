@@ -276,7 +276,8 @@ function calc(user,month){
   const ORD=['PEDAGIO','ESTAC.','HOSPEDAGEM','MATERIAL'];const ord=t=>{const i=ORD.indexOf(t);return i<0?9:i};
   Object.keys(exp).forEach(p=>exp[p].sort((a,b)=>(ord(a.tipo)-ord(b.tipo))||a.date.localeCompare(b.date)));
   /* alimentação: bloco próprio da Solicitação, uma linha por projeto */
-  const alimP={TELMEX:0,'CFTV BRADESCO':0};rows.forEach(e=>{if(EXTRAS.includes('alim')&&+e.alim>0)alimP[e.projeto]=r2((alimP[e.projeto]||0)+(+e.alim))});
+  /* data da linha: a do próprio dia; com mais de uma alimentação no projeto, a da última */
+  const alimP={TELMEX:0,'CFTV BRADESCO':0},alimD={};rows.forEach(e=>{if(EXTRAS.includes('alim')&&+e.alim>0){alimP[e.projeto]=r2((alimP[e.projeto]||0)+(+e.alim));if(!alimD[e.projeto]||e.date>alimD[e.projeto])alimD[e.projeto]=e.date}});
   const km=kmP.TELMEX+kmP['CFTV BRADESCO'];
   const valorKm=r2(valP.TELMEX+valP['CFTV BRADESCO']);
   const ped=r2(rows.reduce((s,e)=>s+(+e.pedagio||0),0));
@@ -286,7 +287,7 @@ function calc(user,month){
   const extras=r2(hosp+alim+material+outros);const desp=r2(ped+est+extras);
   const total=r2(valorKm+desp);
   const adiant=(user.adiant&&user.adiant[month]!==undefined&&user.adiant[month]!==null)?(+user.adiant[month]||0):(+user.profile.adiantamento||0);
-  return{rows,kmP,valP,exp,alimP,km,valorKm,ped,est,hosp,alim,material,outros,extras,desp,total,adiant,dif:r2(total-adiant)};
+  return{rows,kmP,valP,exp,alimP,alimD,km,valorKm,ped,est,hosp,alim,material,outros,extras,desp,total,adiant,dif:r2(total-adiant)};
 }
 
 function problemas(user,month){
@@ -664,8 +665,8 @@ async function genSolic(user,month){
   };
   sec(c.exp.TELMEX,31,LIM.solicTelmex,'TELMEX');
   sec(c.exp['CFTV BRADESCO'],40,LIM.solicCftv,'CFTV BRADESCO');
-  /* bloco Alimentação (linhas 55 e 56 já trazem a descrição "PROJETO ..."): data do fechamento e total por projeto */
-  [['TELMEX',55],['CFTV BRADESCO',56]].forEach(([pr,rr])=>{if(c.alimP[pr]>0){dt('F'+rr,fim);sheet.set('P'+rr,c.alimP[pr])}});
+  /* bloco Alimentação (linhas 55 e 56 já trazem a descrição "PROJETO ..."): total por projeto, com a data da despesa */
+  [['TELMEX',55],['CFTV BRADESCO',56]].forEach(([pr,rr])=>{if(c.alimP[pr]>0){dt('F'+rr,serial(c.alimD[pr]));sheet.set('P'+rr,c.alimP[pr])}});
   return saveTpl(zip,sheet,styles);
 }
 async function montaComprovPdf(u){
@@ -1229,7 +1230,7 @@ function pvSolic(u,c){
   <tr class="tot"><td colspan="3">Total</td><td class="n">${num(c.valorKm)}</td></tr>
   ${sec('5132376110 - Estacionamento/pedágio - DESPESAS LOCAIS (Telmex)',c.exp.TELMEX,'TELMEX')}
   ${sec('6122376110 - Estacionamento/pedágio - DESPESAS LOCAIS (CFTV Bradesco)',c.exp['CFTV BRADESCO'],'CFTV BRADESCO')}
-  ${c.alim>0?`<tr><th colspan="4">6132394020 - Alimentação - DESPESAS LOCAIS</th></tr>`+['TELMEX','CFTV BRADESCO'].filter(k=>c.alimP[k]>0).map(k=>`<tr><td></td><td>${fim}</td><td>${PROJ[k].nome}</td><td class="n">${num(c.alimP[k])}</td></tr>`).join('')+`<tr class="tot"><td colspan="3">Total</td><td class="n">${num(c.alim)}</td></tr>`:''}
+  ${c.alim>0?`<tr><th colspan="4">6132394020 - Alimentação - DESPESAS LOCAIS</th></tr>`+['TELMEX','CFTV BRADESCO'].filter(k=>c.alimP[k]>0).map(k=>`<tr><td></td><td>${fmtBR(c.alimD[k])}</td><td>${PROJ[k].nome}</td><td class="n">${num(c.alimP[k])}</td></tr>`).join('')+`<tr class="tot"><td colspan="3">Total</td><td class="n">${num(c.alim)}</td></tr>`:''}
   <tr><th colspan="4">Resultado do relatório</th></tr>
   <tr><td colspan="3">Total das despesas</td><td class="n">${num(c.total)}</td></tr>
   <tr><td colspan="3">Total de adiantamento</td><td class="n">${num(c.adiant)}</td></tr>
