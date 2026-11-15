@@ -879,19 +879,33 @@ const docMes=(u,m)=>({entries:u.entries.filter(e=>e.date.startsWith(m)).sort((a,
 const baseDoc=u=>({email:AUTH.email||'',profile:u.profile,addresses:u.addresses,tag:u.tag||[]});
 function setSync(s,m){syncSt={s,m};const el=document.getElementById('sync');if(el)el.textContent=s==='ok'?'Salvo na nuvem':s==='salvando'?'Salvando…':s==='erro'?'Erro ao salvar':''}
 
+/* Abertura: mostra em que etapa está e mede o tempo de cada uma (para diagnosticar lentidão no celular) */
+let ETAPA='',ETAPA_T=0,ETAPA_IV=null;const TEMPOS=[];
+function etapa(nome){
+  const t=performance.now();if(ETAPA)TEMPOS.push([ETAPA,Math.round(t-ETAPA_T)]);ETAPA=nome;ETAPA_T=t;
+  const pinta=()=>{const el=document.getElementById('etapa');if(el&&ETAPA)el.textContent=ETAPA+'… '+Math.round((performance.now()-ETAPA_T)/1000)+' s'};
+  clearInterval(ETAPA_IV);if(nome){pinta();ETAPA_IV=setInterval(pinta,1000)}
+}
+const tempos=()=>TEMPOS.map(([n,ms])=>n+' '+(ms/1000).toFixed(1).replace('.',',')+' s').join(' · ');
 async function iniciarNuvem(){
-  AUTH={status:'loading'};render();
+  AUTH={status:'loading'};render();etapa('Baixando o Firebase');
   try{
     if(!window.firebase)await Promise.all(['app','auth','firestore'].map(f=>new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=`https://www.gstatic.com/firebasejs/10.12.2/firebase-${f}-compat.js`;sc.async=false;sc.onload=ok;sc.onerror=()=>err(new Error('Não consegui carregar o Firebase (internet ou bloqueio de rede)'));document.head.appendChild(sc)})));
     firebase.initializeApp(FIREBASE_CONFIG);fb.auth=firebase.auth();fb.db=firebase.firestore();
+    /* No celular, algumas redes seguram a conexão contínua do Firestore e a primeira leitura demora dezenas de segundos;
+       o modo de consulta por requisições comuns evita essa espera */
+    try{if(fb.db.settings&&/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent))fb.db.settings({experimentalForceLongPolling:true,merge:true})}catch(e){}
+    etapa('Conferindo o login Google');
     fb.auth.onAuthStateChanged(onAuth);
   }catch(e){AUTH={status:'erro',msg:e.message};render()}
 }
 async function onAuth(user){
-  if(!user){AUTH={status:'out'};S.users={};S.mine=null;return render()}
-  AUTH={status:'loading'};render();
+  if(!user){etapa('');AUTH={status:'out'};S.users={};S.mine=null;return render()}
+  AUTH={status:'loading'};render();etapa('Conferindo o acesso e baixando os lançamentos');
   try{
     const email=(user.email||'').toLowerCase();const ref=fb.db.doc('config/acesso');
+    /* a lista de acessos e os dados do técnico são lidos ao mesmo tempo (quem não é técnico tem a leitura negada, e isso é ignorado) */
+    const meuP=carregarUsuario(user.uid,true,user).catch(()=>null);
     const snap=await ref.get();let cfg=snap.exists?snap.data():null;
     if(!cfg&&email===ADMIN_EMAIL.toLowerCase()){cfg={admins:[email],supervisores:[],emails:[email]};await ref.set(cfg)}
     cfg=cfg||{};const low=a=>(a||[]).map(x=>String(x).trim().toLowerCase());
@@ -900,20 +914,24 @@ async function onAuth(user){
     if(!tec&&!sup){let pedido=false;try{await fb.db.doc('pedidos/'+user.uid).set({email,nome:String(user.displayName||'').slice(0,80),quando:new Date().toISOString()});pedido=true}catch(e){}if(pedido)avisaAdmin(user);AUTH={status:'blocked',email,nome:user.displayName||'',pedido};return render()}
     AUTH={status:'ok',user,uid:user.uid,email,nome:user.displayName||'',acesso:{tecnico:tec,supervisor:sup,admin:adm},cfg};
     S.me=user.uid;S.mine=null;
-    if(tec)S.mine=await carregarUsuario(user.uid,true,user);
+    if(tec)S.mine=(await meuP)||await carregarUsuario(user.uid,true,user);
     S.role=tec?'tecnico':(sup?'supervisor':'admin');
-    await aplicaPapel();render();
+    await aplicaPapel();etapa('');
+    const total=Math.round(performance.now());console.log('Abertura: '+tempos()+' · total '+(total/1000).toFixed(1)+' s');
+    if(adm&&total>6000)AUTH.lento='Abertura lenta ('+(total/1000).toFixed(0)+' s): '+tempos();
+    render();
     if(adm)carregaPedidos().then(()=>{if(AUTH.pedidos&&AUTH.pedidos.length)render()});
     if(S.mine&&S.mine._novo)agendaNuvem();
-  }catch(e){console.error(e);AUTH={status:'erro',msg:e.message};render()}
+  }catch(e){console.error(e);etapa('');AUTH={status:'erro',msg:e.message};render()}
 }
 async function carregarUsuario(uid,todos,authUser,mes){
-  const ref=fb.db.doc('users/'+uid);const d=await ref.get();const x=d.exists?d.data():null;
+  const ref=fb.db.doc('users/'+uid);
+  /* documento do técnico e meses lidos em paralelo */
+  const mesesP=todos?ref.collection('meses').get().then(s=>s.docs):ref.collection('meses').doc(mes).get().then(m=>m.exists?[m]:[]);
+  const[d,docsLidos]=await Promise.all([ref.get(),mesesP]);const x=d.exists?d.data():null;
   const u={profile:{...perfilVazio(authUser),...((x&&x.profile)||{})},addresses:(x&&x.addresses)||[],tag:(x&&x.tag)||[],entries:[],status:{},adiant:{}};
   if(!x&&authUser)u._novo=true;
-  let docs;
-  if(todos)docs=(await ref.collection('meses').get()).docs;
-  else{const m=await ref.collection('meses').doc(mes).get();docs=m.exists?[m]:[]}
+  const docs=docsLidos;
   docs.forEach(m=>{const y=m.data();(y.entries||[]).forEach(e=>u.entries.push(e));u.status[m.id]=y.status||{s:'Rascunho',motivo:''};if(y.adiant!==null&&y.adiant!==undefined)u.adiant[m.id]=y.adiant});
   if(todos&&authUser){
     docs.forEach(m=>{lastW['m:'+uid+m.id]=JSON.stringify(docMes(u,m.id))});
@@ -988,7 +1006,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 function renderGate(){
   document.getElementById('nav').innerHTML='';
   const st=AUTH.status;let h='';
-  if(st==='loading')h='<div class="empty">Carregando…</div>';
+  if(st==='loading')h='<div class="empty">Carregando…<div id="etapa" class="small muted" style="margin-top:8px"></div></div>';
   else if(st==='out')h=`<h2>Entrar</h2><p class="sub">Use a sua conta Google. Cada técnico vê e edita só o próprio relatório.</p><button class="btn primary" data-act="login">Entrar com Google</button>`;
   else if(st==='blocked')h=AUTH.pedido?`<h2>Pedido de acesso enviado</h2><p class="sub">O e-mail <b>${esc(AUTH.email)}</b> foi enviado ao administrador para liberação. Depois que ele liberar, toque em <b>Já fui liberado</b>.</p><div class="row" style="margin-top:12px"><button class="btn primary" data-act="recarrega">Já fui liberado</button><button class="btn" data-act="logout">Sair</button></div>`
     :`<h2>Acesso não liberado</h2><p class="sub">O e-mail <b>${esc(AUTH.email)}</b> ainda não foi cadastrado. Peça ao administrador para liberar este e-mail e entre de novo.</p><div class="row" style="margin-top:12px"><button class="btn" data-act="recarrega">Tentar de novo</button><button class="btn" data-act="logout">Sair</button></div>`;
@@ -1054,7 +1072,7 @@ function render0(){
     </div>
     <div class="controls">
       ${sup&&S.view==='mes'?`<select data-act="user" aria-label="Técnico">${usersOpts}</select>`:''}
-      ${!sup&&!adm&&u?`<span class="small muted">${esc(u.profile.nome)}</span>`:''}${NUVEM?`<span class="small muted">${esc(AUTH.email)}</span><span id="sync" class="small muted"></span>`:''}
+      ${!sup&&!adm&&u?`<span class="small muted">${esc(u.profile.nome)}</span>`:''}${NUVEM?`<span class="small muted">${esc(AUTH.email)}</span><span id="sync" class="small muted"></span>${AUTH.lento?`<span class="small muted">${esc(AUTH.lento)}</span>`:''}`:''}
       <div class="spacer"></div>
       <select data-act="mm" aria-label="Mês">${[...Array(12)].map((_,i)=>`<option value="${i+1}" ${i+1===m?'selected':''}>${MESES[i]}</option>`).join('')}</select>
       <select data-act="yy" aria-label="Ano">${[2025,2026,2027].map(a=>`<option ${a===y?'selected':''}>${a}</option>`).join('')}</select>
