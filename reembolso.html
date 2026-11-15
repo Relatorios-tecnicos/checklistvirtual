@@ -520,7 +520,7 @@ function drawFotos(){
       ${p.erro?`<div class="msg warn">${esc(p.erro)}. Digite o valor.</div>`:(p.cands.length?`<div class="small muted">Valores encontrados. Toque no correto:</div><div class="row" style="margin:6px 0">${p.cands.map(v=>`<button type="button" class="btn sm" data-act="fotoCand" data-v="${v}">${num(v)}</button>`).join('')}</div>`:'<div class="msg warn">Não consegui ler o valor. Digite abaixo.</div>')}
       <div class="row"><input type="number" id="fotoVal" step="0.01" min="0" inputmode="decimal" placeholder="Valor R$" value="${p.cands[0]||''}" style="max-width:150px"><button type="button" class="btn sm primary" data-act="fotoOk">Confirmar e anexar</button><button type="button" class="btn sm" data-act="fotoCancel">Descartar</button></div></div>`;
   }
-  fotosForm.forEach((f,i)=>{h+=`<div class="item" style="margin-top:8px"><div class="t"><img src="${FOTOS[f.id]||''}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px"><b>${f.tipo==='estac'?'Estacionamento':'Pedágio'}</b><span>${brl(f.valor)}</span><span class="num"><button type="button" class="btn sm" data-act="fotoRm" data-i="${i}">Remover</button></span></div></div>`});
+  fotosForm.forEach((f,i)=>{h+=`<div class="item" style="margin-top:8px"><div class="t"><img src="${FOTOS[f.id]||''}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px"><b>${f.tipo==='estac'?'Estacionamento':f.tipo==='tag'?'Fatura da tag (p. '+(f.pag||'')+')':'Pedágio'}</b><span>${brl(f.valor)}</span><span class="num"><button type="button" class="btn sm" data-act="fotoRm" data-i="${i}">Remover</button></span></div></div>`});
   box.innerHTML=h;
 }
 
@@ -657,7 +657,7 @@ async function montaComprovPdf(u){
   for(const e of u.entries.filter(x=>x.date.startsWith(S.month)).sort((x,y)=>x.date.localeCompare(y.date)||x.id-y.id))for(const f of(e.fotos||[])){
     const dataUrl=await fotoGet(f.id);if(!dataUrl)continue;
     const bytes=Uint8Array.from(atob(dataUrl.split(',')[1]),ch=>ch.charCodeAt(0));const img=await out.embedJpg(bytes);
-    paginaImg(img,`${fmtBR(e.date)} - ${f.tipo==='estac'?'Estacionamento':'Pedagio'}${f.valor?' - R$ '+num(f.valor):''}${f.chamado?' - Chamado '+f.chamado:''}`);
+    paginaImg(img,f.tipo==='tag'?`Fatura da tag - pagina ${f.pag||''}`:`${fmtBR(e.date)} - ${f.tipo==='estac'?'Estacionamento':'Pedagio'}${f.valor?' - R$ '+num(f.valor):''}${f.chamado?' - Chamado '+f.chamado:''}`);
   }
   for(const f of comprovFiles){
     const buf=await f.arrayBuffer();
@@ -730,6 +730,19 @@ async function montaKmPdf(u,month){
   pg.drawRectangle({x:x0+wl,y:y-14,width:cols[4].w,height:14,borderColor:preto,borderWidth:.5});pg.drawText(vk,{x:x0+wl+(cols[4].w-fb.widthOfTextAtSize(vk,7.5))/2,y:y-10,size:7.5,font:fb});
   pg.drawRectangle({x:x0+wl+cols[4].w,y:y-14,width:cols[5].w,height:14,borderColor:preto,borderWidth:.5});pg.drawText(vv,{x:x0+wl+cols[4].w+(cols[5].w-fb.widthOfTextAtSize(vv,7.5))/2,y:y-10,size:7.5,font:fb});
   return out.save();
+}
+let TAGFILES=[];
+async function paginasComoFotos(file){
+  await lib('pdfjs');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;const ids=[];
+  for(let n=1;n<=pdf.numPages;n++){
+    const pg=await pdf.getPage(n);let d='';
+    for(const[sc,q]of[[1.6,.65],[1.3,.55],[1.0,.5],[0.8,.45]]){
+      const vp=pg.getViewport({scale:sc});const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);await pg.render({canvasContext:x,viewport:vp}).promise;
+      d=c.toDataURL('image/jpeg',q);if(d.length<=380000)break}
+    const id='f'+newId().toString(36)+n;await fotoPut(id,d);ids.push({id,n})}
+  return ids;
 }
 function tituloNome(n){const peq=['de','da','do','das','dos','e'];return String(n||'').toLowerCase().split(/\s+/).filter(Boolean).map((w,i)=>peq.includes(w)&&i>0?w:w.charAt(0).toUpperCase()+w.slice(1)).join(' ')}
 function nomeArquivos(user,month){
@@ -1374,7 +1387,8 @@ document.addEventListener('click',async ev=>{
     const msg=document.getElementById('tagMsg');msg.textContent='Lendo…';
     try{
       let todos=[];
-      for(const f of comprovFiles.filter(f=>f.type==='application/pdf'))todos=todos.concat(await lerTag(f));
+      TAGFILES=comprovFiles.filter(f=>f.type==='application/pdf');
+      for(const f of TAGFILES)todos=todos.concat(await lerTag(f));
       const seen=new Set();todos=todos.filter(i=>{const k=[i.date,i.hora,i.placa,i.tipo,i.valor,i.desc].join('|');if(seen.has(k))return false;seen.add(k);return true});
       U().tag=todos;save();render();
       document.getElementById('tagMsg').textContent=todos.length?`${todos.length} lançamento(s) lido(s). Confira com a fatura antes de aplicar.`:'Não encontrei passagens nesses PDFs. Eles são o "Histórico de lançamentos" da tag?';
@@ -1383,15 +1397,29 @@ document.addEventListener('click',async ev=>{
   }
   else if(a==='limpartag'){u.tag=[]}
   else if(a==='aplicartag'){
-    let n=0;
+    let n=0;let primeiro=null;
     tagPorDia(u.tag||[]).forEach(d=>{
       const e=u.entries.filter(x=>x.date===d.date).sort((x,y)=>x.id-y.id)[0];
       if(!e)return;
       if(d.np)e.pedagio=d.ped;
       if(d.ne)e.estac=d.est;
+      if(!primeiro||e.date<primeiro.date)primeiro=e;
       n++;
     });
-    toast(n?`Pedágio e estacionamento aplicados em ${n} dia(s)`:'Nenhum dia da fatura tem lançamento')
+    let msg=n?`Pedágio e estacionamento aplicados em ${n} dia(s)`:'Nenhum dia da fatura tem lançamento';
+    const arqs=TAGFILES.filter(f=>comprovFiles.includes(f));
+    if(n&&primeiro){
+      if(arqs.length){
+        try{
+          toast('Guardando as páginas da fatura…');
+          u.entries.forEach(e=>{if(e.fotos)e.fotos=e.fotos.filter(f=>f.tipo!=='tag')});
+          primeiro.fotos=primeiro.fotos||[];
+          for(const f of arqs){for(const p of await paginasComoFotos(f))primeiro.fotos.push({id:p.id,tipo:'tag',valor:0,pag:p.n,arq:f.name});comprovFiles.splice(comprovFiles.indexOf(f),1)}
+          TAGFILES=[];msg+='. As páginas da fatura foram guardadas e entram no PDF unificado.';
+        }catch(err){console.error(err);msg+='. Não consegui guardar as páginas da fatura: '+err.message}
+      }else if(!u.entries.some(e=>(e.fotos||[]).some(f=>f.tipo==='tag')))msg+='. Para a fatura entrar no PDF unificado, anexe o PDF dela e aplique de novo.';
+    }
+    toast(msg)
   }
   else if(a==='pick'){document.getElementById('fileIn').click();return}
   else if(a==='rmfile'){const rf=comprovFiles[+b.dataset.i];RECIBOS=RECIBOS.filter(x=>x.file!==rf);comprovFiles.splice(+b.dataset.i,1)}
