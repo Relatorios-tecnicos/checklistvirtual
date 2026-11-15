@@ -591,8 +591,11 @@ async function genControle(user,month){
     sheet.set('A'+r,p.nome);sheet.set('B'+r,c.adiant);sheet.set('C'+r,c.total);sheet.set('D'+r,c.dif);
     sheet.set('E'+r,serial(e.date),styles.date(sheet.style('E'+r)));sheet.set('F'+r,e.chamado||'');sheet.set('G'+r,e.trajeto);
     sheet.set('H'+r,projLabel(e));sheet.set('I'+r,+e.km||null);
-    sheet.set('J'+r,+e.pedagio>0?+e.pedagio:null);sheet.set('K'+r,+e.estac>0?+e.estac:null);
+    sheet.set('J'+r,+e.pedagio>0?+e.pedagio:null,sheet.style('K'+r));sheet.set('K'+r,+e.estac>0?+e.estac:null);
   });
+  /* colunas de dinheiro (Pedágio, Estacionamento, Hospedagem, Alimentação…): toda célula sem formato recebe o de moeda */
+  for(let r=2;r<=134;r++){const ref=sheet.style('K'+r)||sheet.style('L'+r);if(!ref)continue;
+    for(const col of['J','K','L','M']){const c=sheet.cell(col+r);if(!c.getAttribute('s'))c.setAttribute('s',ref)}}
   return saveTpl(zip,sheet,styles);
 }
 async function genKm(user,month){
