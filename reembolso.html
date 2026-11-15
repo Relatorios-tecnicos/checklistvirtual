@@ -345,8 +345,8 @@ function parseChamado(t){
 /* ---------- km automático (OpenStreetMap: Nominatim + OSRM) ---------- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let lastGeo=0;
-function geoCache(){try{return JSON.parse(localStorage.getItem('geo-cache-v2')||'{}')}catch(e){return{}}}
-function geoSave(c){try{localStorage.setItem('geo-cache-v2',JSON.stringify(c))}catch(e){}}
+function geoCache(){try{return JSON.parse(localStorage.getItem('geo-cache-v3')||'{}')}catch(e){return{}}}
+function geoSave(c){try{localStorage.setItem('geo-cache-v3',JSON.stringify(c))}catch(e){}}
 function variantes(addr){
   let n=addr.replace(/\bCEP\s*:?\s*/gi,'').replace(/\bAv\.?(?=\s)/gi,'Avenida').replace(/\bPres\.?(?=\s)/gi,'Presidente').replace(/\bR\.(?=\s|[A-Z])/g,'Rua ').replace(/\bRod\.?(?=\s)/gi,'Rodovia').replace(/\bDr\.?(?=\s)/gi,'Doutor').replace(/\bProf\.?(?=\s)/gi,'Professor').replace(/\bEng\.?(?=\s)/gi,'Engenheiro').replace(/\bCel\.?(?=\s)/gi,'Coronel').replace(/\bGen\.?(?=\s)/gi,'General');
   const cep=(/(\d{5}-?\d{3})/.exec(n)||[])[1]||'';
@@ -356,6 +356,11 @@ function variantes(addr){
   const cidade=partes.length>1?partes[partes.length-1]:'';
   const rua=partes[0]||'';const numero=(partes[1]&&/^\d+[A-Za-z]?$/.test(partes[1]))?partes[1]:'';
   const v=[];
+  if(partes.length===1){
+    const m=n.match(/^(.*?)\s+(\d+[A-Za-z]?)\s+(.*?)\s*[\/-]\s*([A-Za-z]{2})\s*$/);
+    if(m){const w=m[3].trim().split(/\s+/);
+      for(let k=1;k<=Math.min(4,w.length);k++){const cd=w.slice(-k).join(' ');v.push([m[1],m[2],cd,m[4]].join(', '));v.push([m[1],cd,m[4]].join(', '))}}
+  }
   if(rua&&cidade){
     if(numero)v.push([rua,numero,cidade,uf].filter(Boolean).join(', '));
     v.push([rua,cidade,uf].filter(Boolean).join(', '));
@@ -381,6 +386,15 @@ function cidadeDe(a){
   if(!m.length)m=[...a.matchAll(/,\s*([^,\d\/][^,\/]*?)\s*,\s*[A-Za-z]{2}\b/g)];
   return m.length?m[m.length-1][1].trim():'';
 }
+function cidadesDe(a){
+  const c=cidadeDe(a);if(c)return[normT(c)];
+  const m=String(a).match(/^(.*?)\s*[\/-]\s*[A-Za-z]{2}\s*$/);if(!m)return[];
+  const w=normT(m[1]).replace(/[.,;]/g,' ').split(/\s+/).filter(Boolean);const r=[];
+  for(let k=1;k<=4&&k<=w.length;k++)r.push(w.slice(-k).join(' '));
+  return r;
+}
+function munDe(x){const d=x&&x.address;return normT(d&&(d.city||d.town||d.village||d.municipality||d.city_district||d.county)||'')}
+function munOk(mun,cids){return mun&&cids.some(c=>mun===c||(c.length>3&&mun.length>3&&(mun.includes(c)||c.includes(mun))))}
 function distKm(a,b){const R=6371,t=x=>x*Math.PI/180,dl=t(b.lat-a.lat),dn=t(b.lon-a.lon);const h=Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 async function cepPonto(addr){
   const m=String(addr).match(/\b(\d{5})-?(\d{3})\b/);if(!m)return null;const cep=m[1]+m[2];
@@ -394,12 +408,12 @@ async function cepPonto(addr){
 async function geocode(addr){
   const cd=coordDe(addr);if(cd)return cd;
   const c=geoCache();if(c[addr])return c[addr];
-  const cep=await cepPonto(addr);const cid=normT(cidadeDe(addr));
+  const cep=await cepPonto(addr);const cids=cidadesDe(addr);
   const vs=variantes(addr);
   for(const q of vs){
     const w=1100-(Date.now()-lastGeo);if(w>0)await sleep(w);lastGeo=Date.now();
-    const j=await getJson('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q));
-    let ok=j.filter(x=>!cid||!x.display_name||normT(x.display_name).includes(cid)).map(x=>({lat:+x.lat,lon:+x.lon}));
+    const j=await getJson('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&addressdetails=1&q='+encodeURIComponent(q));
+    let ok=j.filter(x=>{if(!cids.length)return true;const mun=munDe(x);return mun?munOk(mun,cids):(!x.display_name||cids.some(c=>normT(x.display_name).includes(c)))}).map(x=>({lat:+x.lat,lon:+x.lon}));
     if(cep&&ok.length){
       ok.sort((a,b)=>distKm(cep,a)-distKm(cep,b));
       if(distKm(cep,ok[0])>3)break; // longe do CEP: desconfia e usa o ponto do CEP
@@ -410,11 +424,11 @@ async function geocode(addr){
   for(const q of vs.slice(0,2)){
     try{
       const j=await getJson('https://photon.komoot.io/api/?limit=5&lang=default&q='+encodeURIComponent(q+', Brasil'));
-      const f=(j.features||[]).find(x=>!cid||normT(JSON.stringify(x.properties)).includes(cid));
+      const f=(j.features||[]).find(x=>{if(!cids.length)return true;const p=x.properties||{};const mun=normT(p.city||p.town||p.village||p.county||'');return mun?munOk(mun,cids):cids.some(c=>normT(JSON.stringify(p)).includes(c))});
       if(f){const p={lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]};c[addr]=p;geoSave(c);return p}
     }catch(e){}
   }
-  throw new Error('Não localizei o endereço "'+addr+'"');
+  throw new Error('Não localizei o endereço "'+addr+'" na cidade informada. Cole no fim do endereço as coordenadas do Google Maps');
 }
 async function kmRota(home,stops){
   const seq=[home,...stops,home];const pts=[];
