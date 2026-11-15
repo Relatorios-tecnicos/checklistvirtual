@@ -323,8 +323,8 @@ function parseChamado(t){
 /* ---------- km automático (OpenStreetMap: Nominatim + OSRM) ---------- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let lastGeo=0;
-function geoCache(){try{return JSON.parse(localStorage.getItem('geo-cache')||'{}')}catch(e){return{}}}
-function geoSave(c){try{localStorage.setItem('geo-cache',JSON.stringify(c))}catch(e){}}
+function geoCache(){try{return JSON.parse(localStorage.getItem('geo-cache-v2')||'{}')}catch(e){return{}}}
+function geoSave(c){try{localStorage.setItem('geo-cache-v2',JSON.stringify(c))}catch(e){}}
 function variantes(addr){
   let n=addr.replace(/\bCEP\s*:?\s*/gi,'').replace(/\bAv\.?(?=\s)/gi,'Avenida').replace(/\bPres\.?(?=\s)/gi,'Presidente').replace(/\bR\.(?=\s|[A-Z])/g,'Rua ').replace(/\bRod\.?(?=\s)/gi,'Rodovia').replace(/\bDr\.?(?=\s)/gi,'Doutor').replace(/\bProf\.?(?=\s)/gi,'Professor').replace(/\bEng\.?(?=\s)/gi,'Engenheiro').replace(/\bCel\.?(?=\s)/gi,'Coronel').replace(/\bGen\.?(?=\s)/gi,'General');
   const cep=(/(\d{5}-?\d{3})/.exec(n)||[])[1]||'';
@@ -352,19 +352,38 @@ function coordDe(t){
   t=String(t);let m=t.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/)||t.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/)||t.match(/(-?\d{1,2}\.\d{3,})\s*[,;]\s*(-?\d{1,3}\.\d{3,})/);
   return m?{lat:+m[1],lon:+m[2]}:null;
 }
+const normT=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function cidadeDe(a){const m=[...String(a).matchAll(/,\s*([^,\d][^,]*?)\s*-\s*[A-Za-z]{2}\b/g)];return m.length?m[m.length-1][1].trim():''}
+function distKm(a,b){const R=6371,t=x=>x*Math.PI/180,dl=t(b.lat-a.lat),dn=t(b.lon-a.lon);const h=Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+async function cepPonto(addr){
+  const m=String(addr).match(/\b(\d{5})-?(\d{3})\b/);if(!m)return null;const cep=m[1]+m[2];
+  for(const u of['https://cep.awesomeapi.com.br/json/'+cep,'https://brasilapi.com.br/api/cep/v2/'+cep]){
+    try{const ac=new AbortController();const to=setTimeout(()=>ac.abort(),6000);const r=await fetch(u,{signal:ac.signal});clearTimeout(to);if(!r.ok)continue;const j=await r.json();
+      let lat=j.lat,lon=j.lng;if(j.location&&j.location.coordinates){lat=j.location.coordinates.latitude;lon=j.location.coordinates.longitude}
+      if(lat&&lon&&!isNaN(+lat)&&!isNaN(+lon))return{lat:+lat,lon:+lon}}catch(e){}
+  }
+  return null;
+}
 async function geocode(addr){
   const cd=coordDe(addr);if(cd)return cd;
   const c=geoCache();if(c[addr])return c[addr];
+  const cep=await cepPonto(addr);const cid=normT(cidadeDe(addr));
   const vs=variantes(addr);
   for(const q of vs){
     const w=1100-(Date.now()-lastGeo);if(w>0)await sleep(w);lastGeo=Date.now();
-    const j=await getJson('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(q));
-    if(j.length){const p={lat:+j[0].lat,lon:+j[0].lon};c[addr]=p;geoSave(c);return p}
+    const j=await getJson('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=br&q='+encodeURIComponent(q));
+    let ok=j.filter(x=>!cid||!x.display_name||normT(x.display_name).includes(cid)).map(x=>({lat:+x.lat,lon:+x.lon}));
+    if(cep&&ok.length){
+      ok.sort((a,b)=>distKm(cep,a)-distKm(cep,b));
+      if(distKm(cep,ok[0])>3)break; // longe do CEP: desconfia e usa o ponto do CEP
+    }
+    if(ok.length){c[addr]=ok[0];geoSave(c);return ok[0]}
   }
+  if(cep){c[addr]=cep;geoSave(c);return cep}
   for(const q of vs.slice(0,2)){
     try{
-      const j=await getJson('https://photon.komoot.io/api/?limit=1&lang=default&q='+encodeURIComponent(q+', Brasil'));
-      const f=j.features&&j.features[0];
+      const j=await getJson('https://photon.komoot.io/api/?limit=5&lang=default&q='+encodeURIComponent(q+', Brasil'));
+      const f=(j.features||[]).find(x=>!cid||normT(JSON.stringify(x.properties)).includes(cid));
       if(f){const p={lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0]};c[addr]=p;geoSave(c);return p}
     }catch(e){}
   }
