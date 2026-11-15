@@ -568,6 +568,10 @@ function vRecibos(){
       <div class="field"><label class="f">Valor (R$)</label><input type="number" step="0.01" min="0" inputmode="decimal" data-ri="${i}" data-rf="valor" value="${esc(r.valor)}"></div>
       <div class="field"><label class="f">Dia</label><select data-ri="${i}" data-rf="dia"><option value="">Escolha…</option>${dias.map(e=>`<option value="${e.date}" ${r.dia===e.date?'selected':''}>${fmtBR(e.date)}</option>`).join('')}</select></div>
     </div>
+    ${(()=>{const ed=r.dia&&u.entries.find(e=>e.date===r.dia);const chs=ed?String(ed.chamado||'').split(' / ').map(x=>x.trim()).filter(Boolean):[];
+      if(!chs.length)return ed?'<div class="small muted" style="margin-top:6px">Este lançamento não tem número de chamado.</div>':'';
+      if(chs.length===1)r.chamado=chs[0];else if(r.chamado!=='*'&&!chs.includes(r.chamado))r.chamado='';
+      return`<div class="field" style="margin-top:8px"><label class="f">Chamado deste recibo</label><select data-ri="${i}" data-rf="chamado">${chs.length>1?`<option value="">Escolha…</option>`:''}${chs.map(c=>`<option value="${esc(c)}" ${r.chamado===c?'selected':''}>${esc(c)}</option>`).join('')}${chs.length>1?`<option value="*" ${r.chamado==='*'?'selected':''}>Todos os chamados do dia</option>`:''}</select></div>`})()}
     <button class="btn sm primary" data-act="reciboOk" data-i="${i}" ${trav||r.lendo?'disabled':''}>Aplicar ao dia</button>
   </div>`).join('')}</div>${dias.length?'':'<div class="empty">Não há lançamentos neste mês. Lance os dias primeiro.</div>'}</div>`;
 }
@@ -1300,9 +1304,12 @@ document.addEventListener('click',async ev=>{
     if(!(v>0)){toast('Informe o valor');return}
     if(!r.img){toast('Não consegui ler a imagem');return}
     const e=u.entries.find(x=>x.date===r.dia);if(!e){toast('Lançamento não encontrado');return}
+    const chs=String(e.chamado||'').split(' / ').map(x=>x.trim()).filter(Boolean);
+    if(chs.length>1&&!r.chamado){toast('Escolha o chamado deste recibo');return}
+    const chamado=chs.length?(r.chamado==='*'?chs.join(' / '):(r.chamado||chs[0])):'';
     const fid='f'+newId().toString(36);
     try{await fotoPut(fid,r.img)}catch(err){toast('Não foi possível salvar a foto: '+err.message);return}
-    e.fotos=e.fotos||[];e.fotos.push({id:fid,tipo:r.tipo,valor:v});
+    e.fotos=e.fotos||[];e.fotos.push({id:fid,tipo:r.tipo,valor:v,chamado});
     const campo=r.tipo==='estac'?'estac':'pedagio';e[campo]=r2((+e[campo]||0)+v);
     RECIBOS.splice(+b.dataset.i,1);const k=comprovFiles.indexOf(r.file);if(k>=0)comprovFiles.splice(k,1);
     toast('Aplicado em '+fmtBR(r.dia))}
@@ -1314,13 +1321,13 @@ document.addEventListener('click',async ev=>{
         const land=img.width>img.height;const W=land?841.89:595.28,H=land?595.28:841.89,m=28,topo=leg?22:0;
         const sc=Math.min((W-2*m)/img.width,(H-2*m-topo)/img.height);const w=img.width*sc,h=img.height*sc;
         const pg=out.addPage([W,H]);
-        if(leg)pg.drawText(leg,{x:m,y:H-m-8,size:12,font});
+        if(leg){let sz=12;while(sz>7&&font.widthOfTextAtSize(leg,sz)>W-2*m)sz-=0.5;pg.drawText(leg,{x:m,y:H-m-8,size:sz,font})}
         pg.drawImage(img,{x:(W-w)/2,y:H-m-topo-h,width:w,height:h});
       };
       for(const e of u.entries.filter(x=>x.date.startsWith(S.month)).sort((x,y)=>x.date.localeCompare(y.date)||x.id-y.id))for(const f of(e.fotos||[])){
         const dataUrl=await fotoGet(f.id);if(!dataUrl)continue;
         const bytes=Uint8Array.from(atob(dataUrl.split(',')[1]),ch=>ch.charCodeAt(0));const img=await out.embedJpg(bytes);
-        paginaImg(img,`${fmtBR(e.date)} - ${f.tipo==='estac'?'Estacionamento':'Pedagio'}${f.valor?' - R$ '+num(f.valor):''}`);
+        paginaImg(img,`${fmtBR(e.date)} - ${f.tipo==='estac'?'Estacionamento':'Pedagio'}${f.valor?' - R$ '+num(f.valor):''}${f.chamado?' - Chamado '+f.chamado:''}`);
       }
       for(const f of comprovFiles){
         const buf=await f.arrayBuffer();
@@ -1342,7 +1349,7 @@ document.addEventListener('click',async ev=>{
 
 document.addEventListener('input',ev=>{
   const t=ev.target;if(t.name==='kmCFTV'||t.name==='kmTELMEX'){const f=t.form;f.elements.km.value=(+f.elements.kmCFTV.value||0)+(+f.elements.kmTELMEX.value||0)}
-  if(t.dataset&&t.dataset.ri!==undefined&&RECIBOS[+t.dataset.ri])RECIBOS[+t.dataset.ri][t.dataset.rf]=t.value;
+  if(t.dataset&&t.dataset.ri!==undefined&&RECIBOS[+t.dataset.ri]){RECIBOS[+t.dataset.ri][t.dataset.rf]=t.value;if(t.dataset.rf==='dia'){RECIBOS[+t.dataset.ri].chamado='';render()}}
   // salva o cadastro enquanto digita (não perde ao trocar de tela)
   const fm=t.form&&t.form.dataset&&t.form.dataset.form;
   if(fm==='perfil'&&t.name){const u=U();if(u){const v=String(t.value);u.profile[t.name]=t.name==='adiantamento'?(+v.replace(',','.')||0):v.trim();save()}}
