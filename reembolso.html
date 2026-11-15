@@ -395,6 +395,13 @@ function cidadesDe(a){
 }
 function munDe(x){const d=x&&x.address;return normT(d&&(d.city||d.town||d.village||d.municipality||d.city_district||d.county)||'')}
 function munOk(mun,cids){return mun&&cids.some(c=>mun===c||(c.length>3&&mun.length>3&&(mun.includes(c)||c.includes(mun))))}
+function avisoEnd(seq,nomes){
+  const out=[];
+  seq.forEach((ad,i)=>{if(i===seq.length-1||coordDe(ad))return;
+    const f=[];if(!/\d/.test(ad))f.push('número');if(!cidadesDe(ad).length)f.push('cidade/UF no final');
+    if(f.length)out.push(nomes[i]+' (falta '+f.join(' e ')+')');});
+  return out.length?'<br><b>Atenção:</b> '+out.map(esc).join('; ')+'. Sem isso o ponto pode cair em outra cidade; escreva o endereço como "Rua, número, Bairro, Cidade - UF" e calcule de novo.':'';
+}
 function distKm(a,b){const R=6371,t=x=>x*Math.PI/180,dl=t(b.lat-a.lat),dn=t(b.lon-a.lon);const h=Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 async function cepPonto(addr){
   const m=String(addr).match(/\b(\d{5})-?(\d{3})\b/);if(!m)return null;const cep=m[1]+m[2];
@@ -1441,7 +1448,7 @@ document.addEventListener('click',async ev=>{
       }
       const nomes=['Residência',...stops.map((x,i)=>'Parada '+(i+1)),'Residência'];
       const det=R.legs.map((d,i)=>`${nomes[i]} → ${nomes[i+1]}: ${d.toFixed(1).replace('.',',')} km`).join(' · ');
-      msg.innerHTML=esc(`Total ida e volta: ${km} km (OpenStreetMap). ${det}.${rep}`)+'<br>Onde o site localizou cada ponto (confira se está no lugar certo): '+R.pts.slice(0,-1).map((p,i)=>`<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">${nomes[i]}</a>`).join(' · ')+'<br>Ponto errado? Em Endereços, cole no fim do endereço as coordenadas do Google Maps (clique direito no ponto → clique nos números).'}
+      msg.innerHTML=esc(`Total ida e volta: ${km} km (OpenStreetMap). ${det}.${rep}`)+'<br>Onde o site localizou cada ponto (confira se está no lugar certo): '+R.pts.slice(0,-1).map((p,i)=>`<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">${nomes[i]}</a>`).join(' · ')+'<br>Ponto errado? Em Endereços, cole no fim do endereço as coordenadas do Google Maps (clique direito no ponto → clique nos números).'+avisoEnd([u.profile.home,...stops,u.profile.home],nomes)}
     catch(err){msg.textContent=err.message+' — digite o km manualmente.'}
     b.disabled=false;return;
   }
