@@ -945,7 +945,7 @@ async function carregarTodos(){
   S.sup=users;
 }
 /* Endereço do Apps Script que envia o e-mail de aviso ao administrador (vazio = sem aviso por e-mail) */
-const AVISO_URL="";
+const AVISO_URL="https://script.google.com/macros/s/AKfycbzqTDyn3qqYeZXDaE2kFs45L3enbxrfuNwBivpEqnwAQo75gEGFRVVgmC0wQWhM72NF/exec";
 async function avisaAdmin(user){
   if(!AVISO_URL)return;const k='pedidoAvisado:'+user.uid;
   try{if(localStorage.getItem(k))return;const idToken=await user.getIdToken();
