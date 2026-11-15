@@ -894,7 +894,7 @@ async function onAuth(user){
     cfg=cfg||{};const low=a=>(a||[]).map(x=>String(x).trim().toLowerCase());
     const adm=low(cfg.admins).includes(email)||email===ADMIN_EMAIL.toLowerCase();
     const sup=adm||low(cfg.supervisores).includes(email);const tec=low(cfg.emails).includes(email);
-    if(!tec&&!sup){let pedido=false;try{await fb.db.doc('pedidos/'+user.uid).set({email,nome:String(user.displayName||'').slice(0,80),quando:new Date().toISOString()});pedido=true}catch(e){}AUTH={status:'blocked',email,nome:user.displayName||'',pedido};return render()}
+    if(!tec&&!sup){let pedido=false;try{await fb.db.doc('pedidos/'+user.uid).set({email,nome:String(user.displayName||'').slice(0,80),quando:new Date().toISOString()});pedido=true}catch(e){}if(pedido)avisaAdmin(user);AUTH={status:'blocked',email,nome:user.displayName||'',pedido};return render()}
     AUTH={status:'ok',user,uid:user.uid,email,nome:user.displayName||'',acesso:{tecnico:tec,supervisor:sup,admin:adm},cfg};
     S.me=user.uid;S.mine=null;
     if(tec)S.mine=await carregarUsuario(user.uid,true,user);
@@ -922,6 +922,14 @@ async function carregarTodos(){
   const snap=await fb.db.collection('users').get();const users={};
   for(const d of snap.docs)users[d.id]=await carregarUsuario(d.id,false,null,S.month);
   S.sup=users;
+}
+/* Endereço do Apps Script que envia o e-mail de aviso ao administrador (vazio = sem aviso por e-mail) */
+const AVISO_URL="";
+async function avisaAdmin(user){
+  if(!AVISO_URL)return;const k='pedidoAvisado:'+user.uid;
+  try{if(localStorage.getItem(k))return;const idToken=await user.getIdToken();
+    await fetch(AVISO_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({idToken})});
+    localStorage.setItem(k,String(Date.now()))}catch(e){}
 }
 async function carregaPedidos(){
   if(!NUVEM||!AUTH.acesso||!AUTH.acesso.admin)return;
