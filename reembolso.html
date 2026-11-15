@@ -347,7 +347,12 @@ async function getJson(url){
   if(!r.ok)throw new Error('Serviço de mapas respondeu erro '+r.status);
   return r.json();
 }
+function coordDe(t){
+  t=String(t);let m=t.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/)||t.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/)||t.match(/(-?\d{1,2}\.\d{3,})\s*[,;]\s*(-?\d{1,3}\.\d{3,})/);
+  return m?{lat:+m[1],lon:+m[2]}:null;
+}
 async function geocode(addr){
+  const cd=coordDe(addr);if(cd)return cd;
   const c=geoCache();if(c[addr])return c[addr];
   const vs=variantes(addr);
   for(const q of vs){
@@ -370,7 +375,7 @@ async function kmRota(home,stops){
   const url='https://router.project-osrm.org/route/v1/driving/'+pts.map(p=>p.lon+','+p.lat).join(';')+'?overview=false';
   const r=await fetch(url);if(!r.ok)throw new Error('Serviço de rotas indisponível ('+r.status+')');
   const j=await r.json();if(!j.routes||!j.routes.length)throw new Error('Rota não encontrada');
-  const legs=(j.routes[0].legs||[]).map(l=>l.distance/1000);return{total:Math.round(j.routes[0].distance/1000),legs};
+  const legs=(j.routes[0].legs||[]).map(l=>l.distance/1000);return{total:Math.round(j.routes[0].distance/1000),legs,pts};
 }
 function linkMaps(home,stops){
   const seq=[home,...stops,home];
@@ -983,7 +988,7 @@ function vEnd(){
   return`<h1 class="page">Endereços</h1>${u._novo?'<div class="msg warn"><b>Primeiro acesso:</b> preencha sua residência e os dados do relatório (abaixo) uma vez só.</div>':''}
   <div class="card"><h2>Minha residência</h2><p class="sub">Ponto de partida e de retorno de todo dia.</p>
     <form data-form="home"><div class="field"><input type="text" name="home" value="${esc(p.home)}" required></div><button class="btn primary" type="submit">Salvar residência</button></form></div>
-  <div class="card"><h2>Locais de atendimento</h2><p class="sub">Escolha-os ao lançar o dia.</p>
+  <div class="card"><h2>Locais de atendimento</h2><p class="sub">Escolha-os ao lançar o dia. Se o site não achar o local certo, escreva o endereço e, no fim, as coordenadas do Google Maps (ex.: -22.4101, -47.5603).</p>
     <div class="list">${u.addresses.map(a=>`<div class="item"><div class="t"><b>${esc(a.nome)}</b><span class="num"><button class="btn sm" data-act="rmend" data-id="${a.id}">Excluir</button></span></div><div class="tr">${esc(a.end)}</div></div>`).join('')||'<div class="empty">Nenhum local.</div>'}</div>
     <form data-form="end" style="margin-top:14px"><div class="field"><label class="f">Nome</label><input type="text" name="nome" required></div><div class="field"><label class="f">Endereço completo</label><input type="text" name="end" required></div><button class="btn" type="submit">Adicionar local</button></form></div>
   <div class="card"><h2>Dados do relatório</h2><p class="sub">Aparecem nas planilhas. Preenchidos uma vez.</p>
@@ -1092,7 +1097,7 @@ document.addEventListener('click',async ev=>{
       }
       const nomes=['Residência',...stops.map((x,i)=>'Parada '+(i+1)),'Residência'];
       const det=R.legs.map((d,i)=>`${nomes[i]} → ${nomes[i+1]}: ${d.toFixed(1).replace('.',',')} km`).join(' · ');
-      msg.textContent=`Total ida e volta: ${km} km (OpenStreetMap). ${det}. Confira no Google Maps se necessário.${rep}`}
+      msg.innerHTML=esc(`Total ida e volta: ${km} km (OpenStreetMap). ${det}.${rep}`)+'<br>Onde o site localizou cada ponto (confira se está no lugar certo): '+R.pts.slice(0,-1).map((p,i)=>`<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">${nomes[i]}</a>`).join(' · ')+'<br>Ponto errado? Em Endereços, cole no fim do endereço as coordenadas do Google Maps (clique direito no ponto → clique nos números).'}
     catch(err){msg.textContent=err.message+' — digite o km manualmente.'}
     b.disabled=false;return;
   }
