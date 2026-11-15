@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Logs de acesso aos relatórios (regra já existente, mantida)
+    match /acessos_relatorios/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // TROQUE pelo e-mail Google do administrador (em minúsculas), igual ao ADMIN_EMAIL do index.html
+    function adminFixo() { return request.auth.token.email.lower() == 'epsouza2011@gmail.com'; }
+
+    function logado()  { return request.auth != null && request.auth.token.email_verified == true; }
+    function mail()    { return request.auth.token.email.lower(); }
+    function lista(n)  { return get(/databases/$(database)/documents/config/acesso).data.get(n, []); }
+    function ehAdmin() { return logado() && (adminFixo() || mail() in lista('admins')); }
+    function ehSup()   { return logado() && (adminFixo() || mail() in lista('admins') || mail() in lista('supervisores')); }
+    function ehTec()   { return logado() && mail() in lista('emails'); }
+    function dono(uid) { return logado() && request.auth.uid == uid && ehTec(); }
+
+    // O técnico só muda o status entre Rascunho e Enviado. Ajuste, Aprovado e Pago são do supervisor.
+    function statusTec(velho, novo) {
+      return velho in ['Rascunho', 'Ajuste', 'Enviado'] &&
+        (novo == velho ||
+         (novo == 'Enviado'  && velho in ['Rascunho', 'Ajuste']) ||
+         (novo == 'Rascunho' && velho in ['Enviado', 'Ajuste']));
+    }
+
+    // Lista de acessos: todos os logados leem; só o administrador altera
+    match /config/acesso {
+      allow read: if logado();
+      allow create: if logado() && adminFixo();
+      allow update: if ehAdmin();
+    }
+
+    // Pedidos de acesso: quem ainda não está na lista grava só o próprio pedido; só o administrador lê e apaga
+    match /pedidos/{uid} {
+      allow create, update: if logado() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'nome', 'quando'])
+        && request.resource.data.email == mail()
+        && request.resource.data.nome is string && request.resource.data.nome.size() <= 80
+        && request.resource.data.quando is string && request.resource.data.quando.size() <= 40;
+      allow read, delete: if ehAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if dono(uid) || ehSup();
+      allow create, update: if dono(uid);
+
+      match /meses/{mes} {
+        allow read: if dono(uid) || ehSup();
+
+        allow create: if dono(uid)
+          && request.resource.data.status.s in ['Rascunho', 'Enviado']
+          && request.resource.data.entries.size() <= 100;
+
+        allow update: if
+          (dono(uid)
+            && statusTec(resource.data.status.s, request.resource.data.status.s)
+            && request.resource.data.entries.size() <= 100)
+          ||
+          (ehSup()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && request.resource.data.status.s in ['Rascunho', 'Enviado', 'Ajuste', 'Aprovado', 'Pago']);
+      }
+
+      match /fotos/{id} {
+        allow read: if dono(uid) || ehSup();
+        allow create, update: if dono(uid) && request.resource.data.img.size() < 400000;
+        allow delete: if dono(uid);
+      }
+    }
+  }
+}

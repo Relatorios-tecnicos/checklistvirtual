@@ -875,12 +875,13 @@ async function onAuth(user){
     cfg=cfg||{};const low=a=>(a||[]).map(x=>String(x).trim().toLowerCase());
     const adm=low(cfg.admins).includes(email)||email===ADMIN_EMAIL.toLowerCase();
     const sup=adm||low(cfg.supervisores).includes(email);const tec=low(cfg.emails).includes(email);
-    if(!tec&&!sup){AUTH={status:'blocked',email,nome:user.displayName||''};return render()}
+    if(!tec&&!sup){let pedido=false;try{await fb.db.doc('pedidos/'+user.uid).set({email,nome:String(user.displayName||'').slice(0,80),quando:new Date().toISOString()});pedido=true}catch(e){}AUTH={status:'blocked',email,nome:user.displayName||'',pedido};return render()}
     AUTH={status:'ok',user,uid:user.uid,email,nome:user.displayName||'',acesso:{tecnico:tec,supervisor:sup,admin:adm},cfg};
     S.me=user.uid;S.mine=null;
     if(tec)S.mine=await carregarUsuario(user.uid,true,user);
     S.role=tec?'tecnico':(sup?'supervisor':'admin');
     await aplicaPapel();render();
+    if(adm)carregaPedidos().then(()=>{if(AUTH.pedidos&&AUTH.pedidos.length)render()});
     if(S.mine&&S.mine._novo)agendaNuvem();
   }catch(e){console.error(e);AUTH={status:'erro',msg:e.message};render()}
 }
@@ -902,6 +903,15 @@ async function carregarTodos(){
   const snap=await fb.db.collection('users').get();const users={};
   for(const d of snap.docs)users[d.id]=await carregarUsuario(d.id,false,null,S.month);
   S.sup=users;
+}
+async function carregaPedidos(){
+  if(!NUVEM||!AUTH.acesso||!AUTH.acesso.admin)return;
+  try{
+    const c=AUTH.cfg||{};const ja=new Set([...(c.emails||[]),...(c.supervisores||[]),...(c.admins||[])].map(x=>String(x).trim().toLowerCase()));
+    const s=await fb.db.collection('pedidos').get();const l=[];
+    s.docs.forEach(x=>{const p={id:x.id,...x.data()};if(ja.has(String(p.email||'').toLowerCase()))fb.db.doc('pedidos/'+p.id).delete().catch(()=>{});else l.push(p)});
+    l.sort((a,b)=>String(a.quando||'').localeCompare(String(b.quando||'')));AUTH.pedidos=l;
+  }catch(e){AUTH.pedidos=AUTH.pedidos||[]}
 }
 async function aplicaPapel(){
   if(S.role==='tecnico'){S.users={[S.me]:S.mine};S.userId=S.me}
@@ -950,13 +960,18 @@ function renderGate(){
   const st=AUTH.status;let h='';
   if(st==='loading')h='<div class="empty">Carregando…</div>';
   else if(st==='out')h=`<h2>Entrar</h2><p class="sub">Use a sua conta Google. Cada técnico vê e edita só o próprio relatório.</p><button class="btn primary" data-act="login">Entrar com Google</button>`;
-  else if(st==='blocked')h=`<h2>Acesso não liberado</h2><p class="sub">O e-mail <b>${esc(AUTH.email)}</b> ainda não foi cadastrado. Peça ao administrador para liberar este e-mail e entre de novo.</p><button class="btn" data-act="logout">Sair</button>`;
+  else if(st==='blocked')h=AUTH.pedido?`<h2>Pedido de acesso enviado</h2><p class="sub">O e-mail <b>${esc(AUTH.email)}</b> foi enviado ao administrador para liberação. Depois que ele liberar, toque em <b>Já fui liberado</b>.</p><div class="row" style="margin-top:12px"><button class="btn primary" data-act="recarrega">Já fui liberado</button><button class="btn" data-act="logout">Sair</button></div>`
+    :`<h2>Acesso não liberado</h2><p class="sub">O e-mail <b>${esc(AUTH.email)}</b> ainda não foi cadastrado. Peça ao administrador para liberar este e-mail e entre de novo.</p><div class="row" style="margin-top:12px"><button class="btn" data-act="recarrega">Tentar de novo</button><button class="btn" data-act="logout">Sair</button></div>`;
   else h=`<h2>Não foi possível iniciar</h2><div class="msg err">${esc(AUTH.msg||'Erro desconhecido')}</div><div class="row" style="margin-top:12px"><button class="btn" data-act="logout">Sair</button><button class="btn" data-act="recarrega">Tentar de novo</button></div>`;
   document.getElementById('app').innerHTML=`<div style="max-width:440px;margin:14vh auto 0"><div class="brand" style="justify-content:center;margin-bottom:6px"><div class="logo">R</div>Reembolso de Campo</div><div class="card">${h}</div></div>`;
 }
 function vAcessos(){
   const c=AUTH.cfg||{};const ln=a=>(a||[]).join('\n');
-  return`<h1 class="page">Acessos</h1><p class="muted small" style="margin:0">Um e-mail Google por linha. Só quem estiver na lista consegue entrar.</p>
+  const ped=AUTH.pedidos||[];const dt=q=>{const x=new Date(q);return isNaN(x)?'':x.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})};
+  const pedH=`<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><b>Pedidos de acesso${ped.length?` (${ped.length})`:''}</b><button class="btn sm ghost" type="button" data-act="pedRef">Atualizar</button></div>
+    ${ped.length?ped.map(p=>`<div class="row" style="justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line,rgba(128,128,128,.25));margin-top:10px;flex-wrap:wrap"><div style="min-width:0"><div><b>${esc(p.nome||'(sem nome)')}</b></div><div class="small muted" style="word-break:break-all">${esc(p.email)}${dt(p.quando)?' · '+dt(p.quando):''}</div></div><div class="row"><button class="btn sm primary" type="button" data-act="pedOk" data-id="${esc(p.id)}">Liberar como técnico</button><button class="btn sm" type="button" data-act="pedNo" data-id="${esc(p.id)}">Recusar</button></div></div>`).join(''):'<p class="muted small" style="margin:8px 0 0">Nenhum pedido aguardando. Quem tentar entrar sem estar na lista aparece aqui.</p>'}
+  </div>`;
+  return`<h1 class="page">Acessos</h1>${pedH}<p class="muted small" style="margin:12px 0 0">Um e-mail Google por linha. Só quem estiver na lista consegue entrar.</p>
   <form class="card" data-form="acessos">
     <div class="field"><label class="f">Técnicos (cada um vê só o próprio relatório)</label><textarea name="emails" style="min-height:140px">${esc(ln(c.emails))}</textarea></div>
     <div class="field"><label class="f">Supervisores (veem todos, aprovam e marcam como pago)</label><textarea name="supervisores">${esc(ln(c.supervisores))}</textarea></div>
@@ -1015,7 +1030,7 @@ function render0(){
       <select data-act="yy" aria-label="Ano">${[2025,2026,2027].map(a=>`<option ${a===y?'selected':''}>${a}</option>`).join('')}</select>
     </div>
   </header>
-  <main>${body}</main>`;
+  <main>${NUVEM&&AUTH.acesso&&AUTH.acesso.admin&&(AUTH.pedidos||[]).length&&S.view!=='acessos'?`<div class="msg warn" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px"><span>${AUTH.pedidos.length===1?'1 pedido de acesso aguardando':AUTH.pedidos.length+' pedidos de acesso aguardando'} liberação.</span><button class="btn sm" data-act="verPedidos">Ver pedidos</button></div>`:''}${body}</main>`;
   drawFotos();setSync(syncSt.s,syncSt.m);
 }
 
@@ -1279,6 +1294,23 @@ document.addEventListener('click',async ev=>{
   if(a==='login'){try{await fb.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(err){toast('Login cancelado ou bloqueado: '+(err.message||err))}return}
   if(a==='logout'){draftClear();clearTimeout(saveT);try{await nuvemSave();await fb.auth.signOut()}catch(e){}AUTH={status:'out'};S.users={};S.mine=null;location.href='index.html';return}
   if(a==='recarrega'){location.reload();return}
+  if(a==='verPedidos'){S.role='admin';try{await aplicaPapel()}catch(err){}S.view='acessos';render();return}
+  if(a==='pedRef'){await carregaPedidos();toast((AUTH.pedidos||[]).length?'Pedidos atualizados':'Nenhum pedido aguardando');render();return}
+  if(a==='pedOk'||a==='pedNo'){
+    const p=(AUTH.pedidos||[]).find(x=>x.id===b.dataset.id);if(!p)return;
+    try{
+      if(a==='pedOk'){
+        const snap=await fb.db.doc('config/acesso').get();const c=snap.exists?snap.data():(AUTH.cfg||{});
+        const cfg={emails:[...(c.emails||[])],supervisores:[...(c.supervisores||[])],admins:[...(c.admins||[])]};
+        const em=String(p.email||'').trim().toLowerCase();if(em&&!cfg.emails.map(x=>String(x).toLowerCase()).includes(em))cfg.emails.push(em);
+        await fb.db.doc('config/acesso').set(cfg);AUTH.cfg=cfg;
+      }
+      await fb.db.doc('pedidos/'+p.id).delete();
+      AUTH.pedidos=AUTH.pedidos.filter(x=>x.id!==p.id);
+      toast(a==='pedOk'?'Acesso liberado para '+p.email:'Pedido recusado');
+    }catch(err){toast('Não foi possível concluir: '+err.message)}
+    render();return;
+  }
   if(a==='view'){S.view=b.dataset.v;editId=null}
   else if(a==='ptab'){prevTab=b.dataset.t}
   else if(a==='theme'){S.theme=S.theme==='dark'?'light':'dark'}
