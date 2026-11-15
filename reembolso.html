@@ -232,7 +232,13 @@ async function saveTpl(zip,sheet,styles){
 const FATOR=0.99;
 const PROJ={TELMEX:{label:'TELMEX',curto:'TELMEX',nome:'PROJETO TELMEX'},'CFTV BRADESCO':{label:'CFTV BRADESCO',curto:'CFTV',nome:'PROJETO CFTV BRADESCO'}};
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const LIM={kmLinhas:25,solicKm:3,solicTelmex:3,solicCftv:9};
+/* Solicitação: a última linha de cada bloco é só um espaçador; cabem 2 linhas Telmex (31-32) e 8 CFTV (40-47) */
+const LIM={kmLinhas:25,solicKm:2,solicTelmex:2,solicCftv:8};
+/* tipos de despesa: campo do lançamento -> [rótulo na tela, rótulo sem acento (PDF/nome de arquivo), rótulo na Solicitação] */
+const TIPOS={pedagio:['Pedágio','PEDAGIO','PEDAGIO'],estac:['Estacionamento','ESTACIONAMENTO','ESTAC.'],hosp:['Hospedagem','HOSPEDAGEM','HOSPEDAGEM'],alim:['Alimentação','ALIMENTACAO','ALIMENTACAO'],material:['Material','MATERIAL','MATERIAL'],outros:['Outros','OUTROS','OUTROS']};
+const EXTRAS=['hosp','alim','material','outros'];
+const campoTipo=t=>TIPOS[t]&&t!=='tag'?t:'pedagio';
+const optsTipo=sel=>Object.keys(TIPOS).map(t=>`<option value="${t}" ${t===sel?'selected':''}>${TIPOS[t][0]}</option>`).join('');
 
 function semCoord(t){return String(t||'').replace(/\s*[-–—(]?\s*-?\d{1,2}\.\d{3,}\s*[,;]\s*-?\d{1,3}\.\d{3,}\s*\)?/g,'').replace(/[\s,;-]+$/,'').trim()}
 function trajeto(home,stops){
@@ -262,15 +268,23 @@ function calc(user,month){
   rows.forEach(e=>{
     if(+e.pedagio>0)exp[e.projeto].push({tipo:'PEDAGIO',date:e.date,valor:+e.pedagio,nota:String(e.notaPed||'').trim()});
     if(+e.estac>0)exp[e.projeto].push({tipo:'ESTAC.',date:e.date,valor:+e.estac,nota:String(e.notaEst||'').trim()});
+    /* hospedagem, material e outros: linhas comuns no bloco do projeto (sem placa no nº da nota) */
+    for(const k of['hosp','material','outros'])if(+e[k]>0)exp[e.projeto].push({tipo:TIPOS[k][2]+(k==='outros'&&String(e.outrosDesc||'').trim()?' - '+String(e.outrosDesc).trim().toUpperCase():''),date:e.date,valor:+e[k],nota:'',semPlaca:true});
   });
-  Object.keys(exp).forEach(p=>exp[p].sort((a,b)=>(a.tipo===b.tipo?0:a.tipo==='PEDAGIO'?-1:1)||a.date.localeCompare(b.date)));
+  const ORD=['PEDAGIO','ESTAC.','HOSPEDAGEM','MATERIAL'];const ord=t=>{const i=ORD.indexOf(t);return i<0?9:i};
+  Object.keys(exp).forEach(p=>exp[p].sort((a,b)=>(ord(a.tipo)-ord(b.tipo))||a.date.localeCompare(b.date)));
+  /* alimentação: bloco próprio da Solicitação, uma linha por projeto */
+  const alimP={TELMEX:0,'CFTV BRADESCO':0};rows.forEach(e=>{if(+e.alim>0)alimP[e.projeto]=r2((alimP[e.projeto]||0)+(+e.alim))});
   const km=kmP.TELMEX+kmP['CFTV BRADESCO'];
   const valorKm=r2(valP.TELMEX+valP['CFTV BRADESCO']);
   const ped=r2(rows.reduce((s,e)=>s+(+e.pedagio||0),0));
   const est=r2(rows.reduce((s,e)=>s+(+e.estac||0),0));
-  const total=r2(valorKm+ped+est);
+  const sm=k=>r2(rows.reduce((s,e)=>s+(+e[k]||0),0));
+  const hosp=sm('hosp'),alim=sm('alim'),material=sm('material'),outros=sm('outros');
+  const extras=r2(hosp+alim+material+outros);const desp=r2(ped+est+extras);
+  const total=r2(valorKm+desp);
   const adiant=(user.adiant&&user.adiant[month]!==undefined&&user.adiant[month]!==null)?(+user.adiant[month]||0):(+user.profile.adiantamento||0);
-  return{rows,kmP,valP,exp,km,valorKm,ped,est,total,adiant,dif:r2(total-adiant)};
+  return{rows,kmP,valP,exp,alimP,km,valorKm,ped,est,hosp,alim,material,outros,extras,desp,total,adiant,dif:r2(total-adiant)};
 }
 
 function problemas(user,month){
@@ -284,13 +298,14 @@ function problemas(user,month){
     if((+e.pedagio>0||+e.estac>0)&&false)out.push({});
   });
   if(c.rows.length>LIM.kmLinhas)out.push({l:'err',m:`O modelo do Reembolso KM comporta ${LIM.kmLinhas} dias; há ${c.rows.length}.`});
-  if(c.exp.TELMEX.length>LIM.solicTelmex)out.push({l:'err',m:`A Solicitação comporta ${LIM.solicTelmex} despesas Telmex; há ${c.exp.TELMEX.length}.`});
-  if(c.exp['CFTV BRADESCO'].length>LIM.solicCftv)out.push({l:'err',m:`A Solicitação comporta ${LIM.solicCftv} despesas CFTV; há ${c.exp['CFTV BRADESCO'].length}.`});
+  c.rows.forEach(e=>{if(+e.outros>0&&!String(e.outrosDesc||'').trim())out.push({l:'warn',m:`${fmtBR(e.date)}: informe o que são os "Outros" (${brl(e.outros)}).`})});
+  if(c.exp.TELMEX.length>LIM.solicTelmex)out.push({l:'err',m:`A Solicitação comporta ${LIM.solicTelmex} linhas de despesa Telmex (pedágio, estacionamento, hospedagem, material e outros somados); há ${c.exp.TELMEX.length}.`});
+  if(c.exp['CFTV BRADESCO'].length>LIM.solicCftv)out.push({l:'err',m:`A Solicitação comporta ${LIM.solicCftv} linhas de despesa CFTV (pedágio, estacionamento, hospedagem, material e outros somados); há ${c.exp['CFTV BRADESCO'].length}.`});
   const dias={};c.rows.forEach(e=>dias[e.date]=(dias[e.date]||0)+1);
   Object.entries(dias).forEach(([d,n])=>{if(n>1)out.push({l:'warn',m:`${fmtBR(d)}: ${n} lançamentos no mesmo dia (o modelo traz uma linha por dia).`})});
   const p=user.profile;
   ['nome','matricula','cpf','fornecedor','centro','home'].forEach(k=>{if(!String(p[k]||'').trim())out.push({l:'warn',m:`Perfil: falta ${k}.`})});
-  if(c.rows.length&&!out.some(o=>o.l==='err'))out.push({l:'ok',m:`Conferência: ${brl(c.valorKm)} (km) + ${brl(c.ped)} (pedágio) + ${brl(c.est)} (estacionamento) = ${brl(c.total)}.`});
+  if(c.rows.length&&!out.some(o=>o.l==='err'))out.push({l:'ok',m:`Conferência: ${brl(c.valorKm)} (km) + ${brl(c.ped)} (pedágio) + ${brl(c.est)} (estacionamento)${EXTRAS.filter(k=>c[k]>0).map(k=>` + ${brl(c[k])} (${TIPOS[k][0].toLowerCase()})`).join('')} = ${brl(c.total)}.`});
   return out;
 }
 
@@ -520,7 +535,7 @@ function drawFotos(){
       ${p.erro?`<div class="msg warn">${esc(p.erro)}. Digite o valor.</div>`:(p.cands.length?`<div class="small muted">Valores encontrados. Toque no correto:</div><div class="row" style="margin:6px 0">${p.cands.map(v=>`<button type="button" class="btn sm" data-act="fotoCand" data-v="${v}">${num(v)}</button>`).join('')}</div>`:'<div class="msg warn">Não consegui ler o valor. Digite abaixo.</div>')}
       <div class="row"><input type="number" id="fotoVal" step="0.01" min="0" inputmode="decimal" placeholder="Valor R$" value="${p.cands[0]||''}" style="max-width:150px"><button type="button" class="btn sm primary" data-act="fotoOk">Confirmar e anexar</button><button type="button" class="btn sm" data-act="fotoCancel">Descartar</button></div></div>`;
   }
-  fotosForm.forEach((f,i)=>{h+=`<div class="item" style="margin-top:8px"><div class="t"><img src="${FOTOS[f.id]||''}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px"><b>${f.tipo==='estac'?'Estacionamento':f.tipo==='tag'?'Fatura da tag (p. '+(f.pag||'')+')':'Pedágio'}</b>${f.tipo==='tag'?'<span class="small muted">só para o PDF unificado (o valor já está no campo Pedágio)</span>':`<span>${brl(f.valor)}</span>`}<span class="num"><button type="button" class="btn sm" data-act="fotoRm" data-i="${i}">Remover</button></span></div></div>`});
+  fotosForm.forEach((f,i)=>{h+=`<div class="item" style="margin-top:8px"><div class="t"><img src="${FOTOS[f.id]||''}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px"><b>${f.tipo==='tag'?'Fatura da tag (p. '+(f.pag||'')+')':(TIPOS[f.tipo]||TIPOS.pedagio)[0]}</b>${f.tipo==='tag'?'<span class="small muted">só para o PDF unificado (o valor já está no campo Pedágio)</span>':`<span>${brl(f.valor)}</span>`}<span class="num"><button type="button" class="btn sm" data-act="fotoRm" data-i="${i}">Remover</button></span></div></div>`});
   box.innerHTML=h;
 }
 
@@ -569,7 +584,7 @@ function vRecibos(){
     ${!r.lendo&&r.cands.length?`<div class="small muted">Valores encontrados. Toque no correto:</div><div class="row" style="margin:6px 0">${r.cands.map(v=>`<button type="button" class="btn sm" data-act="reciboCand" data-i="${i}" data-v="${v}">${num(v)}</button>`).join('')}</div>`:''}
     ${!r.lendo&&r.data?`<div class="small muted">Data lida na foto: ${fmtBR(r.data)}</div>`:''}
     <div class="grid3" style="margin-top:8px">
-      <div class="field"><label class="f">Tipo</label><select data-ri="${i}" data-rf="tipo"><option value="estac" ${r.tipo==='estac'?'selected':''}>Estacionamento</option><option value="pedagio" ${r.tipo==='pedagio'?'selected':''}>Pedágio</option></select></div>
+      <div class="field"><label class="f">Tipo</label><select data-ri="${i}" data-rf="tipo">${optsTipo(r.tipo)}</select></div>
       <div class="field"><label class="f">Valor (R$)</label><input type="number" step="0.01" min="0" inputmode="decimal" data-ri="${i}" data-rf="valor" value="${esc(r.valor)}"></div>
       <div class="field"><label class="f">Dia</label><select data-ri="${i}" data-rf="dia"><option value="">Escolha…</option>${dias.map(e=>`<option value="${e.date}" ${r.dia===e.date?'selected':''}>${fmtBR(e.date)}</option>`).join('')}</select></div>
     </div>
@@ -592,10 +607,12 @@ async function genControle(user,month){
     sheet.set('E'+r,serial(e.date),styles.date(sheet.style('E'+r)));sheet.set('F'+r,e.chamado||'');sheet.set('G'+r,e.trajeto);
     sheet.set('H'+r,projLabel(e));sheet.set('I'+r,+e.km||null);
     sheet.set('J'+r,+e.pedagio>0?+e.pedagio:null,sheet.style('K'+r));sheet.set('K'+r,+e.estac>0?+e.estac:null);
+    sheet.set('L'+r,+e.hosp>0?+e.hosp:null);sheet.set('M'+r,+e.alim>0?+e.alim:null);sheet.set('N'+r,+e.material>0?+e.material:null);sheet.set('O'+r,+e.outros>0?+e.outros:null);
+    if(+e.outros>0&&String(e.outrosDesc||'').trim())sheet.set('P'+r,String(e.outrosDesc).trim());
   });
   /* colunas de dinheiro (Pedágio, Estacionamento, Hospedagem, Alimentação…): toda célula sem formato recebe o de moeda */
   for(let r=2;r<=134;r++){const ref=sheet.style('K'+r)||sheet.style('L'+r);if(!ref)continue;
-    for(const col of['J','K','L','M']){const c=sheet.cell(col+r);if(!c.getAttribute('s'))c.setAttribute('s',ref)}}
+    for(const col of['J','K','L','M','N','O']){const c=sheet.cell(col+r);if(!c.getAttribute('s'))c.setAttribute('s',ref)}}
   return saveTpl(zip,sheet,styles);
 }
 async function genKm(user,month){
@@ -639,12 +656,14 @@ async function genSolic(user,month){
   const sec=(list,start,max,proj)=>{
     list.slice(0,max).forEach((x,i)=>{
       const rr=start+i;
-      sheet.set('C'+rr,x.nota||p.placa||'');dt('F'+rr,serial(x.date));
+      sheet.set('C'+rr,x.nota||(x.semPlaca?'':p.placa)||'');dt('F'+rr,serial(x.date));
       sheet.set('H'+rr,`DESPESAS ${PROJ[proj].nome} (${x.tipo})`);sheet.set('P'+rr,x.valor);
     });
   };
   sec(c.exp.TELMEX,31,LIM.solicTelmex,'TELMEX');
   sec(c.exp['CFTV BRADESCO'],40,LIM.solicCftv,'CFTV BRADESCO');
+  /* bloco Alimentação (linhas 55 e 56 já trazem a descrição "PROJETO ..."): data do fechamento e total por projeto */
+  [['TELMEX',55],['CFTV BRADESCO',56]].forEach(([pr,rr])=>{if(c.alimP[pr]>0){dt('F'+rr,fim);sheet.set('P'+rr,c.alimP[pr])}});
   return saveTpl(zip,sheet,styles);
 }
 async function montaComprovPdf(u){
@@ -660,7 +679,7 @@ async function montaComprovPdf(u){
   for(const e of u.entries.filter(x=>x.date.startsWith(S.month)).sort((x,y)=>x.date.localeCompare(y.date)||x.id-y.id))for(const f of(e.fotos||[])){
     const dataUrl=await fotoGet(f.id);if(!dataUrl)continue;
     const bytes=Uint8Array.from(atob(dataUrl.split(',')[1]),ch=>ch.charCodeAt(0));const img=await out.embedJpg(bytes);
-    paginaImg(img,f.tipo==='tag'?`Fatura da tag - pagina ${f.pag||''}`:`${fmtBR(e.date)} - ${f.tipo==='estac'?'Estacionamento':'Pedagio'}${f.valor?' - R$ '+num(f.valor):''}${f.chamado?' - Chamado '+f.chamado:''}`);
+    paginaImg(img,f.tipo==='tag'?`Fatura da tag - pagina ${f.pag||''}`:`${fmtBR(e.date)} - ${(t=>t.charAt(0)+t.slice(1).toLowerCase())((TIPOS[f.tipo]||TIPOS.pedagio)[1])}${f.tipo==='outros'&&e.outrosDesc?' ('+String(e.outrosDesc).normalize('NFD').replace(/[^\x20-\x7e]/g,'')+')':''}${f.valor?' - R$ '+num(f.valor):''}${f.chamado?' - Chamado '+f.chamado:''}`);
   }
   for(const f of comprovFiles){
     const buf=await f.arrayBuffer();
@@ -756,7 +775,7 @@ function nomeArquivos(user,month){
     km:`Reembolso_KM_${N.replace(/\s+/g,'_')}__${ref}.xlsx`,
     kmPdf:`Reembolso_KM_${N.replace(/\s+/g,'_')}__${ref}.pdf`,
     solic:`Solicitação de Reembolso e Prestação de Contas (Não Viagem) - Hitss (v7) ${N} _ ${ref}.xlsm`,
-    comprov:`COMPROVANTES UNIFICADO ${mes}-${y} (PEDAGIO-ESTACIONAMENTO).pdf`,
+    comprov:`COMPROVANTES UNIFICADO ${mes}-${y} (${['PEDAGIO','ESTACIONAMENTO',...EXTRAS.filter(k=>(user.entries||[]).some(e=>e.date.startsWith(month)&&(+e[k]>0||(e.fotos||[]).some(f=>f.tipo===k)))).map(k=>TIPOS[k][1])].join('-')}).pdf`,
     zip:`Reembolso_${mes.slice(0,3)}${y}.zip`
   };
 }
@@ -1104,8 +1123,16 @@ function vLancar(){
       <div class="grid2" style="margin-top:8px"><div class="field"><label class="f">Nº do cupom do pedágio</label><input type="text" name="notaPed" value="${esc(e?e.notaPed||'':'')}" placeholder="vazio = placa" autocomplete="off"></div>
       <div class="field"><label class="f">Nº do cupom do estacionamento</label><input type="text" name="notaEst" value="${esc(e?e.notaEst||'':'')}" placeholder="vazio = placa" autocomplete="off"></div></div>
       <div class="small muted">Mais de um cupom no dia? Separe por " / ".</div></details>
+    <details id="extrasBox" style="margin:-4px 0 12px"${e&&(EXTRAS.some(k=>+e[k]>0))?' open':''}><summary class="small muted" style="cursor:pointer">Outras despesas do dia: hospedagem, alimentação, material, outros</summary>
+      <div class="grid2" style="margin-top:8px">
+        <div class="field"><label class="f">Hospedagem (R$)</label><input type="number" name="hosp" min="0" step="0.01" inputmode="decimal" value="${e&&e.hosp?e.hosp:''}"></div>
+        <div class="field"><label class="f">Alimentação (R$)</label><input type="number" name="alim" min="0" step="0.01" inputmode="decimal" value="${e&&e.alim?e.alim:''}"></div>
+        <div class="field"><label class="f">Material (R$)</label><input type="number" name="material" min="0" step="0.01" inputmode="decimal" value="${e&&e.material?e.material:''}"></div>
+        <div class="field"><label class="f">Outros (R$)</label><input type="number" name="outros" min="0" step="0.01" inputmode="decimal" value="${e&&e.outros?e.outros:''}"></div>
+      </div>
+      <div class="field"><label class="f">Especificar o que são Outros</label><input type="text" name="outrosDesc" maxlength="80" value="${esc(e?e.outrosDesc||'':'')}" autocomplete="off"></div></details>
     <div class="field"><label class="f">Comprovante em foto (sem tag)</label>
-      <div class="row"><select id="fotoTipo" style="width:auto"><option value="pedagio">Pedágio</option><option value="estac">Estacionamento</option></select>
+      <div class="row"><select id="fotoTipo" style="width:auto">${optsTipo('pedagio')}</select>
       <input type="file" id="fotoIn" accept="image/*" capture="environment" style="display:none">
       <button type="button" class="btn sm" data-act="foto">Tirar foto / anexar</button></div>
       <div id="fotoBox" style="margin-top:8px"></div></div>
@@ -1122,7 +1149,7 @@ function vLancar(){
     <div class="list">${c.rows.length?c.rows.map(x=>`
       <div class="item"><div class="t"><b>${fmtBR(x.date)}</b>${projsDe(x).map(p=>`<span class="chip ${PROJ[p].curto}">${PROJ[p].curto}</span>`).join('')}<span class="small muted">${esc(x.chamado||'sem chamado')}</span><span class="num">${x.km} km</span></div>
         <div class="tr">${esc(x.trajeto)}</div>${x.split?`<div class="small muted" style="margin-top:4px">Km por projeto: ${Object.entries(x.split).map(([p,k])=>PROJ[p].curto+' '+k).join(' · ')}</div>`:''}${x.fotos&&x.fotos.length?`<div class="small muted" style="margin-top:4px">${x.fotos.length} comprovante(s) em foto anexado(s)</div>`:''}
-        <div class="row small" style="margin-top:8px"><span class="muted">${brl(r2(x.km*FATOR))} km${+x.pedagio?` · pedágio ${brl(x.pedagio)}`:''}${+x.estac?` · estac. ${brl(x.estac)}`:''}</span><span class="spacer"></span>
+        <div class="row small" style="margin-top:8px"><span class="muted">${brl(r2(x.km*FATOR))} km${+x.pedagio?` · pedágio ${brl(x.pedagio)}`:''}${+x.estac?` · estac. ${brl(x.estac)}`:''}${EXTRAS.filter(k=>+x[k]>0).map(k=>` · ${TIPOS[k][0].toLowerCase()} ${brl(x[k])}`).join('')}</span><span class="spacer"></span>
         ${locked?'':`<button class="btn sm" data-act="edit" data-id="${x.id}">Editar</button><button class="btn sm" data-act="del" data-id="${x.id}">Excluir</button>`}</div></div>`).join(''):'<div class="empty">Nenhum lançamento neste mês.</div>'}</div>
   </div>`;
 }
@@ -1147,7 +1174,7 @@ function vMes(){
     <div class="stats">
       <div class="stat"><b>${c.km}</b><span>km no mês</span></div>
       <div class="stat"><b>${brl(c.valorKm)}</b><span>valor do km (× 0,99)</span></div>
-      <div class="stat"><b>${brl(c.ped+c.est)}</b><span>pedágio + estacionamento</span></div>
+      <div class="stat"><b>${brl(c.desp)}</b><span>${c.extras>0?'pedágio, estac. e outras despesas':'pedágio + estacionamento'}</span></div>
       <div class="stat"><b>${brl(c.total)}</b><span>total da prestação</span></div>
       <div class="stat"><b>${brl(c.adiant)}</b><span>adiantamento</span></div>
       <div class="stat"><b>${brl(c.dif)}</b><span>${c.dif>=0?'a restituir ao colaborador':'a restituir à empresa'}</span></div>
@@ -1174,9 +1201,10 @@ function vMes(){
   </div>`;
 }
 function pvControle(u,c){
-  const h=['Nome do Colaborador','Valor Adiantamento','Valor da Prestação','Diferença','Data do Atendimento','Nº do Chamado','Trajeto','Projeto','KM','Pedágio','Estacionamento'];
+  const ex=c.extras>0;
+  const h=['Nome do Colaborador','Valor Adiantamento','Valor da Prestação','Diferença','Data do Atendimento','Nº do Chamado','Trajeto','Projeto','KM','Pedágio','Estacionamento',...(ex?['Hospedagem','Alimentação','Material','Outros','Especificar Outros']:[])];
   return`<div class="tbl-wrap"><table><thead><tr>${h.map((x,i)=>`<th class="${i>=8||i>=1&&i<=3?'n':''}">${x}</th>`).join('')}</tr></thead><tbody>
-  ${c.rows.map(e=>`<tr><td>${esc(u.profile.nome)}</td><td class="n">${num(c.adiant)}</td><td class="n">${num(c.total)}</td><td class="n">${num(c.dif)}</td><td>${fmtBR(e.date)}</td><td>${esc(e.chamado)}</td><td style="min-width:320px">${esc(e.trajeto)}</td><td>${esc(projLabel(e))}</td><td class="n">${e.km}</td><td class="n">${+e.pedagio?num(e.pedagio):''}</td><td class="n">${+e.estac?num(e.estac):''}</td></tr>`).join('')||'<tr><td colspan="11" class="empty">Sem lançamentos.</td></tr>'}
+  ${c.rows.map(e=>`<tr><td>${esc(u.profile.nome)}</td><td class="n">${num(c.adiant)}</td><td class="n">${num(c.total)}</td><td class="n">${num(c.dif)}</td><td>${fmtBR(e.date)}</td><td>${esc(e.chamado)}</td><td style="min-width:320px">${esc(e.trajeto)}</td><td>${esc(projLabel(e))}</td><td class="n">${e.km}</td><td class="n">${+e.pedagio?num(e.pedagio):''}</td><td class="n">${+e.estac?num(e.estac):''}</td>${ex?EXTRAS.map(k=>`<td class="n">${+e[k]?num(e[k]):''}</td>`).join('')+`<td>${esc(e.outrosDesc||'')}</td>`:''}</tr>`).join('')||'<tr><td colspan="11" class="empty">Sem lançamentos.</td></tr>'}
   </tbody></table></div>`;
 }
 function pvKm(u,c){
@@ -1189,7 +1217,7 @@ function pvKm(u,c){
 function pvSolic(u,c){
   const p=u.profile;const fim=fmtBR(ultimoDia(S.month));
   const kmL=['TELMEX','CFTV BRADESCO'].filter(k=>c.kmP[k]>0).map(k=>[fim,`${c.kmP[k]} KM ${PROJ[k].nome} * R$0,99`,c.valP[k]]);
-  const sec=(tit,list,proj)=>`<tr><th colspan="4">${tit}</th></tr>`+list.map(x=>`<tr><td>${esc(x.nota||p.placa)}</td><td>${fmtBR(x.date)}</td><td>DESPESAS ${PROJ[proj].nome} (${x.tipo})</td><td class="n">${num(x.valor)}</td></tr>`).join('')+`<tr class="tot"><td colspan="3">Total</td><td class="n">${num(list.reduce((s,x)=>s+x.valor,0))}</td></tr>`;
+  const sec=(tit,list,proj)=>`<tr><th colspan="4">${tit}</th></tr>`+list.map(x=>`<tr><td>${esc(x.nota||(x.semPlaca?'':p.placa))}</td><td>${fmtBR(x.date)}</td><td>DESPESAS ${PROJ[proj].nome} (${x.tipo})</td><td class="n">${num(x.valor)}</td></tr>`).join('')+`<tr class="tot"><td colspan="3">Total</td><td class="n">${num(list.reduce((s,x)=>s+x.valor,0))}</td></tr>`;
   return`<div class="sheet-h"><div><b>Nome</b>${esc(p.nome)}</div><div><b>CPF</b>${esc(p.cpf)}</div><div><b>Telefone</b>${esc(p.telefone)}</div><div><b>Nº do fornecedor</b>${esc(p.fornecedor)}</div><div><b>Área</b>${esc(p.area)}</div><div><b>Cargo</b>${esc(p.cargo)}</div><div><b>Local / Regional</b>${esc(p.local)} · ${esc(p.regional)}</div><div><b>Empresa</b>${esc(p.empresa)}</div><div><b>Centro de custo</b>${esc(p.centro)}</div><div><b>Total do adiantamento</b>${brl(c.adiant)}</div></div>
   <div class="msg info" style="margin:0 0 10px">${esc(p.motivoGasto)}</div>
   <div class="tbl-wrap"><table><tbody>
@@ -1198,6 +1226,7 @@ function pvSolic(u,c){
   <tr class="tot"><td colspan="3">Total</td><td class="n">${num(c.valorKm)}</td></tr>
   ${sec('5132376110 - Estacionamento/pedágio - DESPESAS LOCAIS (Telmex)',c.exp.TELMEX,'TELMEX')}
   ${sec('6122376110 - Estacionamento/pedágio - DESPESAS LOCAIS (CFTV Bradesco)',c.exp['CFTV BRADESCO'],'CFTV BRADESCO')}
+  ${c.alim>0?`<tr><th colspan="4">6132394020 - Alimentação - DESPESAS LOCAIS</th></tr>`+['TELMEX','CFTV BRADESCO'].filter(k=>c.alimP[k]>0).map(k=>`<tr><td></td><td>${fim}</td><td>${PROJ[k].nome}</td><td class="n">${num(c.alimP[k])}</td></tr>`).join('')+`<tr class="tot"><td colspan="3">Total</td><td class="n">${num(c.alim)}</td></tr>`:''}
   <tr><th colspan="4">Resultado do relatório</th></tr>
   <tr><td colspan="3">Total das despesas</td><td class="n">${num(c.total)}</td></tr>
   <tr><td colspan="3">Total de adiantamento</td><td class="n">${num(c.adiant)}</td></tr>
@@ -1260,7 +1289,7 @@ function vAprov(){
   <div class="list" style="margin-top:12px">${lista.map(({id,u,c,st})=>`
     <div class="card" style="margin-top:0">
       <div class="t row"><b>${esc(u.profile.nome)}</b><span class="chip ${st.s}">${st.s}</span><span class="spacer"></span><b>${brl(c.total)}</b></div>
-      <div class="small muted" style="margin-top:4px">${c.rows.length} dia(s) · ${c.km} km · pedágio+estac. ${brl(c.ped+c.est)}</div>
+      <div class="small muted" style="margin-top:4px">${c.rows.length} dia(s) · ${c.km} km · ${c.extras>0?'despesas':'pedágio+estac.'} ${brl(c.desp)}</div>
       ${st.s==='Ajuste'&&st.motivo?`<div class="msg warn">Ajuste pedido: ${esc(st.motivo)}</div>`:''}
       <div class="row" style="margin-top:10px">
         <button class="btn sm" data-act="abrir" data-id="${id}">Ver planilhas</button>
@@ -1357,7 +1386,7 @@ document.addEventListener('click',async ev=>{
     stops.forEach((st,i)=>{if(st2.length&&st2[st2.length-1]===st){const l=me2[me2.length-1];l.ch=[l.ch,metas[i].ch].filter(Boolean).join(' / ')}else{st2.push(st);me2.push({...metas[i]})}});
     const ps=[...new Set(me2.map(m=>m.proj))];
     const nova={id:newId(),date:d,projeto:me2[0]?me2[0].proj:lst[0].projeto,chamado:[...new Set(lst.flatMap(x=>String(x.chamado||'').split(' / ').filter(Boolean)))].join(' / '),
-      stops:st2,metas:me2,km:0,pedagio:r2(lst.reduce((t,x)=>t+(+x.pedagio||0),0)),estac:r2(lst.reduce((t,x)=>t+(+x.estac||0),0)),
+      stops:st2,metas:me2,km:0,pedagio:r2(lst.reduce((t,x)=>t+(+x.pedagio||0),0)),estac:r2(lst.reduce((t,x)=>t+(+x.estac||0),0)),...Object.fromEntries(EXTRAS.map(k=>[k,r2(lst.reduce((t,x)=>t+(+x[k]||0),0))])),outrosDesc:[...new Set(lst.map(x=>String(x.outrosDesc||'').trim()).filter(Boolean))].join(' / '),
       split:ps.length>1?{'CFTV BRADESCO':0,'TELMEX':0}:null};
     u.entries=u.entries.filter(x=>x.date!==d);u.entries.push(nova);editId=nova.id;save();render();
     window.scrollTo({top:0});setTimeout(()=>{const bt=document.querySelector('[data-act=calckm]');if(bt)bt.click()},80);return;
@@ -1418,11 +1447,11 @@ document.addEventListener('click',async ev=>{
     const fid='f'+newId().toString(36);
     try{await fotoPut(fid,pendingFoto.img)}catch(err){toast('Não foi possível salvar a foto: '+err.message);return}
     fotosForm.push({id:fid,tipo:pendingFoto.tipo,valor:v});
-    if(v>0){const campo=f.elements[pendingFoto.tipo==='estac'?'estac':'pedagio'];campo.value=r2((+campo.value||0)+v)}
+    if(v>0){const campo=f.elements[campoTipo(pendingFoto.tipo)];campo.value=r2((+campo.value||0)+v);if(EXTRAS.includes(pendingFoto.tipo)){const dx=document.getElementById('extrasBox');if(dx)dx.open=true}}
     pendingFoto=null;drawFotos();toast('Comprovante anexado');return}
   else if(a==='fotoRm'){
     const f=document.querySelector('form[data-form=entry]');const it=fotosForm.splice(+b.dataset.i,1)[0];
-    if(it&&it.valor>0){const campo=f.elements[it.tipo==='estac'?'estac':'pedagio'];campo.value=Math.max(0,r2((+campo.value||0)-it.valor))||''}
+    if(it&&it.valor>0){const campo=f.elements[campoTipo(it.tipo)];campo.value=Math.max(0,r2((+campo.value||0)-it.valor))||''}
     drawFotos();return}
   else if(a==='lertag'){
     const msg=document.getElementById('tagMsg');msg.textContent='Lendo…';
@@ -1479,7 +1508,7 @@ document.addEventListener('click',async ev=>{
     const fid='f'+newId().toString(36);
     try{await fotoPut(fid,r.img)}catch(err){toast('Não foi possível salvar a foto: '+err.message);return}
     e.fotos=e.fotos||[];e.fotos.push({id:fid,tipo:r.tipo,valor:v,chamado});
-    const campo=r.tipo==='estac'?'estac':'pedagio';e[campo]=r2((+e[campo]||0)+v);
+    const campo=campoTipo(r.tipo);e[campo]=r2((+e[campo]||0)+v);
     RECIBOS.splice(+b.dataset.i,1);const k=comprovFiles.indexOf(r.file);if(k>=0)comprovFiles.splice(k,1);
     toast('Aplicado em '+fmtBR(r.dia))}
   else if(a==='merge'){
@@ -1535,7 +1564,8 @@ document.addEventListener('submit',async ev=>{
     const stops=fd.getAll('stop').filter(Boolean);
     if(!stops.length){toast('Escolha ao menos um endereço');return}
     const obj={notaPed:String(fd.get('notaPed')||'').trim(),notaEst:String(fd.get('notaEst')||'').trim(),date:fd.get('date'),projeto:fd.get('projeto'),chamado:String(fd.get('chamado')||'').trim(),stops,
-      km:+fd.get('km')||0,pedagio:+fd.get('pedagio')||0,estac:+fd.get('estac')||0};
+      km:+fd.get('km')||0,pedagio:+fd.get('pedagio')||0,estac:+fd.get('estac')||0,
+      hosp:+fd.get('hosp')||0,alim:+fd.get('alim')||0,material:+fd.get('material')||0,outros:+fd.get('outros')||0,outrosDesc:String(fd.get('outrosDesc')||'').trim()};
     if(pendingFoto){toast('Confirme ou descarte a foto do comprovante');return}
     obj.fotos=fotosForm.slice();
     const linhas=linhasParadas(f);
