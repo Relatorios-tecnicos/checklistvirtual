@@ -2,9 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Logs de acesso aos relatórios (regra já existente, mantida)
+    // Registro de acessos aos relatórios: quem está logado só grava o próprio acesso;
+    // só o administrador lê; ninguém altera nem apaga
     match /acessos_relatorios/{docId} {
-      allow read, write: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if ehAdmin();
     }
 
     // TROQUE pelo e-mail Google do administrador (em minúsculas), igual ao ADMIN_EMAIL do index.html

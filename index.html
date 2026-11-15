@@ -101,7 +101,8 @@
 
     function logout() {
       sessionStorage.clear();
-      // Redireciona para o login do Firebase para garantir segurança total
+      // Marca a saída: o login.html encerra a sessão da conta Google antes de mostrar a tela de entrada
+      sessionStorage.setItem("sair", "1");
       location.href = "login.html";
     }
 
