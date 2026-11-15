@@ -644,13 +644,104 @@ async function genSolic(user,month){
   sec(c.exp['CFTV BRADESCO'],40,LIM.solicCftv,'CFTV BRADESCO');
   return saveTpl(zip,sheet,styles);
 }
+async function montaComprovPdf(u){
+  await lib('pdflib');const{PDFDocument}=PDFLib;const out=await PDFDocument.create();
+  const font=await out.embedFont(PDFLib.StandardFonts.Helvetica);
+  const paginaImg=(img,leg)=>{
+    const land=img.width>img.height;const W=land?841.89:595.28,H=land?595.28:841.89,m=28,topo=leg?22:0;
+    const sc=Math.min((W-2*m)/img.width,(H-2*m-topo)/img.height);const w=img.width*sc,h=img.height*sc;
+    const pg=out.addPage([W,H]);
+    if(leg){let sz=12;while(sz>7&&font.widthOfTextAtSize(leg,sz)>W-2*m)sz-=0.5;pg.drawText(leg,{x:m,y:H-m-8,size:sz,font})}
+    pg.drawImage(img,{x:(W-w)/2,y:H-m-topo-h,width:w,height:h});
+  };
+  for(const e of u.entries.filter(x=>x.date.startsWith(S.month)).sort((x,y)=>x.date.localeCompare(y.date)||x.id-y.id))for(const f of(e.fotos||[])){
+    const dataUrl=await fotoGet(f.id);if(!dataUrl)continue;
+    const bytes=Uint8Array.from(atob(dataUrl.split(',')[1]),ch=>ch.charCodeAt(0));const img=await out.embedJpg(bytes);
+    paginaImg(img,`${fmtBR(e.date)} - ${f.tipo==='estac'?'Estacionamento':'Pedagio'}${f.valor?' - R$ '+num(f.valor):''}${f.chamado?' - Chamado '+f.chamado:''}`);
+  }
+  for(const f of comprovFiles){
+    const buf=await f.arrayBuffer();
+    if(f.type==='application/pdf'){
+      const d=await PDFDocument.load(buf,{ignoreEncryption:true});
+      const pgs=await out.copyPages(d,d.getPageIndices());pgs.forEach(p=>out.addPage(p));
+    }else{
+      const du=await imgPronta(f,{max:2000,q:.82,rot:0,crop:false});
+      const img=await out.embedJpg(Uint8Array.from(atob(du.split(',')[1]),ch=>ch.charCodeAt(0)));
+      paginaImg(img,'');
+    }
+  }
+  return out.getPageCount()?await out.save():null;
+}
+/* PDF do Reembolso KM: reproduz a "Declaração para reembolso de quilometragem" (modelo do Excel) */
+async function montaKmPdf(u,month){
+  await lib('pdflib');await lib('jszip');
+  const c=calc(u,month);const p=u.profile;const{PDFDocument,StandardFonts,rgb}=PDFLib;
+  const out=await PDFDocument.create();const f=await out.embedFont(StandardFonts.Helvetica),fb=await out.embedFont(StandardFonts.HelveticaBold);
+  let logo=null;try{const z=await JSZip.loadAsync(TPL.km,{base64:true});logo=await out.embedPng(await z.file('xl/media/image1.png').async('uint8array'))}catch(e){}
+  const cl=t=>String(t==null?'':t).replace(/[^\x20-\xFF]/g,'');
+  const W=792,H=612,M=18;
+  const quebra=(txt,font,sz,w)=>{const out=[];String(txt).split('\n').forEach(par=>{let ln='';par.split(/\s+/).forEach(pal=>{const t=ln?ln+' '+pal:pal;if(font.widthOfTextAtSize(cl(t),sz)>w&&ln){out.push(ln);ln=pal}else ln=t});out.push(ln)});return out};
+  const azul=rgb(.55,.66,.86),cinza=rgb(.83,.83,.83),preto=rgb(0,0,0);
+  const cols=[{n:'#',w:16},{n:'Data',w:52},{n:'Trajeto',w:262},{n:'Motivo',w:222},{n:'Distância em Km',w:56},{n:'Fator',w:50}];
+  const tw=cols.reduce((t,x)=>t+x.w,0);const x0=(W-tw)/2;
+  let pg,y;
+  const novaPag=(primeira)=>{
+    pg=out.addPage([W,H]);pg.drawRectangle({x:M,y:M,width:W-2*M,height:H-2*M,borderColor:rgb(.5,.5,.5),borderWidth:.8});
+    y=H-M-8;
+    if(primeira){
+      if(logo)pg.drawImage(logo,{x:M+8,y:H-M-52,width:44,height:44});
+      const t='DECLARAÇÃO PARA REEMBOLSO DE DESPESAS DE QUILOMETRAGEM';pg.drawText(t,{x:(W-fb.widthOfTextAtSize(t,10))/2+20,y:H-M-18,size:10,font:fb});
+      pg.drawText('Eu,',{x:M+60,y:H-M-40,size:7,font:f});
+      const cx=(lab,val,x,w)=>{pg.drawText(lab,{x,y:H-M-56,size:7,font:f});const bx=x+f.widthOfTextAtSize(lab,7)+4;pg.drawRectangle({x:bx,y:H-M-60,width:w,height:12,color:cinza,borderColor:rgb(.6,.6,.6),borderWidth:.5});pg.drawText(cl(val),{x:bx+3,y:H-M-57,size:7.5,font:fb});};
+      cx('Funcionário:',p.nome,M+60,210);cx('Matrícula:',p.matricula,M+400,70);cx('Empresa:','Global Hitss',M+540,70);
+      y=H-M-76;
+      const par=['Declaro estar ciente de que o reembolso por quilômetro rodado solicitado abaixo abrange os gastos referentes a: combustível, manutenção preventiva (troca de óleo, filtro de óleo, filtro de combustível, velas e filtro de ar, além de balanceamento e alinhamento), lavagem, troca de pneus, seguro, depreciação e IPVA.',
+        'Afirmo ainda que o veículo de minha propriedade apresenta boas condições de uso, encontra-se devidamente segurado (inclusive com cobertura para danos materiais, pessoais e contra terceiros) e que minha Carteira Nacional de Habilitação (CNH) está vigente junto ao órgão emissor, atestando a mim a aptidão necessária para a condução de veículos.',
+        'Desde já autorizo o crédito em minha conta corrente como meio de reembolso pela Empresa.'];
+      par.forEach(t=>{quebra(t,f,6.8,W-2*M-24).forEach(l=>{pg.drawText(cl(l),{x:M+12,y,size:6.8,font:f});y-=8.4});y-=5});
+      y-=2;
+    }
+    // cabeçalho da tabela
+    let x=x0;const hh=18;
+    cols.forEach(cn=>{pg.drawRectangle({x,y:y-hh,width:cn.w,height:hh,color:azul,borderColor:preto,borderWidth:.5});
+      const ls=quebra(cn.n,fb,6.5,cn.w-4);ls.forEach((l,i)=>pg.drawText(cl(l),{x:x+(cn.w-fb.widthOfTextAtSize(cl(l),6.5))/2,y:y-8-i*7+(ls.length>1?2:-1),size:6.5,font:fb}));x+=cn.w});
+    y-=hh;
+  };
+  novaPag(true);
+  const sz=6.6,lh=8;
+  c.rows.forEach((e,i)=>{
+    const lt=quebra(e.trajeto,f,sz,cols[2].w-5),lm=quebra(motivoKm(e),f,sz,cols[3].w-5);const n=Math.max(1,lt.length,lm.length);const rh=n*lh+4;
+    if(y-rh<M+26)novaPag(false);
+    let x=x0;
+    const vals=[String(i+1),fmtBR(e.date),null,null,String(e.km),num(e.km*FATOR)];
+    cols.forEach((cn,j)=>{pg.drawRectangle({x,y:y-rh,width:cn.w,height:rh,borderColor:preto,borderWidth:.4,color:j===5?rgb(.86,.9,.97):undefined});
+      if(j===2)lt.forEach((l,k)=>pg.drawText(cl(l),{x:x+2.5,y:y-lh-k*lh+2,size:sz,font:f}));
+      else if(j===3)lm.forEach((l,k)=>pg.drawText(cl(l),{x:x+2.5,y:y-lh-k*lh+2,size:sz,font:f}));
+      else pg.drawText(cl(vals[j]),{x:x+(cn.w-f.widthOfTextAtSize(cl(vals[j]),sz))/2,y:y-lh+2+(rh-lh-4)/2*0,size:sz,font:f});
+      x+=cn.w});
+    y-=rh;
+  });
+  // total
+  if(y-14<M+4)novaPag(false);
+  const wl=cols[0].w+cols[1].w+cols[2].w+cols[3].w;
+  pg.drawRectangle({x:x0,y:y-14,width:wl,height:14,color:azul,borderColor:preto,borderWidth:.5});
+  const tt='Somatório da KM/Valor a receber';pg.drawText(tt,{x:x0+wl-fb.widthOfTextAtSize(tt,7)-6,y:y-10,size:7,font:fb});
+  const vk=String(c.km),vv=num(c.km*FATOR);
+  pg.drawRectangle({x:x0+wl,y:y-14,width:cols[4].w,height:14,borderColor:preto,borderWidth:.5});pg.drawText(vk,{x:x0+wl+(cols[4].w-fb.widthOfTextAtSize(vk,7.5))/2,y:y-10,size:7.5,font:fb});
+  pg.drawRectangle({x:x0+wl+cols[4].w,y:y-14,width:cols[5].w,height:14,borderColor:preto,borderWidth:.5});pg.drawText(vv,{x:x0+wl+cols[4].w+(cols[5].w-fb.widthOfTextAtSize(vv,7.5))/2,y:y-10,size:7.5,font:fb});
+  return out.save();
+}
+function tituloNome(n){const peq=['de','da','do','das','dos','e'];return String(n||'').toLowerCase().split(/\s+/).filter(Boolean).map((w,i)=>peq.includes(w)&&i>0?w:w.charAt(0).toUpperCase()+w.slice(1)).join(' ')}
 function nomeArquivos(user,month){
-  const[y,m]=month.split('-').map(Number);const mes=MESES[m-1]+' '+y;const n=user.profile.nome;
+  const[y,m]=month.split('-').map(Number);const mes=MESES[m-1];const n=String(user.profile.nome||'').trim();const N=n.toUpperCase();
+  const ref=`${mes}_${y}`;
   return{
-    controle:`Planilha de controle de despesas dos técnicos - ${n} - ${mes}.xlsx`,
-    km:`Reembolso KM - ${n} - ${mes}.xlsx`,
-    solic:`Solicitação de Reembolso e Prestação de Contas Não Viagem - Hitss v7 - ${n} - ${mes}.xlsm`,
-    comprov:`COMPROVANTES UNIFICADO ${MESES[m-1]}-${y} (PEDAGIO-ESTACIONAMENTO).pdf`
+    controle:`Planilha de controle de despesas dos técnicos_${tituloNome(n)}_${ref}.xlsx`,
+    km:`Reembolso_KM_${N.replace(/\s+/g,'_')}__${ref}.xlsx`,
+    kmPdf:`Reembolso_KM_${N.replace(/\s+/g,'_')}__${ref}.pdf`,
+    solic:`Solicitação de Reembolso e Prestação de Contas (Não Viagem) - Hitss (v7) ${N} _ ${ref}.xlsm`,
+    comprov:`COMPROVANTES UNIFICADO ${mes}-${y} (PEDAGIO-ESTACIONAMENTO).pdf`,
+    zip:`Reembolso_${N.replace(/\s+/g,'_')}_${ref}.zip`
   };
 }
 async function gerarTodas(user,month){
@@ -1035,12 +1126,13 @@ function vMes(){
   <div class="tabs">${tabs.map(t=>`<button class="tab ${prevTab===t[0]?'on':''}" data-act="ptab" data-t="${t[0]}">${t[1]}</button>`).join('')}</div>
   ${prev}
   <div class="card">
-    <h2>Gerar planilhas</h2>
-    <p class="sub">Planilhas no mesmo layout dos modelos (a Solicitação sai em .xlsm, com as macros do original: habilite o conteúdo ao abrir). Abra no Excel para conferir antes de enviar.</p>
+    <h2>Gerar arquivos</h2>
+    <p class="sub">Planilhas no mesmo layout dos modelos (a Solicitação sai em .xlsm, com as macros do original: habilite o conteúdo ao abrir). O .zip leva 5 arquivos: Controle, Reembolso KM (planilha e PDF), Solicitação e o PDF unificado dos comprovantes (se houver recibos aplicados ou arquivos anexados). Abra no Excel para conferir antes de enviar.</p>
     <div class="row">
-      <button class="btn primary" data-act="gen" data-k="zip" ${bloq?'disabled':''}>Baixar as 3 planilhas (.zip)</button>
+      <button class="btn primary" data-act="gen" data-k="zip" ${bloq?'disabled':''}>Baixar tudo (.zip)</button>
       <button class="btn" data-act="gen" data-k="controle" ${bloq?'disabled':''}>Controle</button>
       <button class="btn" data-act="gen" data-k="km" ${bloq?'disabled':''}>Reembolso KM</button>
+      <button class="btn" data-act="gen" data-k="kmPdf" ${bloq?'disabled':''}>Reembolso KM (PDF)</button>
       <button class="btn" data-act="gen" data-k="solic" ${bloq?'disabled':''}>Solicitação</button>
     </div>
     ${bloq?'<div class="msg err">Corrija os itens em vermelho para liberar o download.</div>':''}
@@ -1190,13 +1282,15 @@ document.addEventListener('click',async ev=>{
       const nm=nomeArquivos(u,S.month);const k=b.dataset.k;
       if(k==='zip'){
         const r=await gerarTodas(u,S.month);await lib('jszip');const z=new JSZip();
-        z.file(nm.controle,r.controle);z.file(nm.km,r.km);z.file(nm.solic,r.solic);
-        download(`Reembolso ${u.profile.nome} ${S.month}.zip`,await z.generateAsync({type:'uint8array'}),'application/zip');
+        z.file(nm.controle,r.controle);z.file(nm.km,r.km);z.file(nm.kmPdf,await montaKmPdf(u,S.month));z.file(nm.solic,r.solic);
+        const cp=await montaComprovPdf(u);if(cp)z.file(nm.comprov,cp);
+        download(nm.zip,await z.generateAsync({type:'uint8array'}),'application/zip');
+      }else if(k==='kmPdf'){download(nm.kmPdf,await montaKmPdf(u,S.month),'application/pdf');
       }else{
         const fn={controle:genControle,km:genKm,solic:genSolic}[k];
         download(nm[k],await fn(u,S.month),k==='solic'?'application/vnd.ms-excel.sheet.macroEnabled.12':XL);
       }
-      toast('Planilha gerada');
+      toast(k==='zip'?'Arquivos gerados':'Planilha gerada');
     }catch(e){console.error(e);toast('Erro ao gerar: '+e.message)}
     return;
   }
@@ -1321,32 +1415,9 @@ document.addEventListener('click',async ev=>{
     toast('Aplicado em '+fmtBR(r.dia))}
   else if(a==='merge'){
     try{
-      await lib('pdflib');const{PDFDocument}=PDFLib;const out=await PDFDocument.create();
-      const font=await out.embedFont(PDFLib.StandardFonts.Helvetica);
-      const paginaImg=(img,leg)=>{
-        const land=img.width>img.height;const W=land?841.89:595.28,H=land?595.28:841.89,m=28,topo=leg?22:0;
-        const sc=Math.min((W-2*m)/img.width,(H-2*m-topo)/img.height);const w=img.width*sc,h=img.height*sc;
-        const pg=out.addPage([W,H]);
-        if(leg){let sz=12;while(sz>7&&font.widthOfTextAtSize(leg,sz)>W-2*m)sz-=0.5;pg.drawText(leg,{x:m,y:H-m-8,size:sz,font})}
-        pg.drawImage(img,{x:(W-w)/2,y:H-m-topo-h,width:w,height:h});
-      };
-      for(const e of u.entries.filter(x=>x.date.startsWith(S.month)).sort((x,y)=>x.date.localeCompare(y.date)||x.id-y.id))for(const f of(e.fotos||[])){
-        const dataUrl=await fotoGet(f.id);if(!dataUrl)continue;
-        const bytes=Uint8Array.from(atob(dataUrl.split(',')[1]),ch=>ch.charCodeAt(0));const img=await out.embedJpg(bytes);
-        paginaImg(img,`${fmtBR(e.date)} - ${f.tipo==='estac'?'Estacionamento':'Pedagio'}${f.valor?' - R$ '+num(f.valor):''}${f.chamado?' - Chamado '+f.chamado:''}`);
-      }
-      for(const f of comprovFiles){
-        const buf=await f.arrayBuffer();
-        if(f.type==='application/pdf'){
-          const d=await PDFDocument.load(buf,{ignoreEncryption:true});
-          const pgs=await out.copyPages(d,d.getPageIndices());pgs.forEach(p=>out.addPage(p));
-        }else{
-          const du=await imgPronta(f,{max:2000,q:.82,rot:0,crop:false});
-          const img=await out.embedJpg(Uint8Array.from(atob(du.split(',')[1]),ch=>ch.charCodeAt(0)));
-          paginaImg(img,'');
-        }
-      }
-      download(nomeArquivos(u,S.month).comprov,await out.save(),'application/pdf');toast('PDF gerado');
+      const bytes=await montaComprovPdf(u);
+      if(!bytes){toast('Não há comprovantes para juntar neste mês');return}
+      download(nomeArquivos(u,S.month).comprov,bytes,'application/pdf');toast('PDF gerado');
     }catch(e){console.error(e);toast('Erro ao juntar: '+e.message)}
     return;
   }
