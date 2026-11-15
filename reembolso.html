@@ -754,7 +754,7 @@ function nomeArquivos(user,month){
     kmPdf:`Reembolso_KM_${N.replace(/\s+/g,'_')}__${ref}.pdf`,
     solic:`Solicitação de Reembolso e Prestação de Contas (Não Viagem) - Hitss (v7) ${N} _ ${ref}.xlsm`,
     comprov:`COMPROVANTES UNIFICADO ${mes}-${y} (PEDAGIO-ESTACIONAMENTO).pdf`,
-    zip:`Reembolso_${N.replace(/\s+/g,'_')}_${ref}.zip`
+    zip:`Reembolso_${mes.slice(0,3)}${y}.zip`
   };
 }
 async function gerarTodas(user,month){
