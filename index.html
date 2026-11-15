@@ -9,8 +9,8 @@
     body { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); }
     .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
   </style>
-  <!-- A página só aparece depois de confirmado o login com a conta Google -->
-  <style id="auth-hide">body { visibility: hidden; }</style>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
@@ -31,6 +31,12 @@
         class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-95">
         Desbloquear
       </button>
+    </div>
+
+    <div id="verif-section" class="text-center py-6">
+      <p id="verif-texto" class="text-gray-500 text-sm">Verificando acesso…</p>
+      <button id="verif-botao" onclick="location.reload()"
+        class="hidden w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-95">Tentar de novo</button>
     </div>
 
     <div id="bloq-section" class="hidden text-center">
@@ -106,18 +112,24 @@
     }
 
     function mostrarMenu() {
+      document.getElementById("verif-section").classList.add('hidden');
       document.getElementById("login-section").classList.add('hidden');
       document.getElementById("menu-section").classList.remove('hidden');
     }
 
     function logout() {
+      localStorage.removeItem("acessoOk");
       sessionStorage.clear();
       // Marca a saída: o login.html encerra a sessão da conta Google antes de mostrar a tela de entrada
       sessionStorage.setItem("sair", "1");
       location.href = "login.html";
     }
 
-    // Auto-login se já validou a senha na sessão atual
+    // Quem já foi conferido neste aparelho vê o menu na hora; a conferência (login Google + lista de Acessos)
+    // roda em seguida e bloqueia a tela se o acesso tiver sido retirado
+    if (localStorage.getItem("acessoOk")) {
+      sessionStorage.setItem("logado", "true");
+    }
     if (sessionStorage.getItem("logado") === "true") {
       mostrarMenu();
     }
@@ -126,7 +138,7 @@
     /* Exige o login Google e confere a lista de Acessos antes de mostrar o menu */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-lite.js";
 
     const ADMIN_EMAIL = "epsouza2011@gmail.com";
     // Endereço do Apps Script que envia o e-mail de aviso ao administrador (vazio = sem aviso por e-mail)
@@ -141,11 +153,11 @@
     const db = getFirestore(app);
 
     function mostra() {
-      const esconde = document.getElementById("auth-hide");
-      if (esconde) esconde.remove();
+      document.getElementById("verif-section").classList.add("hidden");
     }
 
     function bloqueia(titulo, texto, botao) {
+      localStorage.removeItem("acessoOk");
       sessionStorage.removeItem("logado");
       document.getElementById("login-section").classList.add("hidden");
       document.getElementById("menu-section").classList.add("hidden");
@@ -170,6 +182,8 @@
 
     onAuthStateChanged(getAuth(app), async (user) => {
       if (!user) {
+        localStorage.removeItem("acessoOk");
+        sessionStorage.removeItem("logado");
         window.location.replace("login.html");
         return;
       }
@@ -182,11 +196,14 @@
         liberado = email === ADMIN_EMAIL || lista.includes(email);
       } catch (e) {
         console.error("Erro ao conferir a lista de acessos:", e);
+        // Sem internet: quem já estava liberado neste aparelho continua no menu; os demais veem o aviso
+        if (localStorage.getItem("acessoOk") === email) return;
         bloqueia("Não foi possível verificar o acesso", "Confira a internet e tente de novo.", "Tentar de novo");
         return;
       }
       if (liberado) {
         // Login Google + lista de Acessos já identificam a pessoa: a senha compartilhada não é mais pedida
+        localStorage.setItem("acessoOk", email);
         sessionStorage.setItem("logado", "true");
         window.mostrarMenu();
         mostra();
@@ -206,10 +223,14 @@
     });
   </script>
   <script>
-    // Se o login não puder ser verificado (sem internet, por exemplo), volta para a tela de login
+    // Se a conferência não terminar (internet lenta ou sem internet), avisa em vez de deixar a tela parada
     setTimeout(function () {
-      if (document.getElementById("auth-hide")) window.location.replace("login.html");
-    }, 10000);
+      var v = document.getElementById("verif-section");
+      if (v && !v.classList.contains("hidden")) {
+        document.getElementById("verif-texto").textContent = "Não foi possível verificar o acesso. Confira a internet.";
+        document.getElementById("verif-botao").classList.remove("hidden");
+      }
+    }, 20000);
   </script>
 </body>
 </html>
