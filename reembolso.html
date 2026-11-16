@@ -1196,7 +1196,7 @@ function vLancar(){
     <h2>${MESES[+S.month.split('-')[1]-1]} · ${c.rows.length} lançamento(s)</h2>
     <p class="sub">${c.km} km · ${brl(c.total)} no total <span class="chip ${st.s}">${st.s}</span></p>
     <div class="list">${c.rows.length?c.rows.map(x=>`
-      <div class="item"><div class="t"><b>${fmtBR(x.date)}</b>${st.s==='Ajuste'&&diasAjuste(st,S.month).has(x.date)?'<span class="chip Ajuste">Corrigir</span>':''}${projsDe(x).map(p=>`<span class="chip ${PROJ[p].curto}">${PROJ[p].curto}</span>`).join('')}<span class="small muted">${esc(x.chamado||'sem chamado')}</span><span class="num">${x.km} km</span></div>
+      <div class="item"><div class="t"><b>${fmtBR(x.date)}</b>${st.s==='Ajuste'&&diasAjuste(st,S.month).has(x.date)?((st.feitos||[]).includes(x.date)?'<span class="chip Aprovado">Corrigido</span>':'<span class="chip Ajuste">Corrigir</span>'):''}${projsDe(x).map(p=>`<span class="chip ${PROJ[p].curto}">${PROJ[p].curto}</span>`).join('')}<span class="small muted">${esc(x.chamado||'sem chamado')}</span><span class="num">${x.km} km</span></div>
         <div class="tr">${esc(x.trajeto)}</div>${x.split?`<div class="small muted" style="margin-top:4px">Km por projeto: ${Object.entries(x.split).map(([p,k])=>PROJ[p].curto+' '+k).join(' · ')}</div>`:''}${x.fotos&&x.fotos.length?`<div class="small muted" style="margin-top:4px">${x.fotos.length} comprovante(s) em foto anexado(s)</div>`:''}
         <div class="row small" style="margin-top:8px"><span class="muted">${brl(r2(x.km*FATOR))} km${+x.pedagio?` · pedágio ${brl(x.pedagio)}`:''}${+x.estac?` · estac. ${brl(x.estac)}`:''}${EXTRAS.filter(k=>+x[k]>0).map(k=>` · ${TIPOS[k][0].toLowerCase()} ${brl(x[k])}`).join('')}</span><span class="spacer"></span>
         ${locked?'':`<button class="btn sm" data-act="edit" data-id="${x.id}">Editar</button><button class="btn sm" data-act="del" data-id="${x.id}">Excluir</button>`}</div></div>`).join(''):'<div class="empty">Nenhum lançamento neste mês.</div>'}</div>
@@ -1400,14 +1400,14 @@ document.addEventListener('click',async ev=>{
   else if(a==='cancel'){draftClear('entry:'+editId);editId=null}
   else if(a==='del'){if(!confirm('Excluir este lançamento?'))return;u.entries=u.entries.filter(x=>x.id!==+b.dataset.id)}
   else if(a==='rmend'){u.addresses=u.addresses.filter(x=>x.id!==+b.dataset.id)}
-  else if(a==='enviar'){stat(u,S.month).s='Enviado';stat(u,S.month).motivo='';stat(u,S.month).dias=[];toast('Enviado para aprovação')}
+  else if(a==='enviar'){stat(u,S.month).s='Enviado';stat(u,S.month).motivo='';stat(u,S.month).dias=[];stat(u,S.month).feitos=[];toast('Enviado para aprovação')}
   else if(a==='recolher'){stat(u,S.month).s='Rascunho';toast('Envio recolhido')}
   else if(a==='abrir'){S.userId=b.dataset.id;S.view='mes'}
   else if(a==='aprovar'){stat(S.users[b.dataset.id],S.month).s='Aprovado';await persistStatus(b.dataset.id);toast('Aprovado')}
   else if(a==='reabrir'){
     const x=S.users[b.dataset.id];const sx=stat(x,S.month);
     if(!confirm(`Reabrir ${MESES[+S.month.slice(5)-1]}/${S.month.slice(0,4)} de ${x.profile.nome}? Hoje está "${sx.s}". O técnico volta a poder editar e reenviar.`))return;
-    sx.s='Ajuste';sx.motivo='Mês reaberto pelo supervisor para edição.';sx.dias=[];await persistStatus(b.dataset.id);toast('Mês reaberto')}
+    sx.s='Ajuste';sx.motivo='Mês reaberto pelo supervisor para edição.';sx.dias=[];sx.feitos=[];await persistStatus(b.dataset.id);toast('Mês reaberto')}
   else if(a==='pagar'){stat(S.users[b.dataset.id],S.month).s='Pago';await persistStatus(b.dataset.id);toast('Marcado como pago')}
   else if(a==='ajuste'){ajusteId=b.dataset.id;S._ajDias=null;const d=document.getElementById('dlg');
     const dv=S._div;if(dv&&dv.uid===ajusteId&&dv.month===S.month&&Object.keys(dv.div).length){const ds=Object.keys(dv.div).sort();S._ajDias=ds;const ta=d.querySelector('textarea');if(!ta.value.trim())ta.value='Km divergente em: '+ds.map(x=>`${fmtBR(x)} (informado ${dv.div[x].inf} km, mapa ${dv.div[x].mapa} km)`).join('; ')+'. Confira o trajeto e corrija o km desses dias.'}
@@ -1659,6 +1659,7 @@ document.addEventListener('submit',async ev=>{
     }else obj.split=null;
     if(editId){const e=u.entries.find(x=>x.id===editId);Object.assign(e,obj);editId=null}
     else{obj.id=newId();u.entries.push(obj)}
+    {const stx=stat(u,obj.date.slice(0,7));if(stx.s==='Ajuste'&&diasAjuste(stx,obj.date.slice(0,7)).has(obj.date)){stx.feitos=[...new Set([...(stx.feitos||[]),obj.date])]}}
     if(!obj.date.startsWith(S.month))S.month=obj.date.slice(0,7);
     toast('Lançamento salvo');
   }else if(kind==='home'){ev.preventDefault();u.profile.home=String(fd.get('home')).trim();toast('Residência salva')}
@@ -1674,7 +1675,7 @@ document.addEventListener('submit',async ev=>{
   else if(kind==='perfil'){ev.preventDefault();delete u._novo;for(const[k,v]of fd.entries())u.profile[k]=k==='adiantamento'?(+String(v).replace(',','.')||0):String(v).trim();toast('Dados salvos')}
   else if(kind==='ajuste'){
     const sub=ev.submitter&&ev.submitter.value;
-    if(sub==='ok'&&ajusteId){const st=stat(S.users[ajusteId],S.month);st.s='Ajuste';st.motivo=String(fd.get('motivo')).trim();st.dias=S._ajDias&&S._ajDias.length?S._ajDias.slice():[];S._ajDias=null;persistStatus(ajusteId);toast('Ajuste solicitado')}
+    if(sub==='ok'&&ajusteId){const st=stat(S.users[ajusteId],S.month);st.s='Ajuste';st.motivo=String(fd.get('motivo')).trim();st.dias=S._ajDias&&S._ajDias.length?S._ajDias.slice():[];st.feitos=[];S._ajDias=null;persistStatus(ajusteId);toast('Ajuste solicitado')}
   }
   if(kind==='entry'||kind==='end')draftClear(dk);
   save();render();
