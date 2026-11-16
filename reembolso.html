@@ -1190,7 +1190,7 @@ function vLancar(){
     <h2>${MESES[+S.month.split('-')[1]-1]} · ${c.rows.length} lançamento(s)</h2>
     <p class="sub">${c.km} km · ${brl(c.total)} no total <span class="chip ${st.s}">${st.s}</span></p>
     <div class="list">${c.rows.length?c.rows.map(x=>`
-      <div class="item"><div class="t"><b>${fmtBR(x.date)}</b>${projsDe(x).map(p=>`<span class="chip ${PROJ[p].curto}">${PROJ[p].curto}</span>`).join('')}<span class="small muted">${esc(x.chamado||'sem chamado')}</span><span class="num">${x.km} km</span></div>
+      <div class="item"><div class="t"><b>${fmtBR(x.date)}</b>${st.s==='Ajuste'&&(st.dias||[]).includes(x.date)?'<span class="chip Ajuste">Corrigir km</span>':''}${projsDe(x).map(p=>`<span class="chip ${PROJ[p].curto}">${PROJ[p].curto}</span>`).join('')}<span class="small muted">${esc(x.chamado||'sem chamado')}</span><span class="num">${x.km} km</span></div>
         <div class="tr">${esc(x.trajeto)}</div>${x.split?`<div class="small muted" style="margin-top:4px">Km por projeto: ${Object.entries(x.split).map(([p,k])=>PROJ[p].curto+' '+k).join(' · ')}</div>`:''}${x.fotos&&x.fotos.length?`<div class="small muted" style="margin-top:4px">${x.fotos.length} comprovante(s) em foto anexado(s)</div>`:''}
         <div class="row small" style="margin-top:8px"><span class="muted">${brl(r2(x.km*FATOR))} km${+x.pedagio?` · pedágio ${brl(x.pedagio)}`:''}${+x.estac?` · estac. ${brl(x.estac)}`:''}${EXTRAS.filter(k=>+x[k]>0).map(k=>` · ${TIPOS[k][0].toLowerCase()} ${brl(x[k])}`).join('')}</span><span class="spacer"></span>
         ${locked?'':`<button class="btn sm" data-act="edit" data-id="${x.id}">Editar</button><button class="btn sm" data-act="del" data-id="${x.id}">Excluir</button>`}</div></div>`).join(''):'<div class="empty">Nenhum lançamento neste mês.</div>'}</div>
@@ -1252,7 +1252,7 @@ function pvControle(u,c){
 }
 function pvKm(u,c){
   const p=u.profile;const conf=S.role!=='tecnico';
-  return(conf?`<div class="row small" style="margin:0 0 10px;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="confkm">Conferir km de todos os dias</button><span id="confMsg" class="muted small">Recalcula cada dia pelo mapa e marca os que diferem do informado. Use o link "Google Maps" da linha para tirar a dúvida.</span></div>`:'')+`<div class="sheet-h"><div><b>Funcionário</b>${esc(p.nome)}</div><div><b>Matrícula</b>${esc(p.matricula)}</div><div><b>Empresa</b>Global Hitss</div></div>
+  return(conf?`<div class="row small" style="margin:0 0 10px;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="confkm">Conferir km de todos os dias</button><span id="confMsg" class="muted small">Recalcula cada dia pelo mapa e marca os que diferem do informado. Use o link "Google Maps" da linha para tirar a dúvida.</span><span id="confAct"></span></div>`:'')+`<div class="sheet-h"><div><b>Funcionário</b>${esc(p.nome)}</div><div><b>Matrícula</b>${esc(p.matricula)}</div><div><b>Empresa</b>Global Hitss</div></div>
   <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Data</th><th>Trajeto</th><th>Motivo</th><th class="n">Distância em km</th><th class="n">Fator</th>${conf?'<th>Google Maps</th><th>Conferência</th>':''}</tr></thead><tbody>
   ${c.rows.map((e,i)=>`<tr><td>${i+1}</td><td>${fmtBR(e.date)}</td><td style="min-width:320px">${esc(e.trajeto)}</td><td>${esc(motivoKm(e))}</td><td class="n">${e.km}</td><td class="n">${num(e.km*FATOR)}</td>${conf?`<td>${(e.stops||[]).length?`<a href="${linkMaps(p.home,e.stops)}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">Abrir rota</a>`:'—'}</td><td data-ck="${i}" class="small muted">—</td>`:''}</tr>`).join('')}
   <tr class="tot"><td colspan="4">Somatório da KM / Valor a receber</td><td class="n">${c.km}</td><td class="n">${num(c.km*FATOR)}</td>${conf?'<td></td><td></td>':''}</tr></tbody></table></div>`;
@@ -1324,6 +1324,7 @@ function vEnd(){
     <button class="btn primary" type="submit">Salvar dados</button></form></div>`;
 }
 
+const DLG_AJ=`<dialog id="dlg"><form method="dialog" data-form="ajuste"><h2 style="margin-top:0">Pedir ajuste</h2><div class="field"><label class="f">Motivo</label><textarea name="motivo" required placeholder="Explique o que o técnico precisa corrigir"></textarea></div><div class="row"><button class="btn primary" value="ok">Enviar</button><button class="btn" value="cancel" formnovalidate>Cancelar</button></div></form></dialog>`;
 /* ----- Aprovação (supervisor) ----- */
 function vAprov(){
   const lista=Object.entries(S.users).map(([id,u])=>{const c=calc(u,S.month);const st=stat(u,S.month);return{id,u,c,st}});
@@ -1340,7 +1341,7 @@ function vAprov(){
         ${st.s==='Aprovado'?`<button class="btn sm primary" data-act="pagar" data-id="${id}">Marcar como pago</button>`:''}
         ${['Enviado','Aprovado','Pago'].includes(st.s)?`<button class="btn sm warn" data-act="reabrir" data-id="${id}">Reabrir mês</button>`:''}
       </div></div>`).join('')}</div>
-  <dialog id="dlg"><form method="dialog" data-form="ajuste"><h2 style="margin-top:0">Pedir ajuste</h2><div class="field"><label class="f">Motivo</label><textarea name="motivo" required placeholder="Explique o que o técnico precisa corrigir"></textarea></div><div class="row"><button class="btn primary" value="ok">Enviar</button><button class="btn" value="cancel" formnovalidate>Cancelar</button></div></form></dialog>`;
+  ${DLG_AJ}`;
 }
 
 /* ============================================================
@@ -1393,16 +1394,16 @@ document.addEventListener('click',async ev=>{
   else if(a==='cancel'){draftClear('entry:'+editId);editId=null}
   else if(a==='del'){if(!confirm('Excluir este lançamento?'))return;u.entries=u.entries.filter(x=>x.id!==+b.dataset.id)}
   else if(a==='rmend'){u.addresses=u.addresses.filter(x=>x.id!==+b.dataset.id)}
-  else if(a==='enviar'){stat(u,S.month).s='Enviado';stat(u,S.month).motivo='';toast('Enviado para aprovação')}
+  else if(a==='enviar'){stat(u,S.month).s='Enviado';stat(u,S.month).motivo='';stat(u,S.month).dias=[];toast('Enviado para aprovação')}
   else if(a==='recolher'){stat(u,S.month).s='Rascunho';toast('Envio recolhido')}
   else if(a==='abrir'){S.userId=b.dataset.id;S.view='mes'}
   else if(a==='aprovar'){stat(S.users[b.dataset.id],S.month).s='Aprovado';await persistStatus(b.dataset.id);toast('Aprovado')}
   else if(a==='reabrir'){
     const x=S.users[b.dataset.id];const sx=stat(x,S.month);
     if(!confirm(`Reabrir ${MESES[+S.month.slice(5)-1]}/${S.month.slice(0,4)} de ${x.profile.nome}? Hoje está "${sx.s}". O técnico volta a poder editar e reenviar.`))return;
-    sx.s='Ajuste';sx.motivo='Mês reaberto pelo supervisor para edição.';await persistStatus(b.dataset.id);toast('Mês reaberto')}
+    sx.s='Ajuste';sx.motivo='Mês reaberto pelo supervisor para edição.';sx.dias=[];await persistStatus(b.dataset.id);toast('Mês reaberto')}
   else if(a==='pagar'){stat(S.users[b.dataset.id],S.month).s='Pago';await persistStatus(b.dataset.id);toast('Marcado como pago')}
-  else if(a==='ajuste'){ajusteId=b.dataset.id;document.getElementById('dlg').showModal();return}
+  else if(a==='ajuste'){ajusteId=b.dataset.id;S._ajDias=null;document.getElementById('dlg').showModal();return}
   else if(a==='gen'){
     try{
       const nm=nomeArquivos(u,S.month);const k=b.dataset.k;
@@ -1454,7 +1455,7 @@ document.addEventListener('click',async ev=>{
   }
   else if(a==='confkm'){
     const u=U();const c=calc(u,S.month);const msg=document.getElementById('confMsg');b.disabled=true;
-    const memo={};let dif=0,ok=0,fal=0;
+    const memo={};let dif=0,ok=0,fal=0;const div={};S._div={uid:S.userId,month:S.month,div};
     for(let i=0;i<c.rows.length;i++){
       const e=c.rows[i];const cel=document.querySelector(`[data-ck="${i}"]`);if(!cel)continue;
       if(!(e.stops||[]).length){cel.textContent='sem endereços';continue}
@@ -1463,12 +1464,23 @@ document.addEventListener('click',async ev=>{
         const k=e.stops.join('|');if(!memo[k])memo[k]=await kmRota(u.profile.home,e.stops);
         const calcKm=memo[k].total,inf=+e.km||0,d=calcKm-inf,ad=Math.abs(d);
         const bad=ad>Math.max(5,inf*0.1);
-        cel.innerHTML=bad?`<b style="color:#f59e0b">Confira: mapa ${calcKm} km (${d>0?'+':''}${d})</b>`:`<span style="color:#22c55e">OK: mapa ${calcKm} km</span>`;
-        bad?dif++:ok++;
+        cel.innerHTML=bad?`<b style="color:#f59e0b">Confira: mapa ${calcKm} km (${d>0?'+':''}${d})</b><br><label class="small"><input type="checkbox" data-ckd="${e.date}" checked> pedir correção</label>`:`<span style="color:#22c55e">OK: mapa ${calcKm} km</span>`;
+        if(bad){dif++;div[e.date]={inf,mapa:calcKm}}else ok++;
       }catch(err){cel.textContent='não localizado';fal++}
     }
     msg.textContent=`Pronto: ${ok} ok, ${dif} para conferir${fal?`, ${fal} não localizado(s)`:''}. Diferença acima de 10% (e 5 km) vem marcada; o mapa usado é o OpenStreetMap, então pequenas diferenças para o Google são normais.`;
+    const act=document.getElementById('confAct');
+    if(act)act.innerHTML=(dif&&stat(u,S.month).s!=='Pago')?`<button class="btn sm warn" data-act="pedirAjusteKm">Pedir ajuste dos dias marcados</button>`:'';
     b.disabled=false;return;
+  }
+  else if(a==='pedirAjusteKm'){
+    const dv=S._div;if(!dv||dv.uid!==S.userId||dv.month!==S.month)return;
+    const datas=[...document.querySelectorAll('[data-ckd]')].filter(x=>x.checked).map(x=>x.dataset.ckd);
+    if(!datas.length){toast('Marque ao menos um dia');return}
+    S._ajDias=datas;ajusteId=S.userId;
+    let d=document.getElementById('dlg');if(!d){document.body.insertAdjacentHTML('beforeend',DLG_AJ);d=document.getElementById('dlg')}
+    d.querySelector('textarea').value='Km divergente em: '+datas.map(x=>`${fmtBR(x)} (informado ${dv.div[x].inf} km, mapa ${dv.div[x].mapa} km)`).join('; ')+'. Confira o trajeto e corrija o km desses dias.';
+    d.showModal();return;
   }
   else if(a==='parse'){
     const r=parseChamado(document.getElementById('cola').value);const f=b.closest('form');const msg=document.getElementById('parseMsg');
@@ -1654,7 +1666,7 @@ document.addEventListener('submit',async ev=>{
   else if(kind==='perfil'){ev.preventDefault();delete u._novo;for(const[k,v]of fd.entries())u.profile[k]=k==='adiantamento'?(+String(v).replace(',','.')||0):String(v).trim();toast('Dados salvos')}
   else if(kind==='ajuste'){
     const sub=ev.submitter&&ev.submitter.value;
-    if(sub==='ok'&&ajusteId){const st=stat(S.users[ajusteId],S.month);st.s='Ajuste';st.motivo=String(fd.get('motivo')).trim();persistStatus(ajusteId);toast('Ajuste solicitado')}
+    if(sub==='ok'&&ajusteId){const st=stat(S.users[ajusteId],S.month);st.s='Ajuste';st.motivo=String(fd.get('motivo')).trim();st.dias=S._ajDias&&S._ajDias.length?S._ajDias.slice():[];S._ajDias=null;persistStatus(ajusteId);toast('Ajuste solicitado')}
   }
   if(kind==='entry'||kind==='end')draftClear(dk);
   save();render();
