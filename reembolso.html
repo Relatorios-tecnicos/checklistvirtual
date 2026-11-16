@@ -1251,11 +1251,11 @@ function pvControle(u,c){
   </tbody></table></div>`;
 }
 function pvKm(u,c){
-  const p=u.profile;
-  return`<div class="sheet-h"><div><b>Funcionário</b>${esc(p.nome)}</div><div><b>Matrícula</b>${esc(p.matricula)}</div><div><b>Empresa</b>Global Hitss</div></div>
-  <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Data</th><th>Trajeto</th><th>Motivo</th><th class="n">Distância em km</th><th class="n">Fator</th></tr></thead><tbody>
-  ${c.rows.map((e,i)=>`<tr><td>${i+1}</td><td>${fmtBR(e.date)}</td><td style="min-width:320px">${esc(e.trajeto)}</td><td>${esc(motivoKm(e))}</td><td class="n">${e.km}</td><td class="n">${num(e.km*FATOR)}</td></tr>`).join('')}
-  <tr class="tot"><td colspan="4">Somatório da KM / Valor a receber</td><td class="n">${c.km}</td><td class="n">${num(c.km*FATOR)}</td></tr></tbody></table></div>`;
+  const p=u.profile;const conf=S.role!=='tecnico';
+  return(conf?`<div class="row small" style="margin:0 0 10px;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="confkm">Conferir km de todos os dias</button><span id="confMsg" class="muted small">Recalcula cada dia pelo mapa e marca os que diferem do informado. Use o link "Google Maps" da linha para tirar a dúvida.</span></div>`:'')+`<div class="sheet-h"><div><b>Funcionário</b>${esc(p.nome)}</div><div><b>Matrícula</b>${esc(p.matricula)}</div><div><b>Empresa</b>Global Hitss</div></div>
+  <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Data</th><th>Trajeto</th><th>Motivo</th><th class="n">Distância em km</th><th class="n">Fator</th>${conf?'<th>Google Maps</th><th>Conferência</th>':''}</tr></thead><tbody>
+  ${c.rows.map((e,i)=>`<tr><td>${i+1}</td><td>${fmtBR(e.date)}</td><td style="min-width:320px">${esc(e.trajeto)}</td><td>${esc(motivoKm(e))}</td><td class="n">${e.km}</td><td class="n">${num(e.km*FATOR)}</td>${conf?`<td>${(e.stops||[]).length?`<a href="${linkMaps(p.home,e.stops)}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">Abrir rota</a>`:'—'}</td><td data-ck="${i}" class="small muted">—</td>`:''}</tr>`).join('')}
+  <tr class="tot"><td colspan="4">Somatório da KM / Valor a receber</td><td class="n">${c.km}</td><td class="n">${num(c.km*FATOR)}</td>${conf?'<td></td><td></td>':''}</tr></tbody></table></div>`;
 }
 function pvSolic(u,c){
   const p=u.profile;const fim=fmtBR(ultimoDia(S.month));
@@ -1450,6 +1450,24 @@ document.addEventListener('click',async ev=>{
       const det=R.legs.map((d,i)=>`${nomes[i]} → ${nomes[i+1]}: ${d.toFixed(1).replace('.',',')} km`).join(' · ');
       msg.innerHTML=esc(`Total ida e volta: ${km} km (OpenStreetMap). ${det}.${rep}`)+'<br>Onde o site localizou cada ponto (confira se está no lugar certo): '+R.pts.slice(0,-1).map((p,i)=>`<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">${nomes[i]}</a>`).join(' · ')+'<br>Ponto errado? Em Endereços, cole no fim do endereço as coordenadas do Google Maps (clique direito no ponto → clique nos números).'+avisoEnd([u.profile.home,...stops,u.profile.home],nomes)}
     catch(err){msg.textContent=err.message+' — digite o km manualmente.'}
+    b.disabled=false;return;
+  }
+  else if(a==='confkm'){
+    const u=U();const c=calc(u,S.month);const msg=document.getElementById('confMsg');b.disabled=true;
+    const memo={};let dif=0,ok=0,fal=0;
+    for(let i=0;i<c.rows.length;i++){
+      const e=c.rows[i];const cel=document.querySelector(`[data-ck="${i}"]`);if(!cel)continue;
+      if(!(e.stops||[]).length){cel.textContent='sem endereços';continue}
+      msg.textContent=`Conferindo ${i+1} de ${c.rows.length}… (pode levar alguns segundos)`;
+      try{
+        const k=e.stops.join('|');if(!memo[k])memo[k]=await kmRota(u.profile.home,e.stops);
+        const calcKm=memo[k].total,inf=+e.km||0,d=calcKm-inf,ad=Math.abs(d);
+        const bad=ad>Math.max(5,inf*0.1);
+        cel.innerHTML=bad?`<b style="color:#f59e0b">Confira: mapa ${calcKm} km (${d>0?'+':''}${d})</b>`:`<span style="color:#22c55e">OK: mapa ${calcKm} km</span>`;
+        bad?dif++:ok++;
+      }catch(err){cel.textContent='não localizado';fal++}
+    }
+    msg.textContent=`Pronto: ${ok} ok, ${dif} para conferir${fal?`, ${fal} não localizado(s)`:''}. Diferença acima de 10% (e 5 km) vem marcada; o mapa usado é o OpenStreetMap, então pequenas diferenças para o Google são normais.`;
     b.disabled=false;return;
   }
   else if(a==='parse'){
