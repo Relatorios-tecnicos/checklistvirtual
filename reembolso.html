@@ -895,6 +895,12 @@ let fb={auth:null,db:null};let AUTH={status:NUVEM?'loading':'demo'};
 const lastW={};let syncSt={s:'',m:''};let saveT=null;
 function loadScript(src){return new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=()=>err(new Error('Não consegui carregar '+src.split('/').pop()+' (internet ou bloqueio de rede)'));document.head.appendChild(sc)})}
 function perfilVazio(a){return{nome:((a&&a.displayName)||'').toUpperCase(),matricula:'',cpf:'',telefone:'',fornecedor:'',area:'',cargo:'',local:'',regional:'',empresa:'',centro:'',adiantamento:0,placa:'',home:'',motivoGasto:'Relatório de despesas referente aos projetos TELMEX e CFTV BRADESCO.'}}
+function diasAjuste(st,m){
+  const out=new Set(st.dias||[]);const[y,mm]=m.split('-');
+  String(st.motivo||'').replace(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?!\d)/g,(_,d,mo,a)=>{
+    const yy=a?(a.length===2?'20'+a:a):y;if(String(mo).padStart(2,'0')===mm&&yy===y)out.add(`${y}-${mm}-${String(d).padStart(2,'0')}`);return _});
+  return out;
+}
 const limpo=o=>JSON.parse(JSON.stringify(o));
 const docMes=(u,m)=>({entries:u.entries.filter(e=>e.date.startsWith(m)).sort((a,b)=>a.id-b.id),status:(u.status&&u.status[m])||{s:'Rascunho',motivo:''},adiant:(u.adiant&&u.adiant[m]!==undefined&&u.adiant[m]!==null)?u.adiant[m]:null});
 const baseDoc=u=>({email:AUTH.email||'',profile:u.profile,addresses:u.addresses,tag:u.tag||[]});
@@ -1190,7 +1196,7 @@ function vLancar(){
     <h2>${MESES[+S.month.split('-')[1]-1]} · ${c.rows.length} lançamento(s)</h2>
     <p class="sub">${c.km} km · ${brl(c.total)} no total <span class="chip ${st.s}">${st.s}</span></p>
     <div class="list">${c.rows.length?c.rows.map(x=>`
-      <div class="item"><div class="t"><b>${fmtBR(x.date)}</b>${st.s==='Ajuste'&&(st.dias||[]).includes(x.date)?'<span class="chip Ajuste">Corrigir km</span>':''}${projsDe(x).map(p=>`<span class="chip ${PROJ[p].curto}">${PROJ[p].curto}</span>`).join('')}<span class="small muted">${esc(x.chamado||'sem chamado')}</span><span class="num">${x.km} km</span></div>
+      <div class="item"><div class="t"><b>${fmtBR(x.date)}</b>${st.s==='Ajuste'&&diasAjuste(st,S.month).has(x.date)?'<span class="chip Ajuste">Corrigir</span>':''}${projsDe(x).map(p=>`<span class="chip ${PROJ[p].curto}">${PROJ[p].curto}</span>`).join('')}<span class="small muted">${esc(x.chamado||'sem chamado')}</span><span class="num">${x.km} km</span></div>
         <div class="tr">${esc(x.trajeto)}</div>${x.split?`<div class="small muted" style="margin-top:4px">Km por projeto: ${Object.entries(x.split).map(([p,k])=>PROJ[p].curto+' '+k).join(' · ')}</div>`:''}${x.fotos&&x.fotos.length?`<div class="small muted" style="margin-top:4px">${x.fotos.length} comprovante(s) em foto anexado(s)</div>`:''}
         <div class="row small" style="margin-top:8px"><span class="muted">${brl(r2(x.km*FATOR))} km${+x.pedagio?` · pedágio ${brl(x.pedagio)}`:''}${+x.estac?` · estac. ${brl(x.estac)}`:''}${EXTRAS.filter(k=>+x[k]>0).map(k=>` · ${TIPOS[k][0].toLowerCase()} ${brl(x[k])}`).join('')}</span><span class="spacer"></span>
         ${locked?'':`<button class="btn sm" data-act="edit" data-id="${x.id}">Editar</button><button class="btn sm" data-act="del" data-id="${x.id}">Excluir</button>`}</div></div>`).join(''):'<div class="empty">Nenhum lançamento neste mês.</div>'}</div>
@@ -1403,7 +1409,9 @@ document.addEventListener('click',async ev=>{
     if(!confirm(`Reabrir ${MESES[+S.month.slice(5)-1]}/${S.month.slice(0,4)} de ${x.profile.nome}? Hoje está "${sx.s}". O técnico volta a poder editar e reenviar.`))return;
     sx.s='Ajuste';sx.motivo='Mês reaberto pelo supervisor para edição.';sx.dias=[];await persistStatus(b.dataset.id);toast('Mês reaberto')}
   else if(a==='pagar'){stat(S.users[b.dataset.id],S.month).s='Pago';await persistStatus(b.dataset.id);toast('Marcado como pago')}
-  else if(a==='ajuste'){ajusteId=b.dataset.id;S._ajDias=null;document.getElementById('dlg').showModal();return}
+  else if(a==='ajuste'){ajusteId=b.dataset.id;S._ajDias=null;const d=document.getElementById('dlg');
+    const dv=S._div;if(dv&&dv.uid===ajusteId&&dv.month===S.month&&Object.keys(dv.div).length){const ds=Object.keys(dv.div).sort();S._ajDias=ds;const ta=d.querySelector('textarea');if(!ta.value.trim())ta.value='Km divergente em: '+ds.map(x=>`${fmtBR(x)} (informado ${dv.div[x].inf} km, mapa ${dv.div[x].mapa} km)`).join('; ')+'. Confira o trajeto e corrija o km desses dias.'}
+    d.showModal();return}
   else if(a==='gen'){
     try{
       const nm=nomeArquivos(u,S.month);const k=b.dataset.k;
