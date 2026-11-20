@@ -437,13 +437,30 @@ async function geocode(addr){
   }
   throw new Error('Não localizei o endereço "'+addr+'" na cidade informada. Cole no fim do endereço as coordenadas do Google Maps');
 }
-async function kmRota(home,stops){
-  const seq=[home,...stops,home];const pts=[];
-  for(const a of seq)pts.push(await geocode(a));
+async function rotaValhalla(pts){
+  const ac=new AbortController();const to=setTimeout(()=>ac.abort(),20000);
+  try{
+    const j=JSON.stringify({locations:pts.map(p=>({lat:p.lat,lon:p.lon})),costing:'auto',directions_options:{units:'kilometers'}});
+    const r=await fetch('https://valhalla1.openstreetmap.de/route?json='+encodeURIComponent(j),{signal:ac.signal});
+    if(!r.ok)throw new Error('Valhalla '+r.status);
+    const d=await r.json();if(!d.trip||!d.trip.legs||!d.trip.legs.length)throw new Error('Valhalla sem rota');
+    return{total:Math.round(d.trip.summary.length),legs:d.trip.legs.map(l=>l.summary.length)};
+  }finally{clearTimeout(to)}
+}
+async function rotaOsrm(pts){
   const url='https://router.project-osrm.org/route/v1/driving/'+pts.map(p=>p.lon+','+p.lat).join(';')+'?overview=false';
   const r=await fetch(url);if(!r.ok)throw new Error('Serviço de rotas indisponível ('+r.status+')');
   const j=await r.json();if(!j.routes||!j.routes.length)throw new Error('Rota não encontrada');
-  const legs=(j.routes[0].legs||[]).map(l=>l.distance/1000);return{total:Math.round(j.routes[0].distance/1000),legs,pts};
+  return{total:Math.round(j.routes[0].distance/1000),legs:(j.routes[0].legs||[]).map(l=>l.distance/1000)};
+}
+async function kmRota(home,stops){
+  const seq=[home,...stops,home];const pts=[];
+  for(const a of seq)pts.push(await geocode(a));
+  let R,alt=null;
+  try{R=await rotaValhalla(pts);R.motor='Valhalla'}
+  catch(e){R=await rotaOsrm(pts);R.motor='OSRM'}
+  if(R.motor==='Valhalla'){try{alt=(await rotaOsrm(pts)).total}catch(e){}}
+  return{total:R.total,legs:R.legs,pts,motor:R.motor,alt};
 }
 function linkMaps(home,stops){
   const seq=[home,...stops,home];
@@ -1457,7 +1474,7 @@ document.addEventListener('click',async ev=>{
       }
       const nomes=['Residência',...stops.map((x,i)=>'Parada '+(i+1)),'Residência'];
       const det=R.legs.map((d,i)=>`${nomes[i]} → ${nomes[i+1]}: ${d.toFixed(1).replace('.',',')} km`).join(' · ');
-      msg.innerHTML=esc(`Total ida e volta: ${km} km (OpenStreetMap). ${det}.${rep}`)+'<br>Onde o site localizou cada ponto (confira se está no lugar certo): '+R.pts.slice(0,-1).map((p,i)=>`<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">${nomes[i]}</a>`).join(' · ')+'<br>Ponto errado? Em Endereços, cole no fim do endereço as coordenadas do Google Maps (clique direito no ponto → clique nos números).'+avisoEnd([u.profile.home,...stops,u.profile.home],nomes)}
+      msg.innerHTML=esc(`Total ida e volta: ${km} km (OpenStreetMap, ${R.motor}). ${det}.${rep}`)+(R.alt&&Math.abs(R.alt-km)>Math.max(5,km*0.05)?esc(` Outro mapa (OSRM) deu ${R.alt} km: a diferença é a rota escolhida.`):'')+'<br>Onde o site localizou cada ponto (confira se está no lugar certo): '+R.pts.slice(0,-1).map((p,i)=>`<a href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener" style="color:var(--accent,#f43f5e)">${nomes[i]}</a>`).join(' · ')+'<br>Ponto errado? Em Endereços, cole no fim do endereço as coordenadas do Google Maps (clique direito no ponto → clique nos números).'+avisoEnd([u.profile.home,...stops,u.profile.home],nomes)}
     catch(err){msg.textContent=err.message+' — digite o km manualmente.'}
     b.disabled=false;return;
   }
