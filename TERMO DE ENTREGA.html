@@ -568,7 +568,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 })();
 </script>
 <style>
-.carimbo-img{position:absolute;left:452px;top:-18px;width:240px;height:auto;pointer-events:none;display:none;mix-blend-mode:multiply}
+.carimbo-img{position:absolute;left:470px;top:4px;width:240px;height:auto;pointer-events:none;display:none;mix-blend-mode:multiply}
 .assinatura-linha{position:relative}
 </style>
 <script>
@@ -584,33 +584,31 @@ if (sessionStorage.getItem("logado") !== "true") {
     var t=new Date();return ('0'+t.getDate()).slice(-2)+'/'+('0'+(t.getMonth()+1)).slice(-2)+'/'+t.getFullYear();
   }
   function local(){
-    var li=document.querySelector('.texto-principal .input-linha');var s=li?li.value:'';if(!s)return '';
-    s=s.split(/\s-\sID\b/i)[0];
-    var cod=(s.split('-')[0]||'').trim();if(cod.length>14||!/\d/.test(cod))cod='';
-    var m=s.match(/\sde\s+([A-Za-zÀ-ú]+(?:\s[A-Za-zÀ-ú]+)?)\s*$/);var cid=m?m[1].trim():'';
-    return [cod,cid].filter(Boolean).join(' - ');
+    var li=document.querySelector('.texto-principal .input-linha');var v=li?li.value:'';if(!v)return '';
+    return v.split(/\s-\sID\b/i)[0].trim();
   }
   function rng(seed){var x=seed>>>0||1;return function(){x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296}}
   function vnoise(w,h,cell,r){var gw=Math.ceil(w/cell)+2,gh=Math.ceil(h/cell)+2,g=[];for(var i=0;i<gw*gh;i++)g.push(r());
     return function(x,y){var fx=x/cell,fy=y/cell,ix=Math.floor(fx),iy=Math.floor(fy),tx=fx-ix,ty=fy-iy;tx=tx*tx*(3-2*tx);ty=ty*ty*(3-2*ty);
       var a=g[iy*gw+ix],b=g[iy*gw+ix+1],c=g[(iy+1)*gw+ix],d=g[(iy+1)*gw+ix+1];return (a*(1-tx)+b*tx)*(1-ty)+(c*(1-tx)+d*tx)*ty}}
   function desenha(nome,mat,loc,dat){
-    var S=3,W=240*S,H=(loc?84:68)*S,cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');
+    function quebra(t,max){var w=t.split(/\s+/),ls=[],cur='';w.forEach(function(x){if((cur+' '+x).trim().length>max&&cur){ls.push(cur);cur=x}else cur=(cur+' '+x).trim()});if(cur)ls.push(cur);
+      if(ls.length>2){ls=[ls[0],ls.slice(1).join(' ')];if(ls[1].length>max)ls[1]=ls[1].slice(0,max-1)+'…'}return ls}
+    var locL=loc?quebra(loc,27):[];
+    var S=3,W=240*S,n=2+locL.length,H=(n*17+16)*S,cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');
     var seed=0,str=nome+mat;for(var i=0;i<str.length;i++)seed=(seed*31+str.charCodeAt(i))|0;var r=rng(Math.abs(seed)+7);
-    c.translate(W/2,H/2);c.rotate(-3.5*Math.PI/180);c.translate(-W/2,-H/2);
-    var col='rgb(38,62,170)';c.strokeStyle=col;c.fillStyle=col;
-    var m=10*S,bx=m,by=m,bw=W-2*m,bh=H-2*m,rr=7*S;
-    c.lineWidth=2.6*S;c.beginPath();c.moveTo(bx+rr,by);c.arcTo(bx+bw,by,bx+bw,by+bh,rr);c.arcTo(bx+bw,by+bh,bx,by+bh,rr);c.arcTo(bx,by+bh,bx,by,rr);c.arcTo(bx,by,bx+bw,by,rr);c.closePath();c.stroke();
-    c.textBaseline='middle';c.textAlign='left';var tx=bx+10*S,lines=[[nome.toUpperCase(),12.5],['MATRÍCULA '+mat.toUpperCase().replace(/^MAT\.?\s*/,''),10.5]];
-    if(loc)lines.push([loc.toUpperCase(),10.5]);
-    var n=lines.length,avail=bh-12*S,step=Math.min(avail/n,19*S),y=by+(bh-step*(n-1))/2;
-    lines.forEach(function(l,i){var fs=l[1]*S;c.font='bold '+fs+'px "Courier New",Courier,monospace';
-      var maxw=bw-20*S;while(c.measureText(l[0]).width>maxw&&fs>6*S){fs-=S*.5;c.font='bold '+fs+'px "Courier New",Courier,monospace'}
-      c.fillText(l[0],tx,y+i*step)});
+    c.translate(W/2,H/2);c.rotate(-1.5*Math.PI/180);c.translate(-W/2,-H/2);
+    var col='rgb(28,36,140)';c.fillStyle=col;c.textBaseline='middle';c.textAlign='center';
+    var lines=[[nome,13.5],['Matrícula '+mat.replace(/^mat\.?\s*/i,''),12]];
+    locL.forEach(function(t){lines.push([t,12])});
+    var step=17*S,y=8*S+step/2,FN='Verdana,"DejaVu Sans",Tahoma,Arial,sans-serif';
+    lines.forEach(function(l,i){var fs=l[1]*S;c.font='bold '+fs+'px '+FN;
+      var maxw=W-16*S;while(c.measureText(l[0]).width>maxw&&fs>6*S){fs-=S*.5;c.font='bold '+fs+'px '+FN}
+      c.fillText(l[0],W/2,y+i*step)});
     // desgaste da tinta
     var id=c.getImageData(0,0,W,H),d=id.data,lo=vnoise(W,H,14*S,r),mid=vnoise(W,H,4*S,r),fine=vnoise(W,H,1.2*S,r);
     for(var yy=0;yy<H;yy++)for(var xx=0;xx<W;xx++){var k=(yy*W+xx)*4+3;if(!d[k])continue;
-      var v=lo(xx,yy)*.45+mid(xx,yy)*.3+fine(xx,yy)*.25;var f=Math.min(1,Math.max(0,(v-.28)*3.2));d[k]=d[k]*(.35+.65*f)*.92}
+      var v=lo(xx,yy)*.45+mid(xx,yy)*.3+fine(xx,yy)*.25;var f=Math.min(1,Math.max(0,(v-.28)*3.2));d[k]=d[k]*(.62+.38*f)*.95}
     c.putImageData(id,0,0);return cv.toDataURL('image/png');
   }
   var ult='';
