@@ -570,7 +570,14 @@ if (sessionStorage.getItem("logado") !== "true") {
 <style>
 .carimbo-img{position:absolute;left:470px;top:4px;width:240px;height:auto;pointer-events:none;display:none;mix-blend-mode:multiply}
 .assinatura-linha{position:relative}
-@media print{.assinatura-bloco.tem-carimbo .dados-id{visibility:hidden}.assinatura-bloco.tem-carimbo .carimbo-img{left:165px;top:66px}}
+@media print{
+.assinatura-bloco.tem-carimbo{padding-bottom:84px}
+.assinatura-bloco.tem-carimbo .dados-id input{display:none !important}
+.assinatura-bloco.tem-carimbo .dados-id{margin-top:6px}
+.assinatura-bloco.tem-carimbo .sub-legenda{font-size:0 !important}
+.assinatura-bloco.tem-carimbo .sub-legenda::after{content:'(Assinatura/ carimbo / Nome Legível)';font:11px/1.2 'Times New Roman',Times,serif;color:#000;font-weight:normal}
+.assinatura-bloco.tem-carimbo .carimbo-img{left:165px;top:90px}
+}
 </style>
 <script>
 (function(){
