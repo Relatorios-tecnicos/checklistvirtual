@@ -243,12 +243,13 @@ if (sessionStorage.getItem("logado") !== "true") {
     </div>
 
     <div id="modal-sig">
-        <div class="modal-box">
-            <canvas id="canvas"></canvas>
-            <div style="margin-top: 15px; display: flex; gap: 10px;">
-                <button onclick="salvarAssinatura()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Confirmar</button>
-                <button onclick="ctx.clearRect(0, 0, canvas.width, canvas.height)" style="flex: 1; padding: 12px; background: #666; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Limpar</button>
-                <button onclick="fecharAssinar()" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        <div class="modal-box" style="padding:0;border-radius:12px;overflow:hidden;width:95%;max-width:600px;">
+            <div style="text-align:center;padding:10px;background:#f2f2f2;font-weight:bold;font-size:18px;margin:0;">Assine abaixo (Azul)</div>
+            <canvas id="canvas" style="border:none;display:block;"></canvas>
+            <div style="display:flex;padding:15px;gap:10px;background:#eee;margin:0;">
+                <button onclick="ctx.clearRect(0, 0, canvas.width, canvas.height)" style="flex:1;padding:12px;background:#666;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Limpar</button>
+                <button onclick="fecharAssinar()" style="flex:1;padding:12px;background:#dc3545;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Sair</button>
+                <button onclick="salvarAssinatura()" style="flex:1;padding:12px;background:#28a745;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Salvar</button>
             </div>
         </div>
     </div>
@@ -418,8 +419,8 @@ if (sessionStorage.getItem("logado") !== "true") {
  #painel-email .pe-box{position:fixed;left:8px;right:8px;top:46px;width:auto;max-height:calc(100vh - 64px);overflow:auto;z-index:1600}
  /* Assinatura em tela cheia */
  #modal-sig,#sig-modal{background:#fff !important;align-items:stretch !important;justify-content:stretch !important}
- #modal-sig .modal-box,#sig-modal .modal-content{width:100% !important;max-width:none !important;height:100vh;height:100dvh;border-radius:0 !important;padding:8px !important;margin:0;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden}
- #canvas{width:100% !important;height:calc(100vh - 86px) !important;height:calc(100dvh - 86px) !important;border:1px solid #bbb !important;flex:none}
+ #modal-sig .modal-box,#sig-modal .modal-content{width:100% !important;max-width:none !important;height:100vh;height:100dvh;border-radius:0 !important;padding:0 !important;margin:0;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden}
+ #canvas{width:100% !important;height:calc(100vh - 150px) !important;height:calc(100dvh - 150px) !important;border:none !important;flex:none}
  #modal-canvas{width:100% !important;height:calc(100vh - 150px) !important;height:calc(100dvh - 150px) !important;flex:none}
 }
 .sig-hint{display:none;position:absolute;left:0;right:0;top:38%;text-align:center;font:bold 18px Arial,sans-serif;color:#b5b5b5;pointer-events:none;z-index:1}
