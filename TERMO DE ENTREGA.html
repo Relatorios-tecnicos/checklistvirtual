@@ -526,7 +526,7 @@ if (sessionStorage.getItem("logado") !== "true") {
   document.getElementById('pe-ok').onclick=function(){
     var d=lerEmail(document.getElementById('pe-txt').value);
     if(!d.site&&!d.id&&!d.protocolo&&!d.itens.length){msg.innerHTML='<span style="color:#b02a37">Não achei dados nesse texto. Cole o e-mail inteiro.</span>';return}
-    guardar(d);aplicar(d);if(MOB&&faltando().length===0)setTimeout(function(){P.classList.remove('aberto')},2500);
+    guardar(d);aplicar(d);if(MOB&&faltando().length===0)P.classList.remove('aberto');
    msg.innerHTML=resumo(d)+(document.querySelector('.tabela-itens')?'<br><span style="color:#555">Os itens da tabela você confere/ajusta.</span>':'');
   };
   document.getElementById('pe-lim').onclick=function(){try{localStorage.removeItem(CH)}catch(e){}document.getElementById('pe-txt').value='';msg.innerHTML='Dados do e-mail removidos. Recarregue a página para voltar ao padrão.'};
