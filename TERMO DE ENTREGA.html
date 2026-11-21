@@ -605,7 +605,7 @@ if (sessionStorage.getItem("logado") !== "true") {
       var a=g[iy*gw+ix],b=g[iy*gw+ix+1],c=g[(iy+1)*gw+ix],d=g[(iy+1)*gw+ix+1];return (a*(1-tx)+b*tx)*(1-ty)+(c*(1-tx)+d*tx)*ty}}
   function desenha(nome,mat,loc,dat){
     function quebra(t,max){var w=t.split(/\s+/),ls=[],cur='';w.forEach(function(x){if((cur+' '+x).trim().length>max&&cur){ls.push(cur);cur=x}else cur=(cur+' '+x).trim()});if(cur)ls.push(cur);
-      if(ls.length>2){ls=[ls[0],ls.slice(1).join(' ')];if(ls[1].length>max)ls[1]=ls[1].slice(0,max-1)+'…'}return ls}
+      return ls}
     var locL=loc?quebra(loc,27):[];
     var S=3,W=240*S,n=2+locL.length,H=(n*17+16)*S,cv=document.createElement('canvas');cv.width=W;cv.height=H;var c=cv.getContext('2d');
     var seed=0,str=nome+mat;for(var i=0;i<str.length;i++)seed=(seed*31+str.charCodeAt(i))|0;var r=rng(Math.abs(seed)+7);
