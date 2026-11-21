@@ -167,7 +167,7 @@ if (sessionStorage.getItem("logado") !== "true") {
             </div>
 
             <div class="texto-principal">
-                Este presente termo visa atestar que foram entregues no endereço/site 
+                Este presente termo visa atestar que foram entregues 
                 <input type="text" class="input-linha" style="width: 360px;" value="MPSP-Promotoria de Justiça-Conchal - ID 014677/08">, 
                 os seguintes itens constantes da solicitação de ativação VoIP sob o Protocolo <strong>SAOG – </strong> 
                 <input type="text" class="input-linha" style="width: 130px;" value="251506777778">.
@@ -689,7 +689,7 @@ if (sessionStorage.getItem("logado") !== "true") {
     var tp=document.querySelector('.texto-principal'),ins=tp?tp.querySelectorAll('input'):[];
     if(tp&&ins.length>1){
       var loc=ins[0].value.trim().replace(/\s-\s(ID\b)/i,' – $1'),prot=ins[1].value.trim();
-      mk('pp-p','Este presente termo visa atestar que foram entregues no endere\u00e7o/site <b>'+esc(loc)+'</b>, os seguintes itens constantes da solicitação de ativação VoIP sob o <b>Protocolo SAOG - '+esc(prot)+'.</b>',tp,'after');
+      mk('pp-p','Este presente termo visa atestar que foram entregues <b>'+esc(loc)+'</b>, os seguintes itens constantes da solicitação de ativação VoIP sob o <b>Protocolo SAOG - '+esc(prot)+'.</b>',tp,'after');
     }
     document.querySelectorAll('.tabela-itens td input').forEach(function(i,k){
       var v=i.value,h=esc(v);
