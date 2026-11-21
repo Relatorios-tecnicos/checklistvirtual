@@ -637,7 +637,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 .pp-t,.pp-x{display:none}
 @media print{
 .page{padding:0 !important;margin:0 !important;width:794px !important;height:1100px !important;font-family:'Times New Roman',Times,'Liberation Serif',serif !important;color:#000}
-.page::before{background-size:340px auto !important;background-position:center 527px !important}
+.page::before{background-size:340px auto !important;opacity:.3 !important;background-position:center 527px !important}
 .conteudo{padding:107px 48px 0 48px;font-family:'Times New Roman',Times,'Liberation Serif',serif}
 .header-logo{position:absolute;left:0;top:0;width:100%;height:0;margin:0}
 .header-logo img.logo-claro,.header-logo img{position:absolute;top:47px;right:55px;width:131px !important;height:auto}
@@ -647,7 +647,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 .pp-p{display:block;text-align:justify;font:16px/27.5px 'Times New Roman',Times,'Liberation Serif',serif;margin:59px 0 0 0}
 .pp-p b{font-weight:bold}
 .tabela-itens{width:643px;margin:59px 0 0 7px;table-layout:fixed;font-family:'Times New Roman',Times,'Liberation Serif',serif}
-.tabela-itens th,.tabela-itens td{border:.5px solid #000;font-family:'Times New Roman',Times,'Liberation Serif',serif;padding:0;line-height:1}
+.tabela-itens th,.tabela-itens td{border:.4px solid #555;font-family:'Times New Roman',Times,'Liberation Serif',serif;padding:0;line-height:1}
 .tabela-itens th{height:19px;font-size:16px !important;background:#f2f2f2 !important;width:auto}
 .tabela-itens th:nth-child(1){width:85px !important}.tabela-itens th:nth-child(2){width:359px !important}.tabela-itens th:nth-child(3){width:199px !important}
 .tabela-itens td{height:15px;font-size:13.33px;text-align:center}
@@ -661,7 +661,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 .assinatura-bloco+.assinatura-bloco .label-sig{width:97.5px}
 .assinatura-linha{height:24px;align-items:flex-start}
 .label-sig{font:16px/27.5px 'Times New Roman',Times,'Liberation Serif',serif;font-weight:normal;width:91px;padding:0;white-space:nowrap}
-.campo-assinatura{width:264px;height:24px;border-bottom:1px solid #000;position:relative;display:block;margin-top:0}
+.campo-assinatura{width:264px;height:24px;border-bottom:0 !important;background:linear-gradient(#222,#222) left bottom/100% .55px no-repeat !important;position:relative;display:block;margin-top:0}
 .campo-assinatura img{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);height:66px;width:auto;max-height:none;max-width:100%}
 .dados-id{margin:7px 0 0 0;display:flex;flex-direction:column}
 .dados-id .sub-legenda{order:-1;font-size:0 !important;height:13px;line-height:13px}
@@ -673,7 +673,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 .assinatura-bloco.tem-carimbo .carimbo-img{left:100px;top:46px}
 .assinatura-bloco.tem-carimbo+.assinatura-bloco,.assinatura-bloco.tem-carimbo+.data-footer{margin-top:100px}
 .data-footer{font:16px/27.5px 'Times New Roman',Times,'Liberation Serif',serif;margin:82px 0 0 0;text-align:right;white-space:nowrap}
-.data-footer input{font:16px 'Times New Roman',Times,'Liberation Serif',serif !important;border:none !important;border-bottom:1px solid #000 !important;height:20px;padding:0;color:#000;text-align:center}
+.data-footer input{font:16px 'Times New Roman',Times,'Liberation Serif',serif !important;border:none !important;border-bottom:0 !important;background:linear-gradient(#222,#222) left bottom/100% .55px no-repeat !important;height:20px;padding:0;color:#000;text-align:center}
 .data-footer #dia{width:32px !important}.data-footer #mes{width:112px !important}.data-footer #ano{width:48px !important}
 }
 </style>
