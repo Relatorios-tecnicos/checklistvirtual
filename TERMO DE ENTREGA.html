@@ -716,8 +716,11 @@ if (sessionStorage.getItem("logado") !== "true") {
     try{var d=JSON.parse(localStorage.getItem('emailDados')||'null');if(d&&d.cidade)cid=d.cidade}catch(e){}
     var p=['Termo de Entrega'];if(lim(site))p.push(lim(site));if(lim(cid))p.push(lim(cid));return p.join(' - ');
   }
-  window.addEventListener('beforeprint',function(){document.title=nome()});
-  window.addEventListener('afterprint',function(){document.title=T0});
+  /* iOS/celular nao dispara beforeprint de forma confiavel: manter o titulo (nome do PDF) sempre atualizado */
+  function atual(){try{var n=nome();if(document.title!==n)document.title=n}catch(e){}}
+  ['input','change','keyup','focusin','focusout','touchstart','click'].forEach(function(e){document.addEventListener(e,atual,true)});
+  window.addEventListener('beforeprint',atual);window.addEventListener('pageshow',atual);window.addEventListener('storage',atual);
+  setInterval(atual,500);atual();
 })();
 </script>
 <style id="pe-mobile">

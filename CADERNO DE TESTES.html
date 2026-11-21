@@ -620,8 +620,15 @@ input{border-radius:0}
     var s=document.getElementById('v-site'),l=document.getElementById('v-localidade');
     var p=['Caderno de Testes'];if(s&&lim(s.value))p.push(lim(s.value));if(l&&lim(l.value))p.push(lim(l.value));return p.join(' - ');
   }
-  window.addEventListener('beforeprint',function(){document.title=nome()});
-  window.addEventListener('afterprint',function(){document.title=T0});
+  function atual(){try{var n=nome();if(document.title!==n)document.title=n}catch(e){}}
+  /* Nome do site grande: aumenta o campo para o texto aparecer inteiro */
+  function ajusta(){var s=document.getElementById('v-site');if(!s)return;var sp=ajusta.sp||(ajusta.sp=document.createElement('span'));
+    var cs=getComputedStyle(s);sp.style.cssText='position:absolute;visibility:hidden;white-space:pre;left:-9999px;top:0;font:'+cs.font;sp.textContent=s.value||'';document.body.appendChild(sp);
+    var w=sp.getBoundingClientRect().width+14;document.body.removeChild(sp);s.style.setProperty('width',Math.min(900,Math.max(383.7,w))+'px','important')}
+  function tudo(){atual();ajusta()}
+  ['input','change','keyup','focusin','focusout','touchstart','click'].forEach(function(e){document.addEventListener(e,tudo,true)});
+  window.addEventListener('beforeprint',tudo);window.addEventListener('pageshow',tudo);window.addEventListener('storage',tudo);
+  setInterval(tudo,500);tudo();
 })();
 </script>
 <style id="pe-mobile">
