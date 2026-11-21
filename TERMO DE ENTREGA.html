@@ -409,6 +409,8 @@ if (sessionStorage.getItem("logado") !== "true") {
 #painel-email #pe-ok{background:#28a745}#painel-email #pe-lim{background:#666}
 #painel-email #pe-msg{margin-top:6px;line-height:1.4;color:#222}
 @media print{#painel-email{display:none !important}}
+.pe-falta{outline:2px solid #dc3545 !important;background:#fff0f0 !important}
+@media print{.pe-falta{outline:none !important;background:transparent !important}}
 </style>
 <div id="painel-email">
   <button type="button" class="pe-bt" id="pe-abrir">&#9993; Preencher pelo e-mail</button>
@@ -446,24 +448,35 @@ if (sessionStorage.getItem("logado") !== "true") {
     return h;
   }
   function setIn(el,v){if(!el||v==null||v==='')return;el.value=v;try{if(el.id)localStorage.setItem(location.pathname+el.id,v)}catch(e){}}
+  function falta(el,on){if(!el)return;if(on)el.classList.add('pe-falta');else el.classList.remove('pe-falta');if(!el._pe){el._pe=1;el.addEventListener('input',function(){el.classList.remove('pe-falta')})}}
   function aplicar(d){
-    // Termo de Entrega
+    // Termo de Entrega: o que não veio no e-mail fica VAZIO e marcado em vermelho (nunca sobra dado de outro chamado)
     var li=document.querySelectorAll('.texto-principal .input-linha');
     if(li.length>=2){
-      if(d.site){var s=d.site+(d.id?' - ID '+d.id:'');li[0].value=s;li[0].style.width=Math.max(360,s.length*7.6)+'px'}
-      else if(d.id){/* sem site: não mexe */}
-      if(d.protocolo)li[1].value=d.protocolo;
+      var s=(d.site||'')+(d.id?(d.site?' - ':'')+'ID '+d.id:'');
+      li[0].value=s;li[0].style.width=Math.max(360,s.length*7.6)+'px';falta(li[0],!d.site);
+      li[1].value=d.protocolo||'';falta(li[1],!d.protocolo);
     }
-    if(d.itens&&d.itens.length&&document.querySelector('.tabela-itens tbody')){
-      var tb=document.querySelector('.tabela-itens tbody');
-      while(tb.querySelectorAll('tr').length<d.itens.length&&typeof adicionarLinha==='function')adicionarLinha();
-      tb.querySelectorAll('tr').forEach(function(tr,i){var ins=tr.querySelectorAll('input');if(ins.length<2)return;var it=d.itens[i];ins[0].value=it?it.desc:'';ins[1].value=it?it.q+' UNIDADE (S)':''});
+    var tb=document.querySelector('.tabela-itens tbody');
+    if(tb){
+      var its=d.itens||[];
+      while(tb.querySelectorAll('tr').length<its.length&&typeof adicionarLinha==='function')adicionarLinha();
+      tb.querySelectorAll('tr').forEach(function(tr,i){var ins=tr.querySelectorAll('input');if(ins.length<2)return;var it=its[i];ins[0].value=it?it.desc:'';ins[1].value=it?it.q+' UNIDADE (S)':'';falta(ins[0],!its.length&&i===0)});
     }
     // Caderno de Testes
-    setIn(document.getElementById('v-site'),d.site);
-    setIn(document.getElementById('v-localidade'),d.cidade);
+    ['v-site','v-localidade'].forEach(function(id){var el=document.getElementById(id);if(!el)return;var v=id==='v-site'?d.site:d.cidade;el.value=v||'';try{localStorage.setItem(location.pathname+id,v||'')}catch(e){}falta(el,!v)});
   }
-  function guardar(d){try{d.ts=Date.now();localStorage.setItem(CH,JSON.stringify(d))}catch(e){}}
+  function zerar(){
+    if(!confirm('Deseja zerar o formulário?'))return;
+    try{localStorage.removeItem(CH);var k=[];for(var i=0;i<localStorage.length;i++){var n=localStorage.key(i);if(n&&n.indexOf(location.pathname)===0)k.push(n)}k.forEach(function(n){localStorage.removeItem(n)})}catch(e){}
+    location.reload();
+  }
+  if(document.querySelector('.tabela-itens')){
+    window.limpar=zerar;
+    var og=window.gerarPDF;
+    window.gerarPDF=function(){var f=document.querySelectorAll('.pe-falta');if(f.length&&!confirm('Há campos em vermelho sem preencher (site, protocolo ou itens). Gerar o PDF mesmo assim?'))return;og()};
+  }else if(typeof window.limparTudo!=='function'){window.limparTudo=zerar}
+    function guardar(d){try{d.ts=Date.now();localStorage.setItem(CH,JSON.stringify(d))}catch(e){}}
   var P=document.getElementById('painel-email'),msg=document.getElementById('pe-msg');
   document.getElementById('pe-abrir').onclick=function(){P.classList.toggle('aberto')};
   document.getElementById('pe-ok').onclick=function(){
