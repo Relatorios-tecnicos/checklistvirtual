@@ -247,7 +247,7 @@ if (sessionStorage.getItem("logado") !== "true") {
             <div style="text-align:center;padding:10px;background:#f2f2f2;font-weight:bold;font-size:18px;margin:0;">Assine abaixo (Azul)</div>
             <canvas id="canvas" style="border:none;display:block;"></canvas>
             <div style="display:flex;padding:15px;gap:10px;background:#eee;margin:0;">
-                <button onclick="ctx.clearRect(0, 0, canvas.width, canvas.height)" style="flex:1;padding:12px;background:#666;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Limpar</button>
+                <button onclick="ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath();" style="flex:1;padding:12px;background:#666;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Limpar</button>
                 <button onclick="fecharAssinar()" style="flex:1;padding:12px;background:#dc3545;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Sair</button>
                 <button onclick="salvarAssinatura()" style="flex:1;padding:12px;background:#28a745;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Salvar</button>
             </div>
@@ -333,7 +333,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 
     function fecharAssinar() {
         document.getElementById('modal-sig').style.display = 'none';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath();
     }
 
     function salvarAssinatura() {
@@ -345,11 +345,16 @@ if (sessionStorage.getItem("logado") !== "true") {
     }
 
     // Eventos do Desenho
-    canvas.onmousedown = () => desenhando = true;
+    canvas.onmousedown = (e) => { desenhando = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
     canvas.onmouseup = () => { desenhando = false; ctx.beginPath(); };
+    canvas.onmouseleave = () => { desenhando = false; ctx.beginPath(); };
     canvas.onmousemove = (e) => { if (desenhando) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
 
-    canvas.ontouchstart = (e) => { desenhando = true; e.preventDefault(); };
+    canvas.ontouchstart = (e) => {
+        desenhando = true; e.preventDefault();
+        let touch = e.touches[0], rect = canvas.getBoundingClientRect();
+        ctx.beginPath(); ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    };
     canvas.ontouchmove = (e) => {
         if (!desenhando) return;
         let touch = e.touches[0];
@@ -357,6 +362,7 @@ if (sessionStorage.getItem("logado") !== "true") {
         ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
         ctx.stroke(); e.preventDefault();
     };
+    canvas.ontouchend = canvas.ontouchcancel = () => { desenhando = false; ctx.beginPath(); };
 
     function limpar() { if(confirm("Deseja zerar o formulário?")) location.reload(); }
 </script>
