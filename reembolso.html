@@ -742,59 +742,74 @@ async function montaKmPdf(u,month){
   const out=await PDFDocument.create();const f=await out.embedFont(StandardFonts.Helvetica),fb=await out.embedFont(StandardFonts.HelveticaBold);
   let logo=null;try{const z=await JSZip.loadAsync(TPL.km,{base64:true});logo=await out.embedPng(await z.file('xl/media/image1.png').async('uint8array'))}catch(e){}
   const cl=t=>String(t==null?'':t).replace(/[^\x20-\xFF]/g,'');
-  const W=792,H=612,M=18;
+  const PW=841.92,PH=595.32,T=t=>PH-t;
   const agora=new Date(),dd2=n=>String(n).padStart(2,'0');const rodData=`${dd2(agora.getDate())}/${dd2(agora.getMonth()+1)}/${agora.getFullYear()} / ${dd2(agora.getHours())}:${dd2(agora.getMinutes())}`;
-  const quebra=(txt,font,sz,w)=>{const out=[];String(txt).split('\n').forEach(par=>{let ln='';par.split(/\s+/).forEach(pal=>{const t=ln?ln+' '+pal:pal;if(font.widthOfTextAtSize(cl(t),sz)>w&&ln){out.push(ln);ln=pal}else ln=t});out.push(ln)});return out};
-  const azul=rgb(.55,.66,.86),cinza=rgb(.83,.83,.83),preto=rgb(0,0,0);
-  const cols=[{n:'#',w:16},{n:'Data',w:52},{n:'Trajeto',w:262},{n:'Motivo',w:222},{n:'Distância em Km',w:56},{n:'Fator',w:50}];
-  const tw=cols.reduce((t,x)=>t+x.w,0);const x0=(W-tw)/2;
+  const quebra=(txt,font,sz,w)=>{const o=[];String(txt).split('\n').forEach(par=>{let ln='';par.split(/\s+/).forEach(pal=>{const t=ln?ln+' '+pal:pal;if(font.widthOfTextAtSize(cl(t),sz)>w&&ln){o.push(ln);ln=pal}else ln=t});o.push(ln)});return o};
+  const azul=rgb(.55,.66,.86),cinza=rgb(.75,.75,.75),claro=rgb(.86,.9,.97),preto=rgb(0,0,0),bordaF=rgb(.7,.7,.7);
+  const C={dt:{x:223.9,w:25.9},tr:{x:253,w:158},mo:{x:414.7,w:136.1},km:{x:554.4,w:29.5},fa:{x:587.5,w:30.2}};
+  const fsT=Math.min(4.3,152/f.widthOfTextAtSize('A: Av. Pres. Juscelino Kubitschek de Oliveira, 275 - Parque Brasil 500, Paulínia - SP, 13140-',1));
+  const lp=6.1,minL=3,GAP=1.4,vazioH=6.5,Y0=134.3,YMAX=566;
+  const ctr=(pg,txt,x,w,mid,sz,font)=>pg.drawText(cl(txt),{x:x+(w-font.widthOfTextAtSize(cl(txt),sz))/2,y:T(mid)-sz*.35,size:sz,font});
+  const bloco=(pg,lines,x,mid,sz)=>{const n=lines.length;lines.forEach((l,k)=>pg.drawText(cl(l),{x,y:T(mid-(n-1)*lp/2+k*lp)-sz*.35,size:sz,font:f}))};
   let pg,y;
   const novaPag=(primeira)=>{
-    pg=out.addPage([W,H]);pg.drawRectangle({x:M,y:M,width:W-2*M,height:H-2*M,borderColor:rgb(.5,.5,.5),borderWidth:.8});
-    pg.drawText('NR-DEF-041.v02',{x:M,y:M-9,size:5.5,font:f});
-    pg.drawText(cl(rodData),{x:W-M-f.widthOfTextAtSize(cl(rodData),6),y:M-9,size:6,font:f});
-    y=H-M-8;
+    pg=out.addPage([PW,PH]);
+    pg.drawRectangle({x:214,y:T(578),width:411,height:562,borderColor:bordaF,borderWidth:.5});
+    pg.drawText('NR-DEF-041.v02',{x:17.9,y:T(570.3),size:3.6,font:f});
+    pg.drawText(cl(rodData),{x:824-f.widthOfTextAtSize(cl(rodData),3.8),y:T(570.3),size:3.8,font:f});
+    let topo=primeira?118.8:24;
+    pg.drawRectangle({x:217.4,y:T(Math.min(572,YMAX+6)),width:404.6,height:Math.min(572,YMAX+6)-topo,color:cinza});
     if(primeira){
-      if(logo)pg.drawImage(logo,{x:M+8,y:H-M-52,width:44,height:44});
-      const t='DECLARAÇÃO PARA REEMBOLSO DE DESPESAS DE QUILOMETRAGEM';pg.drawText(t,{x:(W-fb.widthOfTextAtSize(t,10))/2+20,y:H-M-18,size:10,font:fb});
-      pg.drawText('Eu,',{x:M+60,y:H-M-40,size:7,font:f});
-      const cx=(lab,val,x,w)=>{pg.drawText(lab,{x,y:H-M-56,size:7,font:f});const bx=x+f.widthOfTextAtSize(lab,7)+4;pg.drawRectangle({x:bx,y:H-M-60,width:w,height:12,color:cinza,borderColor:rgb(.6,.6,.6),borderWidth:.5});pg.drawText(cl(val),{x:bx+3,y:H-M-57,size:7.5,font:fb});};
-      cx('Funcionário:',p.nome,M+60,210);cx('Matrícula:',p.matricula,M+400,70);cx('Empresa:','Global Hitss',M+540,70);
-      y=H-M-76;
+      if(logo)pg.drawImage(logo,{x:216,y:T(46),width:26,height:26});
+      const t='DECLARAÇÃO PARA REEMBOLSO DE DESPESAS DE QUILOMETRAGEM';const ts=196/fb.widthOfTextAtSize(t,1);
+      pg.drawText(t,{x:449-196/2,y:T(27.7)-ts*.35,size:ts,font:fb});
+      const fs0=4.7;
+      pg.drawText('Eu,',{x:251,y:T(39.6)-fs0*.35,size:fs0,font:f});
+      const cx=(lab,val,x,bx,bw)=>{pg.drawText(lab,{x,y:T(50)-fs0*.35,size:fs0,font:f});pg.drawRectangle({x:bx,y:T(53.6),width:bw,height:7.2,color:rgb(.93,.93,.93),borderColor:rgb(.55,.55,.55),borderWidth:.4});ctr(pg,val,bx,bw,50,fs0,f)};
+      cx('Funcionário:',p.nome,251,280.8,164.2);cx('Matrícula:',p.matricula,457,481,29);cx('Empresa:','Global Hitss',531,554.7,32.8);
       const par=['Declaro estar ciente de que o reembolso por quilômetro rodado solicitado abaixo abrange os gastos referentes a: combustível, manutenção preventiva (troca de óleo, filtro de óleo, filtro de combustível, velas e filtro de ar, além de balanceamento e alinhamento), lavagem, troca de pneus, seguro, depreciação e IPVA.',
         'Afirmo ainda que o veículo de minha propriedade apresenta boas condições de uso, encontra-se devidamente segurado (inclusive com cobertura para danos materiais, pessoais e contra terceiros) e que minha Carteira Nacional de Habilitação (CNH) está vigente junto ao órgão emissor, atestando a mim a aptidão necessária para a condução de veículos.',
         'Desde já autorizo o crédito em minha conta corrente como meio de reembolso pela Empresa.'];
-      par.forEach(t=>{quebra(t,f,6.8,W-2*M-24).forEach(l=>{pg.drawText(cl(l),{x:M+12,y,size:6.8,font:f});y-=8.4});y-=5});
-      y-=2;
-    }
-    // cabeçalho da tabela
-    let x=x0;const hh=18;
-    cols.forEach(cn=>{pg.drawRectangle({x,y:y-hh,width:cn.w,height:hh,color:azul,borderColor:preto,borderWidth:.5});
-      const ls=quebra(cn.n,fb,6.5,cn.w-4);ls.forEach((l,i)=>pg.drawText(cl(l),{x:x+(cn.w-fb.widthOfTextAtSize(cl(l),6.5))/2,y:y-8-i*7+(ls.length>1?2:-1),size:6.5,font:fb}));x+=cn.w});
-    y-=hh;
+      const fsP=385/f.widthOfTextAtSize('Declaro estar ciente de que o reembolso por quilômetro rodado solicitado abaixo abrange os gastos referentes a: combustível, manutenção preventiva (troca de óleo, filtro de óleo,',1);
+      [67.7,94.3,111.2].forEach((t0,i)=>quebra(par[i],f,fsP,388).forEach((l,k)=>pg.drawText(cl(l),{x:225.7,y:T(t0+k*6.5)-fsP*.35,size:fsP,font:f})));
+      y=122.8;
+    }else y=28;
+    const hh=9.7;
+    [['Data',C.dt],['Trajeto',C.tr],['Motivo',C.mo],['Distância em Km',C.km],['Fator',C.fa]].forEach(([n,cn])=>{
+      pg.drawRectangle({x:cn.x,y:T(y+hh),width:cn.w,height:hh,color:azul,borderColor:preto,borderWidth:.5});
+      const ls=quebra(n,fb,3.9,cn.w-2);ls.forEach((l,i)=>ctr(pg,l,cn.x,cn.w,y+hh/2+(i-(ls.length-1)/2)*4.2,3.9,fb))});
+    y+=hh+(primeira?1.8:1.8);
   };
   novaPag(true);
-  const sz=6.6,lh=8;
+  const linhaVazia=(i)=>{
+    const h=vazioH;
+    pg.drawText(String(i+1),{x:222.6-f.widthOfTextAtSize(String(i+1),4),y:T(y+h/2)-1.4,size:4,font:f});
+    [C.dt,C.tr,C.mo,C.km].forEach(cn=>pg.drawRectangle({x:cn.x,y:T(y+h),width:cn.w,height:h,color:rgb(1,1,1),borderColor:preto,borderWidth:.5}));
+    pg.drawRectangle({x:C.fa.x,y:T(y+h),width:C.fa.w,height:h,color:claro,borderColor:preto,borderWidth:.5});
+    ctr(pg,'0,00',C.fa.x,C.fa.w,y+h/2,3.9,fb);y+=h+GAP;
+  };
   c.rows.forEach((e,i)=>{
-    const lt=quebra(e.trajeto,f,sz,cols[2].w-5),lm=quebra(motivoKm(e),f,sz,cols[3].w-5);const n=Math.max(1,lt.length,lm.length);const rh=n*lh+4;
-    if(y-rh<M+26)novaPag(false);
-    let x=x0;
-    const vals=[String(i+1),fmtBR(e.date),null,null,String(e.km),num(e.km*FATOR)];
-    cols.forEach((cn,j)=>{pg.drawRectangle({x,y:y-rh,width:cn.w,height:rh,borderColor:preto,borderWidth:.4,color:j===5?rgb(.86,.9,.97):undefined});
-      if(j===2)lt.forEach((l,k)=>pg.drawText(cl(l),{x:x+2.5,y:y-lh-k*lh+2,size:sz,font:f}));
-      else if(j===3)lm.forEach((l,k)=>pg.drawText(cl(l),{x:x+2.5,y:y-lh-k*lh+2,size:sz,font:f}));
-      else pg.drawText(cl(vals[j]),{x:x+(cn.w-f.widthOfTextAtSize(cl(vals[j]),sz))/2,y:y-lh+2+(rh-lh-4)/2*0,size:sz,font:f});
-      x+=cn.w});
-    y-=rh;
+    const lt=quebra(e.trajeto,f,fsT,C.tr.w-4),lm=quebra(motivoKm(e),f,fsT,C.mo.w-4);const n=Math.max(minL,lt.length,lm.length);const rh=n*lp+4.7;
+    if(y+rh>YMAX)novaPag(false);
+    const mid=y+rh/2;
+    pg.drawText(String(i+1),{x:222.6-f.widthOfTextAtSize(String(i+1),4),y:T(mid)-1.4,size:4,font:f});
+    [C.dt,C.tr,C.mo,C.km].forEach(cn=>pg.drawRectangle({x:cn.x,y:T(y+rh),width:cn.w,height:rh,color:rgb(1,1,1),borderColor:preto,borderWidth:.5}));
+    pg.drawRectangle({x:C.fa.x,y:T(y+rh),width:C.fa.w,height:rh,color:claro,borderColor:preto,borderWidth:.5});
+    ctr(pg,fmtBR(e.date),C.dt.x,C.dt.w,mid,4,f);
+    bloco(pg,lt,C.tr.x+2,mid,fsT);bloco(pg,lm,C.mo.x+2,mid,fsT);
+    ctr(pg,String(e.km),C.km.x,C.km.w,mid,4,f);ctr(pg,num(e.km*FATOR),C.fa.x,C.fa.w,mid,4,fb);
+    y+=rh+GAP;
   });
+  for(let i=c.rows.length;i<25&&y+vazioH<=YMAX;i++)linhaVazia(i);
+  if(y+8>YMAX+6)novaPag(false);
   // total
-  if(y-14<M+4)novaPag(false);
-  const wl=cols[0].w+cols[1].w+cols[2].w+cols[3].w;
-  pg.drawRectangle({x:x0,y:y-14,width:wl,height:14,color:azul,borderColor:preto,borderWidth:.5});
-  const tt='Somatório da KM/Valor a receber';pg.drawText(tt,{x:x0+wl-fb.widthOfTextAtSize(tt,7)-6,y:y-10,size:7,font:fb});
+  const th=7.2;
+  const xl=453.9,wl=C.mo.x+C.mo.w-xl;
+  pg.drawRectangle({x:xl,y:T(y+th),width:wl,height:th,color:azul,borderColor:preto,borderWidth:.5});
+  ctr(pg,'Somatório da KM/Valor a receber',xl,wl,y+th/2,4,fb);
   const vk=String(c.km),vv=num(c.km*FATOR);
-  pg.drawRectangle({x:x0+wl,y:y-14,width:cols[4].w,height:14,borderColor:preto,borderWidth:.5});pg.drawText(vk,{x:x0+wl+(cols[4].w-fb.widthOfTextAtSize(vk,7.5))/2,y:y-10,size:7.5,font:fb});
-  pg.drawRectangle({x:x0+wl+cols[4].w,y:y-14,width:cols[5].w,height:14,borderColor:preto,borderWidth:.5});pg.drawText(vv,{x:x0+wl+cols[4].w+(cols[5].w-fb.widthOfTextAtSize(vv,7.5))/2,y:y-10,size:7.5,font:fb});
+  pg.drawRectangle({x:C.km.x,y:T(y+th),width:C.km.w,height:th,color:rgb(1,1,1),borderColor:preto,borderWidth:.5});ctr(pg,vk,C.km.x,C.km.w,y+th/2,4,f);
+  pg.drawRectangle({x:C.fa.x,y:T(y+th),width:C.fa.w,height:th,color:rgb(1,1,1),borderColor:preto,borderWidth:.5});ctr(pg,vv,C.fa.x,C.fa.w,y+th/2,4,f);
   return out.save();
 }
 let TAGFILES=[];
