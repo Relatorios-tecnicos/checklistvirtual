@@ -542,7 +542,8 @@ window.onload = () => {
   if(mq.addEventListener)mq.addEventListener('change',rs);else if(mq.addListener)mq.addListener(rs);
 })();
 </script>
-<style>@media print{.page:last-of-type{break-after:auto !important;page-break-after:auto !important}}</style>
+<style>@media print{.page.pg-ult{min-height:0 !important;height:1050px !important;overflow:hidden !important;break-after:auto !important;page-break-after:auto !important}}</style>
+<script>(function(){function m(){var p=document.querySelectorAll('.page');if(p.length)p[p.length-1].classList.add('pg-ult')}m();window.addEventListener('beforeprint',m)})();</script>
 </body>
 </html>
 
