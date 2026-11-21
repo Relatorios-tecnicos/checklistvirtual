@@ -632,6 +632,76 @@ if (sessionStorage.getItem("logado") !== "true") {
   window.addEventListener('beforeprint',atualiza);window.addEventListener('load',atualiza);
 })();
 </script>
+<style>
+/* PDF fiel ao original: Times New Roman, linhas finas, logo no lugar certo */
+.pp-t,.pp-x{display:none}
+@media print{
+.page{padding:0 !important;margin:0 !important;width:794px !important;height:1100px !important;font-family:'Times New Roman',Times,'Liberation Serif',serif !important;color:#000}
+.page::before{background-size:340px auto !important;background-position:center 527px !important}
+.conteudo{padding:107px 48px 0 48px;font-family:'Times New Roman',Times,'Liberation Serif',serif}
+.header-logo{position:absolute;left:0;top:0;width:100%;height:0;margin:0}
+.header-logo img.logo-claro,.header-logo img{position:absolute;top:47px;right:55px;width:131px !important;height:auto}
+.titulo{display:none !important}
+.pp-t{display:block;text-align:center;font:bold 16px/20px 'Times New Roman',Times,'Liberation Serif',serif;margin:0}
+.texto-principal{display:none !important}
+.pp-p{display:block;text-align:justify;font:16px/27.5px 'Times New Roman',Times,'Liberation Serif',serif;margin:59px 0 0 0}
+.pp-p b{font-weight:bold}
+.tabela-itens{width:643px;margin:59px 0 0 7px;table-layout:fixed;font-family:'Times New Roman',Times,'Liberation Serif',serif}
+.tabela-itens th,.tabela-itens td{border:.5px solid #000;font-family:'Times New Roman',Times,'Liberation Serif',serif;padding:0;line-height:1}
+.tabela-itens th{height:19px;font-size:16px !important;background:#f2f2f2 !important;width:auto}
+.tabela-itens th:nth-child(1){width:85px !important}.tabela-itens th:nth-child(2){width:359px !important}.tabela-itens th:nth-child(3){width:199px !important}
+.tabela-itens td{height:15px;font-size:13.33px;text-align:center}
+.tabela-itens td input{display:none !important}
+.pp-x{display:inline;font:13.33px 'Times New Roman',Times,'Liberation Serif',serif}
+.pp-x b{font-weight:bold}
+.obs{font:16px/27.5px 'Times New Roman',Times,'Liberation Serif',serif;margin:50px 0 0 0}
+.obs strong:first-child{font-weight:normal}
+.assinatura-bloco{margin:54px 0 0 0;padding:0}
+.assinatura-bloco+.assinatura-bloco{margin-top:74px}
+.assinatura-bloco+.assinatura-bloco .label-sig{width:97.5px}
+.assinatura-linha{height:24px;align-items:flex-start}
+.label-sig{font:16px/27.5px 'Times New Roman',Times,'Liberation Serif',serif;font-weight:normal;width:91px;padding:0;white-space:nowrap}
+.campo-assinatura{width:264px;height:24px;border-bottom:1px solid #000;position:relative;display:block;margin-top:0}
+.campo-assinatura img{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);height:66px;width:auto;max-height:none;max-width:100%}
+.dados-id{margin:7px 0 0 0;display:flex;flex-direction:column}
+.dados-id .sub-legenda{order:-1;font-size:0 !important;height:13px;line-height:13px}
+.dados-id .sub-legenda::after{content:'(Assinatura/ carimbo / Nome Legível)';font:10.67px/13px 'Times New Roman',Times,'Liberation Serif',serif;color:#000;font-weight:normal}
+.dados-id input{font:14px 'Times New Roman',Times,'Liberation Serif',serif !important;width:350px;margin:2px 0 0 0;border:none !important;padding:0;color:#000}
+.dados-id input.pp-vazio{display:none !important}
+.assinatura-bloco.tem-carimbo{padding-bottom:0}
+.assinatura-bloco.tem-carimbo .dados-id{margin-top:7px}
+.assinatura-bloco.tem-carimbo .carimbo-img{left:100px;top:46px}
+.assinatura-bloco.tem-carimbo+.assinatura-bloco,.assinatura-bloco.tem-carimbo+.data-footer{margin-top:100px}
+.data-footer{font:16px/27.5px 'Times New Roman',Times,'Liberation Serif',serif;margin:82px 0 0 0;text-align:right;white-space:nowrap}
+.data-footer input{font:16px 'Times New Roman',Times,'Liberation Serif',serif !important;border:none !important;border-bottom:1px solid #000 !important;height:20px;padding:0;color:#000;text-align:center}
+.data-footer #dia{width:32px !important}.data-footer #mes{width:112px !important}.data-footer #ano{width:48px !important}
+}
+</style>
+<script>
+(function(){
+  var pp=[];
+  function mk(cls,html,ref,pos){var e=document.createElement('div');e.className=cls;e.innerHTML=html;ref.parentNode.insertBefore(e,pos==='after'?ref.nextSibling:ref);pp.push(e);return e}
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+  function antes(){
+    depois();
+    var ti=document.querySelector('.titulo input'),tt=document.querySelector('.titulo');
+    if(tt&&ti)mk('pp-t','TERMO DE ENTREGA '+esc(ti.value)+' (PROJETO VoIP)',tt,'after');
+    var tp=document.querySelector('.texto-principal'),ins=tp?tp.querySelectorAll('input'):[];
+    if(tp&&ins.length>1){
+      var loc=ins[0].value.trim().replace(/\s-\s(ID\b)/i,' – $1'),prot=ins[1].value.trim();
+      mk('pp-p','Este presente termo visa atestar que foram entregues <b>'+esc(loc)+'</b>, os seguintes itens constantes da solicitação de ativação VoIP sob o <b>Protocolo SAOG - '+esc(prot)+'.</b>',tp,'after');
+    }
+    document.querySelectorAll('.tabela-itens td input').forEach(function(i,k){
+      var v=i.value,h=esc(v);
+      if(i.parentNode.cellIndex===2){h=esc(v).replace(/^(\s*\S+)/,'<b>$1</b>')}
+      var s=document.createElement('span');s.className='pp-x';s.innerHTML=h;i.parentNode.appendChild(s);pp.push(s);
+    });
+    document.querySelectorAll('.dados-id input').forEach(function(i){i.classList.toggle('pp-vazio',!i.value.trim())});
+  }
+  function depois(){pp.forEach(function(e){if(e.parentNode)e.parentNode.removeChild(e)});pp=[]}
+  window.addEventListener('beforeprint',antes);window.addEventListener('afterprint',depois);
+})();
+</script>
 </body>
 </html>
 
