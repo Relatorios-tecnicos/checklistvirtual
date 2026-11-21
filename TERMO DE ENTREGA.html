@@ -373,6 +373,9 @@ if (sessionStorage.getItem("logado") !== "true") {
       window.location.href = "login.html";
       return;
     }
+    // Nome de quem entrega (login Google), se ainda estiver vazio
+    const ne = document.querySelector('.dados-id input');
+    if (ne && !ne.value.trim() && user.displayName) ne.value = user.displayName;
     try {
       await addDoc(collection(db, "acessos_relatorios"), {
         uid: user.uid,
@@ -386,6 +389,80 @@ if (sessionStorage.getItem("logado") !== "true") {
     }
   });
 </script>
+<!-- PREENCHER A PARTIR DO E-MAIL (painel só na tela; não aparece no PDF) -->
+<style>
+#painel-email{position:fixed;top:10px;left:10px;z-index:1500;font-family:Arial,sans-serif;font-size:12px;width:300px}
+#painel-email .pe-bt{background:#0b5ed7;color:#fff;border:none;border-radius:6px;padding:8px 12px;font-weight:bold;cursor:pointer;font-size:12px}
+#painel-email .pe-box{display:none;background:#fff;border-radius:8px;padding:10px;margin-top:6px;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+#painel-email.aberto .pe-box{display:block}
+#painel-email textarea{width:100%;height:130px;font-size:12px;box-sizing:border-box;border:1px solid #bbb;border-radius:4px;padding:5px}
+#painel-email .pe-lin{display:flex;gap:6px;margin-top:6px}
+#painel-email .pe-lin button{flex:1;border:none;border-radius:4px;padding:7px;font-weight:bold;cursor:pointer;color:#fff;font-size:12px}
+#painel-email #pe-ok{background:#28a745}#painel-email #pe-lim{background:#666}
+#painel-email #pe-msg{margin-top:6px;line-height:1.4;color:#222}
+@media print{#painel-email{display:none !important}}
+</style>
+<div id="painel-email">
+  <button type="button" class="pe-bt" id="pe-abrir">&#9993; Preencher pelo e-mail</button>
+  <div class="pe-box">
+    <div style="margin-bottom:5px;color:#333">Copie o e-mail <b>inteiro, com o assunto</b>, e cole aqui:</div>
+    <textarea id="pe-txt" placeholder="Cole aqui o texto do e-mail"></textarea>
+    <div class="pe-lin"><button type="button" id="pe-ok">Preencher</button><button type="button" id="pe-lim">Limpar</button></div>
+    <div id="pe-msg"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var CH='emailDados',VALID=12*3600*1000;
+  function lerEmail(t){
+    t=String(t||'').replace(/ /g,' ');
+    var d={};
+    var m=t.match(/Protocolo\s*(?:SAOG)?\s*[:\-–]?\s*(\d{9,})/i);if(m)d.protocolo=m[1];
+    m=t.match(/Chamado\s*[:\-–]?\s*([0-9]-?\d{5,})/i);if(m)d.chamado=m[1];
+    m=t.match(/ID\s*INTRAGOV\s*[-–:]?\s*(\d{3,}\/\d{2})/i)||t.match(/(\d{5,}\/\d{2})/);if(m)d.id=m[1];
+    m=t.match(/ZIJO\w+\s*[-–]\s*(.+?)\s*[-–]\s*HITSS/i);if(m)d.site=m[1].trim();
+    if(d.site){var p=d.site.split('-');if(p.length>1)d.cidade=p[p.length-1].trim();}
+    return d;
+  }
+  function resumo(d){
+    var ok=[],falta=[];
+    (d.site?ok:falta).push(d.site?'site <b>'+d.site+'</b>':'site (copie também o <b>assunto</b> do e-mail)');
+    (d.id?ok:falta).push(d.id?'ID <b>'+d.id+'</b>':'ID');
+    (d.protocolo?ok:falta).push(d.protocolo?'protocolo <b>'+d.protocolo+'</b>':'protocolo');
+    var h='';if(ok.length)h+='&#10004; Preenchido: '+ok.join(' · ');
+    if(falta.length)h+=(h?'<br>':'')+'<span style="color:#b02a37">&#9888; Não encontrei: '+falta.join(', ')+'</span>';
+    return h;
+  }
+  function setIn(el,v){if(!el||v==null||v==='')return;el.value=v;try{if(el.id)localStorage.setItem(location.pathname+el.id,v)}catch(e){}}
+  function aplicar(d){
+    // Termo de Entrega
+    var li=document.querySelectorAll('.texto-principal .input-linha');
+    if(li.length>=2){
+      if(d.site){var s=d.site+(d.id?' - ID '+d.id:'');li[0].value=s;li[0].style.width=Math.max(360,s.length*7.6)+'px'}
+      else if(d.id){/* sem site: não mexe */}
+      if(d.protocolo)li[1].value=d.protocolo;
+    }
+    // Caderno de Testes
+    setIn(document.getElementById('v-site'),d.site);
+    setIn(document.getElementById('v-localidade'),d.cidade);
+  }
+  function guardar(d){try{d.ts=Date.now();localStorage.setItem(CH,JSON.stringify(d))}catch(e){}}
+  var P=document.getElementById('painel-email'),msg=document.getElementById('pe-msg');
+  document.getElementById('pe-abrir').onclick=function(){P.classList.toggle('aberto')};
+  document.getElementById('pe-ok').onclick=function(){
+    var d=lerEmail(document.getElementById('pe-txt').value);
+    if(!d.site&&!d.id&&!d.protocolo){msg.innerHTML='<span style="color:#b02a37">Não achei dados nesse texto. Cole o e-mail inteiro, com o assunto.</span>';return}
+    guardar(d);aplicar(d);msg.innerHTML=resumo(d)+(document.querySelector('.tabela-itens')?'<br><span style="color:#555">Os itens da tabela você confere/ajusta.</span>':'');
+  };
+  document.getElementById('pe-lim').onclick=function(){try{localStorage.removeItem(CH)}catch(e){}document.getElementById('pe-txt').value='';msg.innerHTML='Dados do e-mail removidos. Recarregue a página para voltar ao padrão.'};
+  window.addEventListener('load',function(){
+    try{var d=JSON.parse(localStorage.getItem(CH)||'null');
+      if(d&&Date.now()-d.ts<VALID){aplicar(d);msg.innerHTML=resumo(d);P.classList.add('aberto')}
+    }catch(e){}
+  });
+})();
+</script>
+
 </body>
 </html>
 
