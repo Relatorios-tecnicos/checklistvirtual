@@ -454,11 +454,33 @@ window.onload = () => {
     try{localStorage.removeItem(CH);var k=[];for(var i=0;i<localStorage.length;i++){var n=localStorage.key(i);if(n&&n.indexOf(location.pathname)===0)k.push(n)}k.forEach(function(n){localStorage.removeItem(n)})}catch(e){}
     location.reload();
   }
+  function faltando(){
+    var m=[],li=document.querySelectorAll('.texto-principal .input-linha');
+    if(li.length>=2){
+      if(!li[0].value.trim()){m.push('endereço/site');falta(li[0],1)}
+      if(!li[1].value.trim()){m.push('protocolo SAOG');falta(li[1],1)}
+      var ins=document.querySelectorAll('.tabela-itens tbody tr td:nth-child(2) input'),ok=false;
+      ins.forEach(function(i){if(i.value.trim())ok=true});
+      if(!ok){m.push('itens');if(ins[0])falta(ins[0],1)}
+    }
+    var vs=document.getElementById('v-site'),vl=document.getElementById('v-localidade');
+    if(vs){if(!vs.value.trim()){m.push('Nome do Site');falta(vs,1)}if(!vl.value.trim()){m.push('Localidade');falta(vl,1)}}
+    return m;
+  }
+  function pdfSeguro(orig){
+    var m=faltando();
+    if(m.length){alert('Não dá para gerar o PDF ainda. Falta preencher: '+m.join(', ')+'.\n\nPreencha pelo e-mail ou digite nos campos em vermelho.');return}
+    orig();
+  }
   if(document.querySelector('.tabela-itens')){
     window.limpar=zerar;
     var og=window.gerarPDF;
-    window.gerarPDF=function(){var f=document.querySelectorAll('.pe-falta');if(f.length&&!confirm('Há campos em vermelho sem preencher (site, protocolo ou itens). Gerar o PDF mesmo assim?'))return;og()};
-  }else if(typeof window.limparTudo!=='function'){window.limparTudo=zerar}
+    window.gerarPDF=function(){pdfSeguro(og)};
+  }else{
+    if(typeof window.limparTudo!=='function')window.limparTudo=zerar;
+    var bp=document.querySelector('.btn-print');
+    if(bp)bp.onclick=function(){pdfSeguro(function(){window.print()})};
+  }
     function guardar(d){try{d.ts=Date.now();localStorage.setItem(CH,JSON.stringify(d))}catch(e){}}
   var P=document.getElementById('painel-email'),msg=document.getElementById('pe-msg');
   document.getElementById('pe-abrir').onclick=function(){P.classList.toggle('aberto')};
@@ -471,6 +493,7 @@ window.onload = () => {
   window.addEventListener('load',function(){
     try{var d=JSON.parse(localStorage.getItem(CH)||'null');
       if(d&&Date.now()-d.ts<VALID){aplicar(d);msg.innerHTML=resumo(d);P.classList.add('aberto')}
+      else{if(document.querySelector('.tabela-itens'))aplicar({itens:[]});faltando();P.classList.add('aberto');msg.innerHTML='Cole aqui o e-mail do chamado e clique em Preencher.'}
     }catch(e){}
   });
 })();
