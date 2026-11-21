@@ -751,14 +751,21 @@ async function montaKmPdf(u,month){
   const lp=6.1,minL=3,GAP=1.4,vazioH=6.5,Y0=134.3,YMAX=566;
   const ctr=(pg,txt,x,w,mid,sz,font)=>pg.drawText(cl(txt),{x:x+(w-font.widthOfTextAtSize(cl(txt),sz))/2,y:T(mid)-sz*.35,size:sz,font});
   const bloco=(pg,lines,x,mid,sz)=>{const n=lines.length;lines.forEach((l,k)=>pg.drawText(cl(l),{x,y:T(mid-(n-1)*lp/2+k*lp)-sz*.35,size:sz,font:f}))};
-  let pg,y;
+  let pg,y,pagN=0;
+  // pré-cálculo: onde termina o conteúdo da última página (para o fundo cinza e a moldura acompanharem)
+  let simY=Y0,simP=0;
+  c.rows.forEach(e=>{const n=Math.max(minL,quebra(e.trajeto,f,fsT,C.tr.w-4).length,quebra(motivoKm(e),f,fsT,C.mo.w-4).length);const rh=n*lp+4.7;if(simY+rh>YMAX){simP++;simY=39.5}simY+=rh+GAP});
+  for(let i=c.rows.length;i<25&&simY+vazioH<=YMAX;i++)simY+=vazioH+GAP;
+  if(simY+8>YMAX+6){simP++;simY=39.5}
+  const fimUlt=simY+7.2+4,nPag=simP+1;
   const novaPag=(primeira)=>{
-    pg=out.addPage([PW,PH]);
-    pg.drawRectangle({x:214,y:T(578),width:411,height:562,borderColor:bordaF,borderWidth:.5});
+    pg=out.addPage([PW,PH]);pagN++;
+    const fundo=pagN===nPag?fimUlt:572;
+    pg.drawRectangle({x:214,y:T(fundo+6),width:411,height:fundo+6-16,borderColor:bordaF,borderWidth:.5});
     pg.drawText('NR-DEF-041.v02',{x:17.9,y:T(570.3),size:3.6,font:f});
     pg.drawText(cl(rodData),{x:824-f.widthOfTextAtSize(cl(rodData),3.8),y:T(570.3),size:3.8,font:f});
     let topo=primeira?118.8:24;
-    pg.drawRectangle({x:217.4,y:T(Math.min(572,YMAX+6)),width:404.6,height:Math.min(572,YMAX+6)-topo,color:cinza});
+    pg.drawRectangle({x:217.4,y:T(fundo),width:404.6,height:fundo-topo,color:cinza});
     if(primeira){
       if(logo)pg.drawImage(logo,{x:216,y:T(46),width:26,height:26});
       const t='DECLARAÇÃO PARA REEMBOLSO DE DESPESAS DE QUILOMETRAGEM';const ts=196/fb.widthOfTextAtSize(t,1);
