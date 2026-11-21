@@ -611,6 +611,19 @@ input{border-radius:0}
 .t2 tbody td{padding-top:5px !important}.t3 tbody td{padding-top:3px !important}
 .t2 tbody td:last-child,.t3 tbody td:last-child{padding-top:0 !important}
 </style>
+<script>
+/* Nome do PDF: Caderno de Testes - Nome do site - Localidade */
+(function(){
+  var T0=document.title;
+  function lim(s){return String(s||'').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim()}
+  function nome(){
+    var s=document.getElementById('v-site'),l=document.getElementById('v-localidade');
+    var p=['Caderno de Testes'];if(s&&lim(s.value))p.push(lim(s.value));if(l&&lim(l.value))p.push(lim(l.value));return p.join(' - ');
+  }
+  window.addEventListener('beforeprint',function(){document.title=nome()});
+  window.addEventListener('afterprint',function(){document.title=T0});
+})();
+</script>
 </body>
 </html>
 

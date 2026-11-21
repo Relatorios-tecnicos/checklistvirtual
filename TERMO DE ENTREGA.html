@@ -706,6 +706,20 @@ if (sessionStorage.getItem("logado") !== "true") {
   window.addEventListener('beforeprint',antes);window.addEventListener('afterprint',depois);
 })();
 </script>
+<script>
+/* Nome do PDF: Termo de Entrega - Nome do site - Localidade */
+(function(){
+  var T0=document.title;
+  function lim(s){return String(s||'').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim()}
+  function nome(){
+    var li=document.querySelector('.texto-principal .input-linha'),site=li?li.value.split(/\s-\sID\b/i)[0]:'',cid='';
+    try{var d=JSON.parse(localStorage.getItem('emailDados')||'null');if(d&&d.cidade)cid=d.cidade}catch(e){}
+    var p=['Termo de Entrega'];if(lim(site))p.push(lim(site));if(lim(cid))p.push(lim(cid));return p.join(' - ');
+  }
+  window.addEventListener('beforeprint',function(){document.title=nome()});
+  window.addEventListener('afterprint',function(){document.title=T0});
+})();
+</script>
 </body>
 </html>
 
