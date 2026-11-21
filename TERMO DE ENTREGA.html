@@ -456,7 +456,11 @@ if (sessionStorage.getItem("logado") !== "true") {
     if(!d.site){m=t.match(/Endere[cç]o de instala[cç][aã]o\s*:\s*([^\r\n]+)/i);if(m)d.site=m[1].trim();}
     d.itens=[];var re=/^[ \t>*]*>>?\s*(?:Instala[cç][aã]o\s*)?(\d+)\s*Unidades?\s*[-–]\s*(.+?)\s*$/gim,mi;
     while((mi=re.exec(t))){d.itens.push({q:('0'+mi[1]).slice(-2).length>2?mi[1]:('0'+mi[1]).slice(-2),desc:mi[2].replace(/\s+/g,' ').trim()})}
-    if(d.site){var p=d.site.split('-');if(p.length>1)d.cidade=p[p.length-1].trim();}
+    var ie=t.search(/Endere[cç]o de instala[cç][aã]o/i);
+    if(ie>=0){var bl=t.slice(ie).split('\n').slice(1,8);
+      for(var k=0;k<bl.length;k++){var ln=bl[k].trim();if(!ln)break;
+        var mc=ln.match(/^(?:.*?\s[-–]\s*)?([^\-–\d\n,]+?\/\s*[A-Za-z]{2})\s*$/);if(mc){d.cidade=mc[1].replace(/\s*\/\s*/,'/').trim();break}}}
+    if(!d.cidade&&d.site){var p=d.site.split('-');if(p.length>1)d.cidade=p[p.length-1].trim();}
     return d;
   }
   function resumo(d){
