@@ -396,7 +396,7 @@ window.onload = () => {
 <div id="painel-email">
   <button type="button" class="pe-bt" id="pe-abrir">&#9993; Preencher pelo e-mail</button>
   <div class="pe-box">
-    <div style="margin-bottom:5px;color:#333">Copie o e-mail <b>inteiro, com o assunto</b>, e cole aqui:</div>
+    <div style="margin-bottom:5px;color:#333">Copie o texto do e-mail (de preferência <b>inteiro</b>) e cole aqui:</div>
     <textarea id="pe-txt" placeholder="Cole aqui o texto do e-mail"></textarea>
     <div class="pe-lin"><button type="button" id="pe-ok">Preencher</button><button type="button" id="pe-lim">Limpar</button></div>
     <div id="pe-msg"></div>
@@ -412,6 +412,9 @@ window.onload = () => {
     m=t.match(/Chamado\s*[:\-–]?\s*([0-9]-?\d{5,})/i);if(m)d.chamado=m[1];
     m=t.match(/ID\s*INTRAGOV\s*[-–:]?\s*(\d{3,}\/\d{2})/i)||t.match(/(\d{5,}\/\d{2})/);if(m)d.id=m[1];
     m=t.match(/ZIJO\w+\s*[-–]\s*(.+?)\s*[-–]\s*HITSS/i);if(m)d.site=m[1].trim();
+    if(!d.site){m=t.match(/Endere[cç]o de instala[cç][aã]o\s*:\s*([^\r\n]+)/i);if(m)d.site=m[1].trim();}
+    d.itens=[];var re=/^[ \t>*]*>>?\s*(?:Instala[cç][aã]o\s*)?(\d+)\s*Unidades?\s*[-–]\s*(.+?)\s*$/gim,mi;
+    while((mi=re.exec(t))){d.itens.push({q:('0'+mi[1]).slice(-2).length>2?mi[1]:('0'+mi[1]).slice(-2),desc:mi[2].replace(/\s+/g,' ').trim()})}
     if(d.site){var p=d.site.split('-');if(p.length>1)d.cidade=p[p.length-1].trim();}
     return d;
   }
@@ -420,6 +423,7 @@ window.onload = () => {
     (d.site?ok:falta).push(d.site?'site <b>'+d.site+'</b>':'site (copie também o <b>assunto</b> do e-mail)');
     (d.id?ok:falta).push(d.id?'ID <b>'+d.id+'</b>':'ID');
     (d.protocolo?ok:falta).push(d.protocolo?'protocolo <b>'+d.protocolo+'</b>':'protocolo');
+    if(document.querySelector('.tabela-itens'))(d.itens&&d.itens.length?ok:falta).push(d.itens&&d.itens.length?d.itens.length+' item(ns): <b>'+d.itens.map(function(i){return i.q+'x '+i.desc}).join('; ')+'</b>':'itens (linha "Instalação 02 Unidades - ...")');
     var h='';if(ok.length)h+='&#10004; Preenchido: '+ok.join(' · ');
     if(falta.length)h+=(h?'<br>':'')+'<span style="color:#b02a37">&#9888; Não encontrei: '+falta.join(', ')+'</span>';
     return h;
@@ -433,6 +437,11 @@ window.onload = () => {
       else if(d.id){/* sem site: não mexe */}
       if(d.protocolo)li[1].value=d.protocolo;
     }
+    if(d.itens&&d.itens.length&&document.querySelector('.tabela-itens tbody')){
+      var tb=document.querySelector('.tabela-itens tbody');
+      while(tb.querySelectorAll('tr').length<d.itens.length&&typeof adicionarLinha==='function')adicionarLinha();
+      tb.querySelectorAll('tr').forEach(function(tr,i){var ins=tr.querySelectorAll('input');if(ins.length<2)return;var it=d.itens[i];ins[0].value=it?it.desc:'';ins[1].value=it?it.q+' UNIDADE (S)':''});
+    }
     // Caderno de Testes
     setIn(document.getElementById('v-site'),d.site);
     setIn(document.getElementById('v-localidade'),d.cidade);
@@ -442,7 +451,7 @@ window.onload = () => {
   document.getElementById('pe-abrir').onclick=function(){P.classList.toggle('aberto')};
   document.getElementById('pe-ok').onclick=function(){
     var d=lerEmail(document.getElementById('pe-txt').value);
-    if(!d.site&&!d.id&&!d.protocolo){msg.innerHTML='<span style="color:#b02a37">Não achei dados nesse texto. Cole o e-mail inteiro, com o assunto.</span>';return}
+    if(!d.site&&!d.id&&!d.protocolo&&!d.itens.length){msg.innerHTML='<span style="color:#b02a37">Não achei dados nesse texto. Cole o e-mail inteiro.</span>';return}
     guardar(d);aplicar(d);msg.innerHTML=resumo(d)+(document.querySelector('.tabela-itens')?'<br><span style="color:#555">Os itens da tabela você confere/ajusta.</span>':'');
   };
   document.getElementById('pe-lim').onclick=function(){try{localStorage.removeItem(CH)}catch(e){}document.getElementById('pe-txt').value='';msg.innerHTML='Dados do e-mail removidos. Recarregue a página para voltar ao padrão.'};
