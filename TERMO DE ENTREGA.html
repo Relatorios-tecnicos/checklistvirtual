@@ -570,6 +570,7 @@ if (sessionStorage.getItem("logado") !== "true") {
 <style>
 .carimbo-img{position:absolute;left:470px;top:4px;width:240px;height:auto;pointer-events:none;display:none;mix-blend-mode:multiply}
 .assinatura-linha{position:relative}
+@media print{.assinatura-bloco.tem-carimbo .dados-id{visibility:hidden}.assinatura-bloco.tem-carimbo .carimbo-img{left:165px;top:66px}}
 </style>
 <script>
 (function(){
@@ -614,10 +615,10 @@ if (sessionStorage.getItem("logado") !== "true") {
   var ult='';
   function atualiza(){
     var nome=ins[0].value.trim(),mat=ins[1].value.trim();
-    if(!nome||!mat){img.style.display='none';img.removeAttribute('src');ult='';return}
+    if(!nome||!mat){img.style.display='none';img.removeAttribute('src');ult='';bl.classList.remove('tem-carimbo');return}
     var key=[nome,mat,local()].join('|');
     if(key!==ult){ult=key;img.src=desenha(nome,mat,local(),dataTxt())}
-    img.style.display='block';
+    img.style.display='block';bl.classList.add('tem-carimbo');
   }
   ['input','change','keyup'].forEach(function(e){ins.forEach(function(i){i.addEventListener(e,atualiza)})});
   ['dia','mes','ano'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',function(){if(img.style.display==='block')atualiza()})});
