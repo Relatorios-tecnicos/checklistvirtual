@@ -624,6 +624,44 @@ input{border-radius:0}
   window.addEventListener('afterprint',function(){document.title=T0});
 })();
 </script>
+<style id="pe-mobile">
+@media (pointer:coarse),(max-width:900px){
+ #painel-email{transform-origin:top left}
+ #painel-email .pe-bt{font-size:17px;padding:12px 18px;border-radius:10px;opacity:1;min-height:46px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+ #painel-email .pe-box{position:static !important;left:auto;right:auto;top:auto;margin-top:8px;padding:14px;border-radius:12px;max-height:none;font-size:15px;overflow:auto}
+ #painel-email .pe-box>div:first-child{font-size:15px;line-height:1.35;margin-bottom:8px !important}
+ #painel-email textarea{font-size:16px;height:150px;padding:10px;border-radius:8px}
+ #painel-email .pe-lin{gap:10px;margin-top:10px}
+ #painel-email .pe-lin button{font-size:17px;padding:14px 8px;border-radius:10px;min-height:48px}
+ #painel-email #pe-msg{font-size:15px;margin-top:10px}
+}
+</style>
+<script>
+/* Painel do e-mail com tamanho de toque confortável, mesmo com a página reduzida no celular */
+(function(){
+  var p=document.getElementById('painel-email');if(!p)return;
+  var grosso=window.matchMedia&&matchMedia('(pointer:coarse)').matches,box=p.querySelector('.pe-box'),raf=0;
+  function aj(){
+    raf=0;var vv=window.visualViewport;
+    if(!grosso||!vv){return}
+    var dev=Math.min(screen.width,screen.height)||vv.width,k=Math.max(1,vv.width/dev);
+    p.style.transformOrigin='top left';p.style.transform='scale('+k+')';
+    p.style.width=Math.max(220,dev-16)+'px';
+    p.style.left=(vv.offsetLeft+8)+'px';p.style.top=(vv.offsetTop+8)+'px';
+    if(box)box.style.maxHeight=Math.max(160,vv.height/k-90)+'px';
+  }
+  function ag(){if(!raf)raf=requestAnimationFrame(aj)}
+  if(window.visualViewport){visualViewport.addEventListener('resize',ag);visualViewport.addEventListener('scroll',ag)}
+  window.addEventListener('resize',ag);window.addEventListener('orientationchange',ag);window.addEventListener('load',ag);
+  document.getElementById('pe-abrir')&&document.getElementById('pe-abrir').addEventListener('click',function(){setTimeout(ag,30)});
+  ag();
+})();
+</script>
+<style id="caderno-mobile">
+body{align-items:flex-start !important;min-width:1162px !important}
+.page,.page.pg-n,.page.pg-ult{margin-left:auto !important;margin-right:auto !important}
+@media print{body{min-width:0 !important}}
+</style>
 </body>
 </html>
 
