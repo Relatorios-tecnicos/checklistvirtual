@@ -743,6 +743,7 @@ async function montaKmPdf(u,month){
   let logo=null;try{const z=await JSZip.loadAsync(TPL.km,{base64:true});logo=await out.embedPng(await z.file('xl/media/image1.png').async('uint8array'))}catch(e){}
   const cl=t=>String(t==null?'':t).replace(/[^\x20-\xFF]/g,'');
   const W=792,H=612,M=18;
+  const agora=new Date(),dd2=n=>String(n).padStart(2,'0');const rodData=`${dd2(agora.getDate())}/${dd2(agora.getMonth()+1)}/${agora.getFullYear()} / ${dd2(agora.getHours())}:${dd2(agora.getMinutes())}`;
   const quebra=(txt,font,sz,w)=>{const out=[];String(txt).split('\n').forEach(par=>{let ln='';par.split(/\s+/).forEach(pal=>{const t=ln?ln+' '+pal:pal;if(font.widthOfTextAtSize(cl(t),sz)>w&&ln){out.push(ln);ln=pal}else ln=t});out.push(ln)});return out};
   const azul=rgb(.55,.66,.86),cinza=rgb(.83,.83,.83),preto=rgb(0,0,0);
   const cols=[{n:'#',w:16},{n:'Data',w:52},{n:'Trajeto',w:262},{n:'Motivo',w:222},{n:'Distância em Km',w:56},{n:'Fator',w:50}];
@@ -750,6 +751,8 @@ async function montaKmPdf(u,month){
   let pg,y;
   const novaPag=(primeira)=>{
     pg=out.addPage([W,H]);pg.drawRectangle({x:M,y:M,width:W-2*M,height:H-2*M,borderColor:rgb(.5,.5,.5),borderWidth:.8});
+    pg.drawText('NR-DEF-041.v02',{x:M,y:M-9,size:5.5,font:f});
+    pg.drawText(cl(rodData),{x:W-M-f.widthOfTextAtSize(cl(rodData),6),y:M-9,size:6,font:f});
     y=H-M-8;
     if(primeira){
       if(logo)pg.drawImage(logo,{x:M+8,y:H-M-52,width:44,height:44});
