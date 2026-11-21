@@ -133,6 +133,14 @@
     .controle-tabela { display: none !important; }
 }
     </style>
+<style>
+/* Impressão/PDF: uma única página A4, sem cabeçalho/rodapé do navegador (data e endereço do site) */
+@page { size: A4 portrait; margin: 0; }
+@media print {
+    html, body { height: auto !important; margin: 0 !important; padding: 0 !important; }
+    .page { min-height: 0 !important; margin: 10mm 0 0 0 !important; page-break-after: avoid; break-after: avoid; }
+}
+</style>
 </head>
 <body>
 <script>
