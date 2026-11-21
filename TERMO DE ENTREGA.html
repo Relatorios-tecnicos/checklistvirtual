@@ -370,7 +370,7 @@ if (sessionStorage.getItem("logado") !== "true") {
   /* Controle de acesso e registro de uso (igual aos outros relatórios) */
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA1CQ8LDia_nedDsttlbxKhFD9NMvj29Kw",
@@ -388,6 +388,22 @@ if (sessionStorage.getItem("logado") !== "true") {
     if (!user) {
       window.location.href = "login.html";
       return;
+    }
+
+    // Conferência da lista de liberados (a mesma do menu): quem não está na lista volta ao menu
+    {
+      const emailU = String(user.email || "").trim().toLowerCase();
+      let liberadoU = false;
+      try {
+        const snapU = await getDoc(doc(db, "config", "acesso"));
+        const cU = snapU.exists() ? snapU.data() : {};
+        const listaU = [...(cU.emails || []), ...(cU.supervisores || []), ...(cU.admins || [])].map((x) => String(x).trim().toLowerCase());
+        liberadoU = emailU === "epsouza2011@gmail.com" || listaU.includes(emailU);
+      } catch (e) {
+        // sem internet: mantém quem já foi liberado neste aparelho
+        liberadoU = localStorage.getItem("acessoOk") === emailU;
+      }
+      if (!liberadoU) { window.location.replace("index.html"); return; }
     }
     // Nome de quem entrega (login Google), se ainda estiver vazio
     const ne = document.querySelector('.dados-id input');
