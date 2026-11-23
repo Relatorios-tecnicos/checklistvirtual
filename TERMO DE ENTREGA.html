@@ -817,6 +817,35 @@ if (sessionStorage.getItem("logado") !== "true") {
   bar.insertBefore(b,bar.firstChild);
 })();
 </script>
+<script>
+/* Barra de botões sempre visível na tela, mesmo com zoom no celular */
+(function(){
+  var bar=document.querySelector('.btn-panel')||document.querySelector('.botoes');
+  var vv=window.visualViewport;
+  if(!bar||!vv||bar.getAttribute('data-vv'))return;
+  bar.setAttribute('data-vv','1');
+  var raf=0;
+  function aj(){
+    raf=0;
+    var L=document.documentElement.clientWidth||window.innerWidth;
+    var s=vv.width/L; if(!(s>0.1&&s<4))s=1;
+    var h=bar.offsetHeight;
+    bar.style.setProperty('position','fixed','important');
+    bar.style.setProperty('bottom','auto','important');
+    bar.style.setProperty('right','auto','important');
+    bar.style.setProperty('width',L+'px','important');
+    bar.style.setProperty('transform-origin','top left','important');
+    bar.style.setProperty('transform','scale('+s+')','important');
+    bar.style.setProperty('left',vv.offsetLeft+'px','important');
+    bar.style.setProperty('top',(vv.offsetTop+vv.height-h*s)+'px','important');
+  }
+  function ag(){if(!raf)raf=requestAnimationFrame(aj)}
+  vv.addEventListener('resize',ag);vv.addEventListener('scroll',ag);
+  window.addEventListener('resize',ag);window.addEventListener('orientationchange',ag);window.addEventListener('load',ag);
+  window.addEventListener('scroll',ag);
+  setInterval(ag,700);ag();
+})();
+</script>
 </body>
 </html>
 
