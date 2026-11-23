@@ -229,8 +229,11 @@ function preencherDoChamado(texto) {
 
   /* Nome do site: cliente final + cidade (ex.: O BOTICÁRIO - INDAIATUBA) */
   const mCli = texto.match(/(?:^|\n)[ \t]*CLIENTE[ \t]*:[ \t]*([^\n]+)/i);
-  const cli = mCli ? mCli[1].trim() : "";
-  marca("Nome do Site", definir("rat-site", [cli, cidade.toUpperCase()].filter(Boolean).join(" - ")));
+  const cli = mCli ? mCli[1].replace(/PRIME[ \t_-]?ID[ \t]*:.*$/i, "").trim() : "";
+  /* Nome do site: PRIMEID do chamado (ex.: BRAD#3368-00#03); sem PRIMEID, usa cliente + cidade */
+  const mPrime = texto.match(/PRIME[ \t_-]?ID[ \t]*:[ \t]*([^\s]+)/i);
+  const nomeSite = mPrime ? mPrime[1].trim() : [cli, cidade.toUpperCase()].filter(Boolean).join(" - ");
+  marca("Nome do Site", definir("rat-site", nomeSite));
 
   const data = dataISO(valorDe(linhas, "Data"));
   const mh = valorDe(linhas, "Início - Fim").match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
