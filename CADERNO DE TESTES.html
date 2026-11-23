@@ -688,18 +688,46 @@ body{align-items:flex-start !important;min-width:1162px !important}
 @media print{body{min-width:0 !important}}
 </style>
 <script>
-/* Botão COLAR CHAMADO na barra inferior (abre o painel de colar texto) */
+/* Botão COLAR CHAMADO na barra inferior (janela igual à do RAT) */
 (function(){
   var bar=document.querySelector('.botoes')||document.querySelector('.btn-panel');
-  var abrir=document.getElementById('pe-abrir');
-  if(!bar||!abrir||document.getElementById('btnColarChamado'))return;
+  var okO=document.getElementById('pe-ok'),txtO=document.getElementById('pe-txt'),msgO=document.getElementById('pe-msg');
+  if(!bar||!okO||!txtO||document.getElementById('btnColarChamado'))return;
+  var st=document.createElement('style');
+  st.textContent='#painel-email{display:none !important}';
+  document.head.appendChild(st);
+  var m=null;
+  function abrir(){
+    if(!m){
+      m=document.createElement('div');m.id='modalColarChamado';
+      m.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:2000;justify-content:center;align-items:center;font-family:Arial,sans-serif';
+      m.innerHTML='<div style="background:#fff;padding:10px;width:95%;max-width:500px;border-radius:8px;text-align:center;color:#000">'+
+        '<h3 style="margin-top:0">Cole o texto do chamado</h3>'+
+        '<textarea id="txtColarChamado" style="width:100%;height:220px;font-size:13px;padding:6px;border:1px solid #333;box-sizing:border-box"></textarea>'+
+        '<div id="msgColarChamado" style="font-size:12px;margin-top:8px;min-height:16px;color:#333;text-align:left"></div>'+
+        '<div style="display:flex;justify-content:space-between;margin-top:10px;gap:10px;">'+
+        '<button type="button" id="btnColarSair" style="background:#666;color:#fff;border:none;padding:10px;border-radius:4px;cursor:pointer;">Sair</button>'+
+        '<button type="button" id="btnColarOk" style="background:#28a745;color:#fff;border:none;padding:10px;border-radius:4px;cursor:pointer;">Preencher</button></div></div>';
+      document.body.appendChild(m);
+      document.getElementById('btnColarSair').onclick=function(){m.style.display='none'};
+      document.getElementById('btnColarOk').onclick=function(){
+        txtO.value=document.getElementById('txtColarChamado').value;
+        okO.click();
+        var h=msgO?msgO.innerHTML:'';
+        document.getElementById('msgColarChamado').innerHTML=h;
+        if(!/Não achei|Não encontrei/i.test(h))m.style.display='none';
+      };
+    }
+    document.getElementById('txtColarChamado').value='';
+    document.getElementById('msgColarChamado').textContent='';
+    m.style.display='flex';
+  }
   var b=document.createElement('button');
   b.type='button';b.id='btnColarChamado';b.textContent='COLAR CHAMADO';
   if(bar.classList.contains('botoes'))b.className='btn';
   b.style.background='#1a73e8';
-  b.onclick=function(){abrir.click()};
+  b.onclick=abrir;
   bar.insertBefore(b,bar.firstChild);
-  abrir.style.display='none';
 })();
 </script>
 </body>
