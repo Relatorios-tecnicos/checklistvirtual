@@ -17,8 +17,8 @@ function injetarCssImpressao() {
   const st = document.createElement("style");
   st.id = "print-mobile-rat";
   st.textContent = "@media print{" +
-    "html,body{width:794px !important;min-width:0 !important;height:auto !important;max-height:none !important;overflow:visible !important;display:block !important;margin:0 !important;padding:0 !important;background:#fff !important}" +
-    "#relatorio{width:794px !important;height:1120px !important;margin:0 !important;box-shadow:none !important;border:none !important;overflow:hidden !important;break-after:avoid !important;page-break-after:avoid !important;break-inside:avoid !important}" +
+    "html,body{width:794px !important;min-width:0 !important;height:950px !important;max-height:950px !important;overflow:hidden !important;display:block !important;margin:0 !important;padding:0 !important;background:#fff !important}" +
+    "#relatorio{zoom:0.88 !important;width:794px !important;height:1120px !important;max-height:1120px !important;margin:0 !important;box-shadow:none !important;border:none !important;overflow:hidden !important;break-after:avoid !important;page-break-after:avoid !important;break-inside:avoid !important}" +
     "input[type=datetime-local],input[type=date]{-webkit-appearance:none !important;appearance:none !important;height:20px !important;min-height:0 !important;line-height:14px !important;padding:2px 3px !important;text-align:left !important;display:block !important}" +
     "}";
   document.head.appendChild(st);
