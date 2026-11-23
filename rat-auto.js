@@ -61,10 +61,20 @@ function atualizaDescricao() {
   d.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+function autoTamanho(el, minimo) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = Math.max(minimo, el.scrollHeight + 2) + "px";
+}
+function ajustaTextos() {
+  autoTamanho(document.getElementById("rat-justificativa"), 30);
+  autoTamanho(document.getElementById("rat-descricao"), 60);
+}
+
 function preencherFim() { preencher("rat-fim", agoraLocal()); }
 
 /* ---------- Colar texto do chamado (Telmex) ---------- */
-const norm = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+const norm = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
 function valorDe(linhas, rotulo) {
   const alvo = norm(rotulo);
@@ -179,6 +189,11 @@ function botaoColar() {
 
 function iniciar() {
   botaoColar();
+  ["rat-justificativa", "rat-descricao"].forEach((id) => {
+    const t = document.getElementById(id);
+    if (t) t.addEventListener("input", ajustaTextos);
+  });
+  window.addEventListener("resize", ajustaTextos);
   preencher("rat-cliente", CLIENTE_PADRAO);
   preencher("rat-inicio", agoraLocal());
   preencher("val-cli-data", hojeISO());
@@ -193,9 +208,10 @@ function iniciar() {
   /* Fim = hora de gerar o PDF, se ainda estiver vazio */
   document.addEventListener("click", (e) => {
     const b = e.target.closest && e.target.closest(".btn-panel button");
-    if (b && /GERAR/i.test(b.textContent)) preencherFim();
+    if (b && /GERAR/i.test(b.textContent)) { preencherFim(); ajustaTextos(); }
   }, true);
-  window.addEventListener("beforeprint", preencherFim);
+  window.addEventListener("beforeprint", () => { preencherFim(); ajustaTextos(); });
+  ajustaTextos();
 
   /* Nome do técnico = nome da conta Google */
   try {
