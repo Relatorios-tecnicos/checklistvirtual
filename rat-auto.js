@@ -98,6 +98,89 @@ function ajustaTextos() {
 
 function preencherFim() { preencher("rat-fim", agoraLocal()); }
 
+/* ---------- Assinatura em tela cheia (igual ao Termo de Entrega) ---------- */
+function assinaturaTelaCheia() {
+  const m = document.getElementById("modalAssinatura");
+  const cv = document.getElementById("canvasModal");
+  if (!m || !cv || m.dataset.fs) return;
+  m.dataset.fs = "1";
+  const MOBq = () => window.matchMedia("(max-width:900px),(pointer:coarse)").matches;
+  const st = document.createElement("style");
+  st.textContent =
+    "@media (max-width:900px),(pointer:coarse){" +
+    "#modalAssinatura{background:#fff !important;align-items:stretch !important;justify-content:stretch !important}" +
+    "#modalAssinatura .modal-content{width:100% !important;max-width:none !important;height:100vh;height:100dvh;border-radius:0 !important;padding:0 !important;margin:0;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden}" +
+    "#modalAssinatura h3{margin:0 !important;padding:10px;background:#f2f2f2;font-size:18px}" +
+    "#modalAssinatura .modal-content>div{padding:15px;background:#eee;margin:0 !important}" +
+    "#modalAssinatura .modal-content>div button{flex:1;padding:12px !important;font-weight:bold}" +
+    "canvas#canvasModal{width:100% !important;height:calc(100vh - 150px) !important;height:calc(100dvh - 150px) !important;border:none !important;flex:none}" +
+    "}" +
+    ".sig-hint{display:none;position:absolute;left:0;right:0;top:38%;text-align:center;font:bold 18px Arial,sans-serif;color:#b5b5b5;pointer-events:none;z-index:1}" +
+    "@media (orientation:portrait) and (max-width:900px),(orientation:portrait) and (pointer:coarse){.sig-hint{display:block}}" +
+    ".signature-pad img{max-width:100%;object-fit:contain}";
+  document.head.appendChild(st);
+  const hint = document.createElement("div");
+  hint.className = "sig-hint";
+  hint.innerHTML = "&#8635; Vire o celular na horizontal<br>para assinar";
+  m.appendChild(hint);
+
+  const penW = () => {
+    const vv = window.visualViewport, sc = vv && vv.scale ? vv.scale : 1;
+    return MOBq() ? Math.max(3, Math.min(12, Math.round(2.4 / sc))) : 3;
+  };
+  const trim = (c) => {
+    const w = c.width, h = c.height, d = c.getContext("2d").getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (d[(y * w + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 < 0) return c.toDataURL("image/png");
+    const p = 8;
+    x0 = Math.max(0, x0 - p); y0 = Math.max(0, y0 - p); x1 = Math.min(w - 1, x1 + p); y1 = Math.min(h - 1, y1 + p);
+    const o = document.createElement("canvas");
+    o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
+    o.getContext("2d").drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
+    return o.toDataURL("image/png");
+  };
+  const setI = (el, p, v) => el.style.setProperty(p, v, "important");
+  const fit = () => {
+    const vv = window.visualViewport;
+    if (!vv || !MOBq()) return;
+    setI(m, "left", vv.offsetLeft + "px"); setI(m, "top", vv.offsetTop + "px");
+    setI(m, "width", vv.width + "px"); setI(m, "height", vv.height + "px");
+    const box = m.querySelector(".modal-content");
+    const bs = getComputedStyle(box);
+    let extra = (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
+    Array.prototype.forEach.call(box.children, (c) => {
+      if (c === cv) return;
+      const cs = getComputedStyle(c);
+      extra += c.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+    });
+    setI(box, "height", vv.height + "px");
+    setI(cv, "height", Math.max(120, vv.height - extra - 4) + "px");
+  };
+
+  const abrirOriginal = window.openModal;
+  if (typeof abrirOriginal === "function") {
+    window.openModal = function (a) {
+      abrirOriginal(a); fit(); abrirOriginal(a);
+      cv.getContext("2d").lineWidth = penW();
+    };
+  }
+  window.salvarAssinatura = function () {
+    const alvo = typeof currentTarget !== "undefined" ? currentTarget : "";
+    const box = document.getElementById("box-" + alvo);
+    if (box) box.innerHTML = '<img src="' + trim(cv) + '" style="max-height:100%;max-width:100%;object-fit:contain;mix-blend-mode:multiply">';
+    if (typeof fecharModal === "function") fecharModal();
+  };
+  const mq = window.matchMedia("(orientation:portrait)");
+  const rs = () => setTimeout(() => {
+    if (m.style.display === "flex") { try { window.openModal(typeof currentTarget !== "undefined" ? currentTarget : "cli"); } catch (e) {} }
+  }, 350);
+  if (mq.addEventListener) mq.addEventListener("change", rs); else if (mq.addListener) mq.addListener(rs);
+}
+assinaturaTelaCheia();
+
 /* ---------- Colar texto do chamado (Telmex) ---------- */
 const norm = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
