@@ -687,6 +687,21 @@ body{align-items:flex-start !important;min-width:1162px !important}
 .page,.page.pg-n,.page.pg-ult{margin-left:auto !important;margin-right:auto !important}
 @media print{body{min-width:0 !important}}
 </style>
+<script>
+/* Botão COLAR CHAMADO na barra inferior (abre o painel de colar texto) */
+(function(){
+  var bar=document.querySelector('.botoes')||document.querySelector('.btn-panel');
+  var abrir=document.getElementById('pe-abrir');
+  if(!bar||!abrir||document.getElementById('btnColarChamado'))return;
+  var b=document.createElement('button');
+  b.type='button';b.id='btnColarChamado';b.textContent='COLAR CHAMADO';
+  if(bar.classList.contains('botoes'))b.className='btn';
+  b.style.background='#1a73e8';
+  b.onclick=function(){abrir.click()};
+  bar.insertBefore(b,bar.firstChild);
+  abrir.style.display='none';
+})();
+</script>
 </body>
 </html>
 
