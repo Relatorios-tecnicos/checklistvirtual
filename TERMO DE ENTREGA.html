@@ -773,6 +773,21 @@ if (sessionStorage.getItem("logado") !== "true") {
 })();
 </script>
 <style id="print-1pag">@media print{html,body{width:794px !important;min-width:0 !important;height:auto !important;max-height:none !important;overflow:visible !important;display:block !important;margin:0 !important;padding:0 !important;background:#fff !important}.page{height:940px !important;min-height:0 !important;max-height:none !important;overflow:hidden !important;break-after:avoid !important;page-break-after:avoid !important;break-inside:avoid !important}.page::before{height:940px !important}}</style>
+<script>
+/* Botão COLAR CHAMADO na barra inferior (abre o painel de colar texto) */
+(function(){
+  var bar=document.querySelector('.botoes')||document.querySelector('.btn-panel');
+  var abrir=document.getElementById('pe-abrir');
+  if(!bar||!abrir||document.getElementById('btnColarChamado'))return;
+  var b=document.createElement('button');
+  b.type='button';b.id='btnColarChamado';b.textContent='COLAR CHAMADO';
+  if(bar.classList.contains('botoes'))b.className='btn';
+  b.style.background='#1a73e8';
+  b.onclick=function(){abrir.click()};
+  bar.insertBefore(b,bar.firstChild);
+  abrir.style.display='none';
+})();
+</script>
 </body>
 </html>
 
