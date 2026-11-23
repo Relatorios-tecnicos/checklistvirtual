@@ -80,7 +80,18 @@ function autoTamanho(el, minimo) {
   el.style.height = "auto";
   el.style.height = Math.max(minimo, el.scrollHeight + 2) + "px";
 }
+function cabeNaLinha(el) {
+  if (!el) return;
+  el.style.fontSize = "";
+  let fs = parseFloat(getComputedStyle(el).fontSize) || 13;
+  let n = 0;
+  while (el.scrollWidth > el.clientWidth && fs > 7 && n++ < 40) {
+    fs -= 0.5;
+    el.style.fontSize = fs + "px";
+  }
+}
 function ajustaTextos() {
+  ["rat-site", "rat-endereco", "rat-resp", "rat-tecnico", "rat-operador"].forEach((id) => cabeNaLinha(document.getElementById(id)));
   autoTamanho(document.getElementById("rat-justificativa"), 30);
   autoTamanho(document.getElementById("rat-descricao"), 60);
 }
@@ -203,7 +214,7 @@ function botaoColar() {
 
 function iniciar() {
   botaoColar();
-  ["rat-justificativa", "rat-descricao"].forEach((id) => {
+  ["rat-justificativa", "rat-descricao", "rat-site", "rat-endereco", "rat-resp", "rat-tecnico", "rat-operador"].forEach((id) => {
     const t = document.getElementById(id);
     if (t) t.addEventListener("input", ajustaTextos);
   });
