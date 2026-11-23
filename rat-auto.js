@@ -149,6 +149,19 @@ function assinaturaTelaCheia() {
     setI(m, "left", vv.offsetLeft + "px"); setI(m, "top", vv.offsetTop + "px");
     setI(m, "width", vv.width + "px"); setI(m, "height", vv.height + "px");
     const box = m.querySelector(".modal-content");
+    /* tamanhos proporcionais a altura da tela (evita botoes/titulo gigantes quando a pagina e ampliada) */
+    const u = vv.height / 100;
+    const h3 = /Android/i.test(navigator.userAgent) ? box.querySelector("h3") : null; /* so no Android; iPhone ja esta bom */
+    if (/Android/i.test(navigator.userAgent)) Array.prototype.forEach.call(box.children, (c) => {
+      if (c.tagName !== "DIV") return;
+      setI(c, "padding", (1.6 * u) + "px"); setI(c, "gap", (1.6 * u) + "px");
+      Array.prototype.forEach.call(c.querySelectorAll("button"), (b) => {
+        setI(b, "padding", (1.8 * u) + "px"); setI(b, "font-size", (2.6 * u) + "px"); setI(b, "border-radius", (1 * u) + "px");
+      });
+    });
+    if (h3) { setI(h3, "font-size", (3 * u) + "px"); setI(h3, "padding", (1.2 * u) + "px"); }
+    const hintEl = m.querySelector(".sig-hint");
+    if (hintEl && /Android/i.test(navigator.userAgent)) setI(hintEl, "font-size", (3.4 * u) + "px");
     const bs = getComputedStyle(box);
     let extra = (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
     Array.prototype.forEach.call(box.children, (c) => {
