@@ -11,6 +11,20 @@ const firebaseConfig = {
   appId: "1:421292656328:web:2a2d4eb79c64a54ba9c7fd"
 };
 
+/* ---------- Impressão no celular: força o layout A4 (794px) ---------- */
+function injetarCssImpressao() {
+  if (document.getElementById("print-mobile-rat")) return;
+  const st = document.createElement("style");
+  st.id = "print-mobile-rat";
+  st.textContent = "@media print{" +
+    "html,body{width:794px !important;min-width:0 !important;height:auto !important;max-height:none !important;overflow:visible !important;display:block !important;margin:0 !important;padding:0 !important;background:#fff !important}" +
+    "#relatorio{width:794px !important;height:1120px !important;margin:0 !important;box-shadow:none !important;border:none !important;overflow:hidden !important;break-after:avoid !important;page-break-after:avoid !important;break-inside:avoid !important}" +
+    "input[type=datetime-local],input[type=date]{-webkit-appearance:none !important;appearance:none !important;height:20px !important;min-height:0 !important;line-height:14px !important;padding:2px 3px !important;text-align:left !important;display:block !important}" +
+    "}";
+  document.head.appendChild(st);
+}
+injetarCssImpressao();
+
 const CLIENTE_PADRAO = "TELMEX";
 
 const TEXTOS = {
@@ -120,7 +134,7 @@ function preencherDoChamado(texto) {
   marca("Endereço", definir("rat-endereco", end));
 
   /* Nome do site: cliente final + cidade (ex.: O BOTICÁRIO - INDAIATUBA) */
-  const mCli = texto.match(/CLIENTE\s*:\s*([^\n]+)/i);
+  const mCli = texto.match(/(?:^|\n)[ \t]*CLIENTE[ \t]*:[ \t]*([^\n]+)/i);
   const cli = mCli ? mCli[1].trim() : "";
   marca("Nome do Site", definir("rat-site", [cli, cidade.toUpperCase()].filter(Boolean).join(" - ")));
 
@@ -145,7 +159,7 @@ function preencherDoChamado(texto) {
   }
 
   /* Justificativa / anormalidade = "DESCRIÇÃO:" do chamado */
-  const mDesc = texto.match(/DESCRI[ÇC][ÃA]O\s*:\s*([^\n]+)/i);
+  const mDesc = texto.match(/DESCRI[ÇC][ÃA]O[ \t]*:[ \t]*([^\n]+)/i);
   if (mDesc) marca("Justificativa", definir("rat-justificativa", mDesc[1].trim().replace(/[,;\s]+$/, "")));
 
   return achou;
