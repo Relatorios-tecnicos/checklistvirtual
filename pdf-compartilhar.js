@@ -228,7 +228,23 @@
     }
   }
 
-  /* Termo: a assinatura vira um bloco com a imagem de fundo, preso ao pé da linha
+  /* reduz a imagem em etapas (metade por vez) com suavização alta: no iPhone a redução de uma vez só deixava o traço falhado */
+  function reduzir(img, w, h) {
+    var src = img, cw = img.naturalWidth, ch = img.naturalHeight;
+    while (cw / 2 >= w && ch / 2 >= h) {
+      cw = Math.round(cw / 2); ch = Math.round(ch / 2);
+      var c = document.createElement("canvas"); c.width = cw; c.height = ch;
+      var x = c.getContext("2d"); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = "high";
+      x.drawImage(src, 0, 0, cw, ch);
+      src = c;
+    }
+    var f = document.createElement("canvas"); f.width = w; f.height = h;
+    var fx = f.getContext("2d"); fx.imageSmoothingEnabled = true; fx.imageSmoothingQuality = "high";
+    fx.drawImage(src, 0, 0, w, h);
+    return f.toDataURL("image/png");
+  }
+
+  /* Termo: a assinatura fica numa caixa presa ao pé da linha, já no tamanho final e sem transformações
      (no iPhone a imagem posicionada pela regra de impressão saía da linha e empurrava o resto da folha) */
   function assinaturasNaLinha(doc) {
     var win = doc.defaultView, imgs = [].slice.call(doc.querySelectorAll(".campo-assinatura img"));
@@ -236,12 +252,26 @@
       var src = img.currentSrc || img.src;
       if (!src || win.getComputedStyle(img).display === "none") return;
       var cs = win.getComputedStyle(img), abs = cs.position === "absolute";
-      var d = doc.createElement("div");
-      d.style.cssText = "position:absolute;left:0;right:0;margin:0;padding:0;border:0;pointer-events:none;" +
-        "bottom:" + (abs ? cs.bottom : "1px") + ";height:" + (abs ? cs.height : "66px") + ";" +
-        "background-image:url(\"" + src + "\");background-repeat:no-repeat;background-position:center bottom;background-size:contain";
-      img.parentNode.style.setProperty("position", "relative", "important");
-      img.parentNode.replaceChild(d, img);
+      var campo = img.parentNode, largura = campo.clientWidth || parseFloat(win.getComputedStyle(campo).width) || 264;
+      var alt = (abs && parseFloat(cs.height)) || 66, baixo = abs ? cs.bottom : "1px";
+      var caixa = doc.createElement("div");
+      caixa.style.cssText = "position:absolute !important;left:0 !important;right:0 !important;bottom:" + baixo + " !important;height:" + alt + "px !important;margin:0;padding:0;border:0;pointer-events:none";
+      var iw = img.naturalWidth, ih = img.naturalHeight, feita = false;
+      if (iw > 0 && ih > 0) {
+        try {
+          var k = Math.min(largura / iw, alt / ih), w = iw * k, h = ih * k;
+          var nova = doc.createElement("img");
+          nova.src = reduzir(img, Math.max(1, Math.round(w * ESCALA)), Math.max(1, Math.round(h * ESCALA)));
+          nova.style.cssText = "display:block !important;position:absolute !important;bottom:0 !important;top:auto !important;left:50% !important;right:auto !important;" +
+            "margin:0 0 0 " + (-w / 2) + "px !important;width:" + w + "px !important;height:" + h + "px !important;max-width:none !important;max-height:none !important;" +
+            "transform:none !important;object-fit:fill !important;border:0;padding:0";
+          caixa.appendChild(nova);
+          feita = true;
+        } catch (e) { console.error("[PDF] assinatura", e); }
+      }
+      if (!feita) caixa.style.cssText += ";background-image:url(\"" + src + "\");background-repeat:no-repeat;background-position:center bottom;background-size:contain";
+      campo.style.setProperty("position", "relative", "important");
+      campo.replaceChild(caixa, img);
     });
   }
 
