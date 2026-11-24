@@ -211,6 +211,20 @@
     }
   }
 
+  /* texto escondido com fonte tamanho zero (ex.: "(Assinatura / Carimbo)" do Termo) sai da cópia:
+     no iPhone a biblioteca desenhava esse texto com outra fonte, no canto da folha */
+  function tiraTextoInvisivel(doc) {
+    var win = doc.defaultView, els = doc.body ? doc.body.getElementsByTagName("*") : [];
+    for (var i = 0; i < els.length; i++) {
+      if (parseFloat(win.getComputedStyle(els[i]).fontSize) >= 0.5) continue;
+      for (var n = els[i].firstChild; n; ) {
+        var prox = n.nextSibling;
+        if (n.nodeType === 3) els[i].removeChild(n);
+        n = prox;
+      }
+    }
+  }
+
   function prepararCopia(doc, cfg) {
     emularImpressao(doc);
     var st = doc.createElement("style");
@@ -224,6 +238,7 @@
       if (inp && !String(inp.value || "").trim()) trs[i].style.setProperty("display", "none", "important");
     }
     bordasSimples(doc);
+    tiraTextoInvisivel(doc);
     camposComoTexto(doc);
   }
 
