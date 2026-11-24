@@ -40,7 +40,7 @@
 
   var st = null; /* traço em andamento */
 
-  /* celular em pé: área estreita, então traço mais fino e mais suavização para ficar preciso */
+  /* celular em pé: área estreita, então traço mais fino para ficar preciso */
   function emPe() {
     return Math.min(screen.width || 9999, screen.height || 9999) < 600 &&
            window.matchMedia("(pointer:coarse)").matches &&
@@ -76,7 +76,6 @@
     var info = st.info;
     info.r = st.cv.getBoundingClientRect(); /* acompanha rolagem/zoom */
     var p = pos(st.cv, info, cx, cy), q = st.pts[st.pts.length - 1];
-    if (emPe()) { p = { x: q.x + (p.x - q.x) * 0.55, y: q.y + (p.y - q.y) * 0.55 }; } /* suaviza o tremor do dedo */
     var dx = p.x - q.x, dy = p.y - q.y;
     if (dx * dx + dy * dy < 1.5) return; /* ignora tremor mínimo */
     st.pts.push(p);
