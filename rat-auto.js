@@ -150,7 +150,7 @@ function assinaturaTelaCheia() {
     setI(m, "width", vv.width + "px"); setI(m, "height", vv.height + "px");
     const box = m.querySelector(".modal-content");
     /* tamanhos proporcionais a altura da tela (evita botoes/titulo gigantes quando a pagina e ampliada) */
-    const u = Math.min(vv.height, vv.width * 0.45) / 100; /* limitado pela largura: em pe a altura e enorme */
+    const u = Math.min(vv.height, vv.width * 0.72) / 100; /* limitado pela largura: em pe a altura e enorme */
     const h3 = box.querySelector("h3");
     Array.prototype.forEach.call(box.children, (c) => {
       if (c.tagName !== "DIV") return;
