@@ -51,7 +51,10 @@
       };
     }
     if (document.querySelector(".page")) {
-      return { seletor: ".page", nome: function () { return document.title; }, css: "" };
+      /* Termo de Entrega: a folha cresce se o conteúdo passar da altura (nada fica cortado); o Caderno mantém as folhas fixas */
+      var termo = !!document.querySelector(".campo-assinatura");
+      return { seletor: ".page", nome: function () { return document.title; },
+        css: termo ? ".page{height:auto !important;min-height:940px !important;max-height:none !important;overflow:visible !important}" : "" };
     }
     return null;
   }
@@ -225,6 +228,23 @@
     }
   }
 
+  /* Termo: a assinatura vira um bloco com a imagem de fundo, preso ao pé da linha
+     (no iPhone a imagem posicionada pela regra de impressão saía da linha e empurrava o resto da folha) */
+  function assinaturasNaLinha(doc) {
+    var win = doc.defaultView, imgs = [].slice.call(doc.querySelectorAll(".campo-assinatura img"));
+    imgs.forEach(function (img) {
+      var src = img.currentSrc || img.src;
+      if (!src || win.getComputedStyle(img).display === "none") return;
+      var cs = win.getComputedStyle(img), abs = cs.position === "absolute";
+      var d = doc.createElement("div");
+      d.style.cssText = "position:absolute;left:0;right:0;margin:0;padding:0;border:0;pointer-events:none;" +
+        "bottom:" + (abs ? cs.bottom : "1px") + ";height:" + (abs ? cs.height : "66px") + ";" +
+        "background-image:url(\"" + src + "\");background-repeat:no-repeat;background-position:center bottom;background-size:contain";
+      img.parentNode.style.setProperty("position", "relative", "important");
+      img.parentNode.replaceChild(d, img);
+    });
+  }
+
   function prepararCopia(doc, cfg) {
     emularImpressao(doc);
     var st = doc.createElement("style");
@@ -238,6 +258,7 @@
       if (inp && !String(inp.value || "").trim()) trs[i].style.setProperty("display", "none", "important");
     }
     bordasSimples(doc);
+    assinaturasNaLinha(doc);
     tiraTextoInvisivel(doc);
     camposComoTexto(doc);
   }
