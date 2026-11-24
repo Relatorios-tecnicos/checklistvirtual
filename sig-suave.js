@@ -40,6 +40,13 @@
 
   var st = null; /* traço em andamento */
 
+  /* celular em pé: área estreita, então traço mais fino e mais suavização para ficar preciso */
+  function emPe() {
+    return Math.min(screen.width || 9999, screen.height || 9999) < 600 &&
+           window.matchMedia("(pointer:coarse)").matches &&
+           window.matchMedia("(orientation:portrait)").matches;
+  }
+
   function pos(cv, info, cx, cy) {
     return { x: (cx - info.r.left) * info.sx, y: (cy - info.r.top) * info.sy };
   }
@@ -48,7 +55,7 @@
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.strokeStyle = "blue"; c.fillStyle = "blue";
     c.lineCap = "round"; c.lineJoin = "round";
-    c.lineWidth = (cv.__base || 3) * info.sx;
+    c.lineWidth = (cv.__base || 3) * info.sx * (emPe() ? 0.7 : 1);
   }
   function ponto(p) {
     var c = st.info.ctx;
@@ -69,6 +76,7 @@
     var info = st.info;
     info.r = st.cv.getBoundingClientRect(); /* acompanha rolagem/zoom */
     var p = pos(st.cv, info, cx, cy), q = st.pts[st.pts.length - 1];
+    if (emPe()) { p = { x: q.x + (p.x - q.x) * 0.55, y: q.y + (p.y - q.y) * 0.55 }; } /* suaviza o tremor do dedo */
     var dx = p.x - q.x, dy = p.y - q.y;
     if (dx * dx + dy * dy < 1.5) return; /* ignora tremor mínimo */
     st.pts.push(p);
