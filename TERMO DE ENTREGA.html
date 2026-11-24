@@ -849,6 +849,45 @@ if (sessionStorage.getItem("logado") !== "true") {
 </script>
 <script src="sig-suave.js"></script>
 <script src="pdf-compartilhar.js"></script>
+<style id="fit-1pag">@media print{.conteudo{transform:scale(var(--pz,1));transform-origin:50% 0}}</style>
+<script>
+/* PDF em 1 pagina mesmo com muitos itens: reduz o conteudo para caber (so quando precisa) */
+(function(){
+  var FN="'Times New Roman',Times,'Liberation Serif',serif",cv=document.createElement('canvas').getContext('2d');
+  function w(t,px,b){cv.font=(b?'bold ':'')+px+'px '+FN;return cv.measureText(t).width}
+  function linhas(parts,px,W){
+    var ws=[];parts.forEach(function(p){String(p[0]).split(/\s+/).filter(Boolean).forEach(function(x){ws.push([x,p[1]])})});
+    var n=1,cur=0,sp=w(' ',px,false);
+    ws.forEach(function(x){var a=w(x[0],px,x[1]);if(cur&&cur+sp+a>W){n++;cur=a}else cur=cur?cur+sp+a:a});
+    return n}
+  function estima(){
+    var tp=document.querySelector('.texto-principal'),pi=tp.querySelectorAll('input');
+    var loc=pi[0].value.trim().replace(/\s-\s(ID\b)/i,' – $1'),prot=pi[1].value.trim();
+    var L=linhas([['Este presente termo visa atestar que foram entregues',0],[loc+',',1],['os seguintes itens constantes da solicitação de ativação VoIP sob o',0],['Protocolo SAOG - '+prot+'.',1]],16,698);
+    var rows=0;
+    document.querySelectorAll('.tabela-itens tbody tr').forEach(function(tr){
+      var ins=tr.querySelectorAll('input');if(tr.style.display==='none'||!ins[0]||!ins[0].value.trim())return;
+      var n1=linhas([[tr.cells[0].textContent,0]],13.33,83);
+      var n2=linhas([[ins[0].value,0]],13.33,357);
+      var t3=ins[1]?ins[1].value.trim():'',m=t3.match(/^(\S+)\s*(.*)$/);
+      var n3=m?linhas([[m[1],1],[m[2],0]],13.33,197):1;
+      rows+=17+16*(Math.max(n1,n2,n3)-1);
+    });
+    var ex=0;
+    document.querySelectorAll('.assinatura-bloco').forEach(function(b){
+      if(b.classList.contains('tem-carimbo'))ex+=18;
+      else b.querySelectorAll('.dados-id input').forEach(function(i){if(i.value.trim())ex+=18});
+    });
+    return 934+27.5*(L-2)+(rows-183)+ex;
+  }
+  function antes(){
+    var c=document.querySelector('.conteudo');if(!c)return;
+    try{var h=estima(),z=h>928?928/h:1;if(z<0.5)z=0.5;c.style.setProperty('--pz',z.toFixed(4))}catch(e){c.style.removeProperty('--pz')}
+  }
+  function depois(){var c=document.querySelector('.conteudo');if(c)c.style.removeProperty('--pz')}
+  window.addEventListener('beforeprint',antes);window.addEventListener('afterprint',depois);
+})();
+</script>
 </body>
 </html>
 
