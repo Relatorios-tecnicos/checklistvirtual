@@ -275,6 +275,24 @@
     });
   }
 
+  /* RAT e Caderno: a assinatura já vai reduzida para o tamanho em que aparece na folha
+     (no iPhone a redução de uma vez só deixava o traço falhado) */
+  function assinaturasNitidas(doc) {
+    var imgs = [].slice.call(doc.querySelectorAll(".signature-pad img, .sig-line img"));
+    imgs.forEach(function (img) {
+      var iw = img.naturalWidth, ih = img.naturalHeight, r = img.getBoundingClientRect();
+      if (!(iw > 0 && ih > 0 && r.width > 0 && r.height > 0)) return;
+      try {
+        var k = Math.min(r.width / iw, r.height / ih), w = iw * k, h = ih * k;
+        var src = reduzir(img, Math.max(1, Math.round(w * ESCALA)), Math.max(1, Math.round(h * ESCALA)));
+        img.removeAttribute("srcset");
+        img.src = src;
+        img.style.cssText += ";width:" + w + "px !important;height:" + h + "px !important;max-width:none !important;max-height:none !important;" +
+          "object-fit:fill !important;transform:none !important";
+      } catch (e) { console.error("[PDF] assinatura", e); }
+    });
+  }
+
   function prepararCopia(doc, cfg) {
     emularImpressao(doc);
     var st = doc.createElement("style");
@@ -289,6 +307,7 @@
     }
     bordasSimples(doc);
     assinaturasNaLinha(doc);
+    assinaturasNitidas(doc);
     tiraTextoInvisivel(doc);
     camposComoTexto(doc);
   }
