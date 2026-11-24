@@ -20,9 +20,10 @@
       /* o app (re)definiu o tamanho do canvas: lê a espessura que ele escolheu */
       var lw = ctx.lineWidth;
       cv.__base = lw && lw > 0 ? lw : 3;
-      var dpr = Math.max(window.devicePixelRatio || 1, 2);
-      var alvoW = Math.min(Math.round(r.width * dpr), 3200);
-      if (cv.width < alvoW * 0.9) {
+      /* resolução 2x, mas com teto de área (~3,5 Mpx) para não pesar/atrasar em telas grandes (celular em pé) */
+      var f = Math.min(Math.max(window.devicePixelRatio || 1, 2), Math.sqrt(3500000 / (r.width * r.height)));
+      var alvoW = Math.round(r.width * f);
+      if (cv.width < alvoW * 0.9 || cv.width > alvoW * 1.15) {
         var tmp = document.createElement("canvas");
         tmp.width = cv.width; tmp.height = cv.height;
         tmp.getContext("2d").drawImage(cv, 0, 0);
@@ -35,7 +36,7 @@
       }
       cv.__w = cv.width; cv.__h = cv.height;
     }
-    return { ctx: ctx, r: r, sx: cv.width / r.width, sy: cv.height / r.height };
+    return { ctx: ctx, r: r, sx: cv.width / r.width, sy: cv.height / r.height, fino: emPe() };
   }
 
   var st = null; /* traço em andamento */
@@ -55,7 +56,7 @@
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.strokeStyle = "blue"; c.fillStyle = "blue";
     c.lineCap = "round"; c.lineJoin = "round";
-    c.lineWidth = (cv.__base || 3) * info.sx * (emPe() ? 0.7 : 1);
+    c.lineWidth = (cv.__base || 3) * info.sx * (info.fino ? 0.7 : 1);
   }
   function ponto(p) {
     var c = st.info.ctx;
