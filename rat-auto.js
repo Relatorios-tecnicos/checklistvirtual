@@ -351,3 +351,6 @@ function iniciar() {
 
 if (document.readyState === "complete") iniciar();
 else window.addEventListener("load", iniciar);
+
+/* Assinatura suave (compartilhada com Termo e Caderno) */
+(function () { const s = document.createElement("script"); s.src = "sig-suave.js"; document.head.appendChild(s); })();
