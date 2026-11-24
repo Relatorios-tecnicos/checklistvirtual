@@ -293,6 +293,25 @@
     });
   }
 
+  /* Termo de Entrega: mede a folha já montada (como no PDF) e, se o conteúdo passar da altura (940px), reduz para caber em 1 página.
+     No iPhone as fontes ocupam mais espaço que no computador, então o tamanho é medido de verdade em vez de estimado. */
+  function ajustaTermo(doc) {
+    var c = doc.querySelector(".page .conteudo"), pg = doc.querySelector(".page");
+    if (!c || !pg || !doc.querySelector(".campo-assinatura")) return;
+    c.style.setProperty("transform", "none", "important");
+    var topo = pg.getBoundingClientRect().top, fim = 0, els = c.getElementsByTagName("*");
+    for (var i = 0; i < els.length; i++) {
+      var r = els[i].getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && r.bottom > fim) fim = r.bottom;
+    }
+    var h = fim - topo;
+    if (h > 930) {
+      var z = Math.max(0.5, 930 / h);
+      c.style.setProperty("transform", "scale(" + z.toFixed(4) + ")", "important");
+      c.style.setProperty("transform-origin", "50% 0", "important");
+    }
+  }
+
   function prepararCopia(doc, cfg) {
     emularImpressao(doc);
     var st = doc.createElement("style");
@@ -310,6 +329,7 @@
     assinaturasNitidas(doc);
     tiraTextoInvisivel(doc);
     camposComoTexto(doc);
+    ajustaTermo(doc);
   }
 
   function montarCopia(copia, W, H) {
