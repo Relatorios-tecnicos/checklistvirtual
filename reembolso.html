@@ -976,7 +976,7 @@ const stat=(u,m)=>(u.status[m]=u.status[m]||{s:'Rascunho',motivo:''});
 let fb={auth:null,db:null};let AUTH={status:NUVEM?'loading':'demo'};
 const lastW={};let syncSt={s:'',m:''};let saveT=null;
 function loadScript(src){return new Promise((ok,err)=>{const sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=()=>err(new Error('Não consegui carregar '+src.split('/').pop()+' (internet ou bloqueio de rede)'));document.head.appendChild(sc)})}
-function perfilVazio(a){return{nome:((a&&a.displayName)||'').toUpperCase(),matricula:'',cpf:'',telefone:'',fornecedor:'',area:'',cargo:'',local:'',regional:'',empresa:'',centro:'',adiantamento:0,placa:'',home:'',motivoGasto:'Relatório de despesas referente aos projetos TELMEX e CFTV BRADESCO.'}}
+function perfilVazio(a){return{nome:((a&&a.displayName)||'').toUpperCase(),matricula:'',cpf:'',telefone:'',fornecedor:'',area:'Serviço de atendimento a campo ESD',cargo:'',local:'11H1',regional:'SP Interior',empresa:'HITSS DO BRASIL - (800)',centro:'85SPSP8H71',adiantamento:0,placa:'',home:'',motivoGasto:'Relatório de despesas referente aos PROJETOS TELMEX NSPPRI314 E CFTV BRADESCO NSPBRA3957.'}}
 function diasAjuste(st,m){
   const out=new Set(st.dias||[]);const[y,mm]=m.split('-');
   String(st.motivo||'').replace(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?!\d)/g,(_,d,mo,a)=>{
@@ -1038,8 +1038,10 @@ async function carregarUsuario(uid,todos,authUser,mes){
   /* documento do técnico e meses lidos em paralelo */
   const mesesP=todos?ref.collection('meses').get().then(s=>s.docs):ref.collection('meses').doc(mes).get().then(m=>m.exists?[m]:[]);
   const[d,docsLidos]=await Promise.all([ref.get(),mesesP]);const x=d.exists?d.data():null;
-  const u={profile:{...perfilVazio(authUser),...((x&&x.profile)||{})},addresses:(x&&x.addresses)||[],tag:(x&&x.tag)||[],entries:[],status:{},adiant:{}};
+  const pv=perfilVazio(authUser),u={profile:{...pv,...((x&&x.profile)||{})},addresses:(x&&x.addresses)||[],tag:(x&&x.tag)||[],entries:[],status:{},adiant:{}};
   if(!x&&authUser)u._novo=true;
+  /* campos que não mudam (podem ser editados): se estiverem vazios, voltam ao padrão */
+  ['area','local','regional','empresa','centro','motivoGasto'].forEach(k=>{if(!String(u.profile[k]||'').trim())u.profile[k]=pv[k]});
   const docs=docsLidos;
   docs.forEach(m=>{const y=m.data();(y.entries||[]).forEach(e=>u.entries.push(e));u.status[m.id]=y.status||{s:'Rascunho',motivo:''};if(y.adiant!==null&&y.adiant!==undefined)u.adiant[m.id]=y.adiant});
   if(todos&&authUser){
