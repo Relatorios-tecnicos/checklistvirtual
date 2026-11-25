@@ -303,8 +303,6 @@ function problemas(user,month){
   });
   if(c.rows.length>LIM.kmLinhas)out.push({l:'err',m:`O modelo do Reembolso KM comporta ${LIM.kmLinhas} dias; há ${c.rows.length}.`});
   c.rows.forEach(e=>{if(EXTRAS.includes('outros')&&+e.outros>0&&!String(e.outrosDesc||'').trim())out.push({l:'warn',m:`${fmtBR(e.date)}: informe o que são os "Outros" (${brl(e.outros)}).`})});
-  if(c.exp.TELMEX.length>LIM.solicTelmex)out.push({l:'err',m:`A Solicitação comporta ${LIM.solicTelmex} linhas de despesa Telmex (pedágio e estacionamento somados); há ${c.exp.TELMEX.length}.`});
-  if(c.exp['CFTV BRADESCO'].length>LIM.solicCftv)out.push({l:'err',m:`A Solicitação comporta ${LIM.solicCftv} linhas de despesa CFTV (pedágio e estacionamento somados); há ${c.exp['CFTV BRADESCO'].length}.`});
   const dias={};c.rows.forEach(e=>dias[e.date]=(dias[e.date]||0)+1);
   Object.entries(dias).forEach(([d,n])=>{if(n>1)out.push({l:'warn',m:`${fmtBR(d)}: ${n} lançamentos no mesmo dia (o modelo traz uma linha por dia).`})});
   const p=user.profile;
@@ -672,9 +670,52 @@ async function genKm(user,month){
   });
   return saveTpl(zip,sheet,styles);
 }
+function shRef(t,de,n){return t.replace(/(\$?[A-Z]{1,3}\$?)(\d+)/g,(m,a,r)=>+r>=de?a+(+r+n):m)}
+function ajustaLinhas(xml,modelo,antes,n){
+  if(!n)return xml;
+  let mm='',novas='',nm=0;
+  if(n<0){/* menos lançamentos que o modelo: apaga as últimas linhas do bloco */
+    const ini=antes+n;
+    xml=xml.replace(/<row r="(\d+)"[^>]*>.*?<\/row>/gs,(m,r)=>+r>=ini&&+r<antes?'':m);
+    xml=xml.replace(/<mergeCell ref="[A-Z]+(\d+):[A-Z]+\d+"\/>/g,(m,a)=>+a>=ini&&+a<antes?(nm--,''):m);
+  }else{/* mais lançamentos: copia o formato da última linha do bloco */
+    const row=xml.match(new RegExp('<row r="'+modelo+'"[^>]*>.*?</row>','s'))[0];
+    const mods=[...xml.matchAll(new RegExp('<mergeCell ref="([A-Z]+)'+modelo+':([A-Z]+)'+modelo+'"/>','g'))].map(m=>[m[1],m[2]]);
+    for(let i=0;i<n;i++){
+      const r=antes+i;
+      novas+=row.replace(/<row r="\d+"/,()=>'<row r="'+r+'"').replace(/<c r="([A-Z]+)\d+"/g,(m,c)=>'<c r="'+c+r+'"');
+      mods.forEach(([a,b])=>{mm+='<mergeCell ref="'+a+r+':'+b+r+'"/>';nm++});
+    }
+  }
+  xml=xml.replace(/<row r="(\d+)"/g,(m,r)=>+r>=antes?'<row r="'+(+r+n)+'"':m)
+    .replace(/<c r="([A-Z]+)(\d+)"/g,(m,c,r)=>+r>=antes?'<c r="'+c+(+r+n)+'"':m)
+    .replace(/(<f[^>]*>)([^<]*)(<\/f>)/g,(m,a,b,c)=>a+shRef(b,antes,n)+c)
+    .replace(/(<formula[12]>)([^<]*)(<\/formula[12]>)/g,(m,a,b,c)=>a+shRef(b,antes,n)+c)
+    .replace(/(sqref|ref)="([^"]*)"/g,(m,a,b)=>a+'="'+shRef(b,antes,n)+'"');
+  if(novas)xml=xml.replace('<row r="'+(antes+n)+'"',()=>novas+'<row r="'+(antes+n)+'"');
+  return xml.replace('</mergeCells>',()=>mm+'</mergeCells>').replace(/<mergeCells count="(\d+)"/,(m,c)=>'<mergeCells count="'+(+c+nm)+'"');
+}
+/* Solicitação: o modelo tem 2 linhas (Telmex) e 8 (CFTV); o app aumenta ou diminui os blocos conforme os lançamentos do mês */
+async function openSolic(nT,nC){
+  await lib('jszip');
+  const zip=await JSZip.loadAsync(TPL.solic,{base64:true});
+  let xml=await zip.file('xl/worksheets/sheet1.xml').async('string');
+  let wb=await zip.file('xl/workbook.xml').async('string');
+  let dr=await zip.file('xl/drawings/drawing1.xml').async('string');
+  const ins=[[47,48,nC],[32,33,nT]];/* de baixo para cima, para os números de linha do modelo continuarem valendo */
+  for(const[modelo,antes,n]of ins){
+    if(!n)continue;
+    xml=ajustaLinhas(xml,modelo,antes,n);
+    wb=wb.replace(/(<definedName[^>]*>)([^<]*)(<\/definedName>)/g,(m,a,b,c)=>a+shRef(b,antes,n)+c);
+    dr=dr.replace(/<xdr:row>(\d+)<\/xdr:row>/g,(m,r)=>+r+1>=antes?'<xdr:row>'+(+r+n)+'</xdr:row>':m);
+  }
+  zip.file('xl/workbook.xml',wb);zip.file('xl/drawings/drawing1.xml',dr);
+  return{zip,sheet:new Sheet(xml)};
+}
 async function genSolic(user,month){
   const c=calc(user,month);const p=user.profile;
-  const{zip,sheet}=await openTpl('solic');
+  const extraT=Math.max(1,c.exp.TELMEX.length)-LIM.solicTelmex,extraC=Math.max(1,c.exp['CFTV BRADESCO'].length)-LIM.solicCftv;/* negativo = remove linhas */
+  const{zip,sheet}=await openSolic(extraT,extraC);
   const styles=new Styles(await zip.file('xl/styles.xml').async('string'));
   const dt=(ref,v)=>sheet.set(ref,v,styles.date(sheet.style(ref)));
   sheet.set('C9',p.nome);sheet.set('K9',/^[1-9]\d*$/.test(String(p.cpf))?+p.cpf:p.cpf);
@@ -699,10 +740,10 @@ async function genSolic(user,month){
       sheet.set('H'+rr,`DESPESAS ${PROJ[proj].nome} (${x.tipo})`);sheet.set('P'+rr,x.valor);
     });
   };
-  sec(c.exp.TELMEX,31,LIM.solicTelmex,'TELMEX');
-  sec(c.exp['CFTV BRADESCO'],40,LIM.solicCftv,'CFTV BRADESCO');
+  sec(c.exp.TELMEX,31,1e3,'TELMEX');
+  sec(c.exp['CFTV BRADESCO'],40+extraT,1e3,'CFTV BRADESCO');
   /* bloco Alimentação (linhas 55 e 56 já trazem a descrição "PROJETO ..."): total por projeto, com a data da despesa */
-  [['TELMEX',55],['CFTV BRADESCO',56]].forEach(([pr,rr])=>{if(c.alimP[pr]>0){dt('F'+rr,serial(c.alimD[pr]));sheet.set('P'+rr,c.alimP[pr])}});
+  [['TELMEX',55+extraT+extraC],['CFTV BRADESCO',56+extraT+extraC]].forEach(([pr,rr])=>{if(c.alimP[pr]>0){dt('F'+rr,serial(c.alimD[pr]));sheet.set('P'+rr,c.alimP[pr])}});
   return saveTpl(zip,sheet,styles);
 }
 async function montaComprovPdf(u){
