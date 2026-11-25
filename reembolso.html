@@ -948,7 +948,7 @@ let S;
 function mesAtual(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
 function load(){
   if(NUVEM){let ui={};try{ui=JSON.parse(localStorage.getItem('reembolso-ui')||'{}')}catch(e){}
-    S={role:'tecnico',userId:null,me:null,month:mesAtual(),view:null,theme:ui.theme||'auto',users:{},seq:0};return}
+    S={role:'tecnico',userId:null,me:null,month:mesAtual(),view:null,theme:(ui.theme&&ui.theme!=='auto')?ui.theme:'light',users:{},seq:0};return}
   try{const t=localStorage.getItem(KEY);S=t?JSON.parse(t):seed()}catch(e){S=seed()}
   try{Object.assign(FOTOS,JSON.parse(localStorage.getItem('reembolso-fotos-v1')||'{}'))}catch(e){}
 }
