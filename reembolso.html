@@ -763,7 +763,7 @@ async function montaComprovPdf(u){
   }
   for(const f of comprovFiles){
     const buf=await f.arrayBuffer();
-    if(f.type==='application/pdf'){
+    if(esPdf(f)){
       const d=await PDFDocument.load(buf,{ignoreEncryption:true});
       const pgs=await out.copyPages(d,d.getPageIndices());pgs.forEach(p=>out.addPage(p));
     }else{
@@ -1148,6 +1148,7 @@ const ICON={
   end:'<svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   aprov:'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>'
 };
+const esPdf=f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name||'');
 let comprovFiles=[];let prevTab='controle';let editId=null;let toastT;
 function toast(m){const t=document.getElementById('toast');t.innerHTML=`<div class="toast">${esc(m)}</div>`;clearTimeout(toastT);toastT=setTimeout(()=>t.innerHTML='',2600)}
 
@@ -1387,9 +1388,9 @@ function vTag(){
   const totP=r2(dias.reduce((t,d)=>t+d.ped,0)),totE=r2(dias.reduce((t,d)=>t+d.est,0));
   return`<div class="card"><h2>Fatura da tag: pedágio e estacionamento</h2>
     <p class="sub">Leia a fatura (PDF "Histórico de lançamentos" da tag) para preencher pedágio e estacionamento de cada dia, somando as passagens da mesma data.</p>
-    <div class="row"><button class="btn" data-act="lertag" ${comprovFiles.some(f=>f.type==='application/pdf')?'':'disabled'}>Ler fatura dos PDFs anexados</button>
+    <div class="row"><button class="btn" data-act="lertag" ${comprovFiles.some(esPdf)?'':'disabled'}>Ler fatura dos PDFs anexados</button>
     ${dias.length?`<button class="btn primary" data-act="aplicartag">Aplicar nos lançamentos</button><button class="btn ghost" data-act="limpartag">Limpar</button>`:''}</div>
-    <div id="tagMsg" class="small muted" style="margin-top:8px">${comprovFiles.some(f=>f.type==='application/pdf')?'':'Anexe o PDF da fatura acima.'}</div>
+    <div id="tagMsg" class="small muted" style="margin-top:8px">${comprovFiles.some(esPdf)?'':'Anexe o PDF da fatura acima.'}</div>
     ${dias.length?`<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Data</th><th class="n">Pedágio</th><th class="n">Estacionamento</th><th>Lançamento no dia</th></tr></thead><tbody>
     ${dias.map(d=>{const ex=u.entries.some(e=>e.date===d.date);return`<tr><td>${fmtBR(d.date)}</td><td class="n">${d.np?num(d.ped)+' ('+d.np+')':''}</td><td class="n">${d.ne?num(d.est)+' ('+d.ne+')':''}</td><td>${ex?'<span class="chip Aprovado">tem</span>':'<span class="chip Ajuste">sem lançamento</span>'}</td></tr>`}).join('')}
     <tr class="tot"><td>Total</td><td class="n">${num(totP)}</td><td class="n">${num(totE)}</td><td></td></tr></tbody></table></div>`:''}
@@ -1620,7 +1621,7 @@ document.addEventListener('click',async ev=>{
     const msg=document.getElementById('tagMsg');msg.textContent='Lendo…';
     try{
       let todos=[];
-      TAGFILES=comprovFiles.filter(f=>f.type==='application/pdf');
+      TAGFILES=comprovFiles.filter(esPdf);
       for(const f of TAGFILES)todos=todos.concat(await lerTag(f));
       const seen=new Set();todos=todos.filter(i=>{const k=[i.date,i.hora,i.placa,i.tipo,i.valor,i.desc].join('|');if(seen.has(k))return false;seen.add(k);return true});
       U().tag=todos;save();render();
@@ -1654,7 +1655,11 @@ document.addEventListener('click',async ev=>{
     }
     toast(msg)
   }
-  else if(a==='pick'){document.getElementById('fileIn').click();return}
+  else if(a==='pick'){/* input próprio, fora do render: se a tela redesenhar (sincronização) enquanto o seletor está aberto, o arquivo não se perde */
+    const inp=document.createElement('input');inp.type='file';inp.accept='application/pdf,image/jpeg,image/png,.pdf';inp.multiple=true;inp.style.display='none';document.body.appendChild(inp);
+    inp.addEventListener('change',()=>{const novos=[...inp.files];inp.remove();if(!novos.length)return;comprovFiles.push(...novos);addRecibos(novos);save();render()});
+    inp.addEventListener('cancel',()=>inp.remove());
+    inp.click();return}
   else if(a==='rmfile'){const rf=comprovFiles[+b.dataset.i];RECIBOS=RECIBOS.filter(x=>x.file!==rf);comprovFiles.splice(+b.dataset.i,1)}
   else if(a==='reciboRot'){const r=RECIBOS[+b.dataset.i];if(!r)return;r.rot=((r.rot||0)+(+b.dataset.d)+360)%360;try{r.img=await imgPequena(r.file,r.rot)}catch(e){toast('Não consegui girar')}}
   else if(a==='reciboRm'){const r=RECIBOS.splice(+b.dataset.i,1)[0];const k=comprovFiles.indexOf(r.file);if(k>=0)comprovFiles.splice(k,1)}
